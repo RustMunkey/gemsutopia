@@ -439,89 +439,94 @@ export default function Reviews() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-white mb-2 text-center">
+                  Rating *
+                </label>
+                <div className="flex justify-center gap-2 mb-4">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setReviewForm(prev => ({ ...prev, rating: star }))}
+                      className={`p-1 rounded transition-colors ${
+                        star <= reviewForm.rating 
+                          ? 'text-yellow-400 hover:text-yellow-500' 
+                          : 'text-gray-500 hover:text-yellow-400'
+                      }`}
+                    >
+                      <Star 
+                        className={`h-8 w-8 ${star <= reviewForm.rating ? 'fill-current' : ''}`} 
+                      />
+                    </button>
+                  ))}
+                </div>
+                <p className="text-sm text-gray-400 text-center">
+                  {reviewForm.rating === 0 ? 'Please select a rating' : 
+                   reviewForm.rating === 1 ? 'Poor' :
+                   reviewForm.rating === 2 ? 'Fair' :
+                   reviewForm.rating === 3 ? 'Good' :
+                   reviewForm.rating === 4 ? 'Very Good' : 'Excellent'}
+                </p>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-white mb-2">
-                  Your Name *
+                  Review Title (Optional)
                 </label>
                 <input
                   type="text"
-                  value={reviewForm.name}
-                  onChange={(e) => setReviewForm(prev => ({ ...prev, name: e.target.value }))}
+                  value={reviewForm.title}
+                  onChange={(e) => setReviewForm(prev => ({ ...prev, title: e.target.value }))}
                   className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-white"
-                  placeholder="Enter your name"
-                  required
+                  placeholder="Give your review a title..."
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-white mb-2">
-                  Email Address *
+                  Your Review *
                 </label>
-                <input
-                  type="email"
-                  value={reviewForm.email}
-                  onChange={(e) => setReviewForm(prev => ({ ...prev, email: e.target.value }))}
-                  className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-white"
-                  placeholder="Enter your email"
+                <textarea
+                  value={reviewForm.review}
+                  onChange={(e) => setReviewForm(prev => ({ ...prev, review: e.target.value }))}
+                  rows={5}
+                  className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-white resize-none"
+                  placeholder="Share your experience with Gemsutopia..."
                   required
                 />
               </div>
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium text-black mb-3">
-                Rating *
-              </label>
-              <div className="flex items-center gap-2">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    type="button"
-                    onClick={() => handleRatingClick(star)}
-                    className="text-3xl transition-colors hover:scale-110 transform duration-200"
-                  >
-                    <Star
-                      className={`w-8 h-8 ${
-                        star <= reviewForm.rating 
-                          ? 'text-yellow-400 fill-yellow-400' 
-                          : 'text-neutral-300'
-                      }`}
-                    />
-                  </button>
-                ))}
-                <span className="ml-3 text-sm text-neutral-600">
-                  {reviewForm.rating} out of 5 stars
-                </span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-white mb-2">
+                    Your Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={reviewForm.name}
+                    onChange={(e) => setReviewForm(prev => ({ ...prev, name: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-white"
+                    placeholder="Enter your name"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-white mb-2">
+                    Email Address *
+                  </label>
+                  <input
+                    type="email"
+                    value={reviewForm.email}
+                    onChange={(e) => setReviewForm(prev => ({ ...prev, email: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-white"
+                    placeholder="Enter your email"
+                    required
+                  />
+                </div>
               </div>
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium text-black mb-2">
-                Review Title
-              </label>
-              <input
-                type="text"
-                value={reviewForm.title}
-                onChange={(e) => setReviewForm(prev => ({ ...prev, title: e.target.value }))}
-                className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                placeholder="Give your review a title (optional)"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-black mb-2">
-                Your Review *
-              </label>
-              <textarea
-                value={reviewForm.review}
-                onChange={(e) => setReviewForm(prev => ({ ...prev, review: e.target.value }))}
-                rows={5}
-                className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black resize-none"
-                placeholder="Share your experience with Gemsutopia..."
-                required
-              />
-            </div>
 
             <div className="text-center">
               <button
