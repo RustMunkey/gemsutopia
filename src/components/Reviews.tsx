@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Star } from 'lucide-react';
 
 export default function Reviews() {
+  const [showModal, setShowModal] = useState(false);
   const reviews = [
     {
       name: "Sarah M.",
@@ -387,50 +388,81 @@ export default function Reviews() {
 
       {/* Leave a Review Section */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mt-16">
-        <div className="bg-white rounded-3xl shadow-2xl p-8">
-          <div className="text-center mb-8">
-            <h3 className="text-3xl font-bold text-black mb-4">Share Your Experience</h3>
-            <p className="text-lg text-neutral-600 max-w-2xl mx-auto">
-              Your feedback helps us grow and helps other customers make informed decisions. 
-              We&apos;d love to hear about your experience with Gemsutopia!
-            </p>
+        <div className="text-center">
+          <h3 className="text-3xl font-bold text-black mb-6">Leave a Review!</h3>
+          
+          {/* 5 Stars */}
+          <div className="flex justify-center mb-8">
+            {[...Array(5)].map((_, i) => (
+              <Star key={i} className="h-8 w-8 text-yellow-400 fill-yellow-400 mx-1" />
+            ))}
           </div>
+          
+          {/* Review Button */}
+          <button
+            onClick={() => setShowModal(true)}
+            className="bg-black text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-gray-800 transition-colors"
+          >
+            Review
+          </button>
+        </div>
+      </div>
 
-          {submitMessage && (
-            <div className={`p-4 rounded-lg mb-6 text-center ${
-              submitMessage.includes('Thank you') 
-                ? 'bg-green-100 text-green-800 border border-green-200' 
-                : 'bg-red-100 text-red-800 border border-red-200'
-            }`}>
-              {submitMessage}
+      {/* Review Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-black rounded-3xl shadow-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto relative">
+            <div className="text-center mb-8">
+              <h3 className="text-3xl font-bold text-white mb-4">Share Your Experience</h3>
+              <p className="text-lg text-gray-300 max-w-2xl mx-auto">
+                Your feedback helps us grow and helps other customers make informed decisions. 
+                We&apos;d love to hear about your experience with Gemsutopia!
+              </p>
             </div>
-          )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Close Button */}
+            <button
+              onClick={() => setShowModal(false)}
+              className="absolute top-6 right-6 text-white hover:text-gray-300 text-2xl"
+            >
+              ×
+            </button>
+
+            {submitMessage && (
+              <div className={`p-4 rounded-lg mb-6 text-center ${
+                submitMessage.includes('Thank you') 
+                  ? 'bg-green-900 text-green-200 border border-green-700' 
+                  : 'bg-red-900 text-red-200 border border-red-700'
+              }`}>
+                {submitMessage}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-black mb-2">
+                <label className="block text-sm font-medium text-white mb-2">
                   Your Name *
                 </label>
                 <input
                   type="text"
                   value={reviewForm.name}
                   onChange={(e) => setReviewForm(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                  className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-white"
                   placeholder="Enter your name"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-black mb-2">
+                <label className="block text-sm font-medium text-white mb-2">
                   Email Address *
                 </label>
                 <input
                   type="email"
                   value={reviewForm.email}
                   onChange={(e) => setReviewForm(prev => ({ ...prev, email: e.target.value }))}
-                  className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                  className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-white"
                   placeholder="Enter your email"
                   required
                 />
@@ -495,14 +527,15 @@ export default function Reviews() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-black text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-neutral-800 transition-colors disabled:bg-neutral-400 disabled:cursor-not-allowed"
+                className="bg-white text-black px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-200 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? 'Submitting...' : 'Submit Review'}
               </button>
             </div>
-          </form>
+            </form>
+          </div>
         </div>
-      </div>
+      )}
       
       <style jsx global>{`
         @keyframes scroll {
