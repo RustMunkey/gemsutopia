@@ -1,10 +1,55 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Star, Mail, TextCursorInput } from 'lucide-react';
+
+interface Review {
+  id: string;
+  customer_name: string;
+  rating: number;
+  title?: string;
+  content: string;
+  is_featured: boolean;
+  is_approved: boolean;
+  created_at: string;
+}
+
+interface FallbackReview {
+  name: string;
+  rating: number;
+  text: string;
+  verified: boolean;
+}
+
+type DisplayReview = Review | FallbackReview;
 
 export default function Reviews() {
   const [showModal, setShowModal] = useState(false);
-  const reviews = [
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  // Fetch reviews from database
+  const fetchReviews = async () => {
+    try {
+      const response = await fetch('/api/reviews');
+      const data = await response.json();
+      if (data.success && data.reviews) {
+        // Only show approved reviews
+        const approvedReviews = data.reviews.filter((review: Review) => review.is_approved);
+        setReviews(approvedReviews);
+      }
+    } catch (error) {
+      console.error('Error fetching reviews:', error);
+      // Fallback to empty array if fetch fails
+      setReviews([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchReviews();
+  }, []);
+
+  const fallbackReviews = [
     {
       name: "Sarah M.",
       rating: 5,
@@ -335,6 +380,13 @@ export default function Reviews() {
           title: '',
           review: ''
         });
+        // Refresh reviews to show the new one if it was auto-approved
+        fetchReviews();
+        // Close modal after successful submission
+        setTimeout(() => {
+          setShowModal(false);
+          setSubmitMessage('');
+        }, 2000);
       } else {
         setSubmitMessage('Failed to submit review. Please try again.');
       }
@@ -360,29 +412,37 @@ export default function Reviews() {
       <div className="overflow-hidden">
         <div className="flex animate-[scroll_20s_linear_infinite] hover:[animation-play-state:paused]">
           {/* First set of reviews */}
-          {reviews.concat(reviews).map((review, index) => (
-            <div key={index} className="inline-block flex-shrink-0 w-80 mx-4">
-              <div className="bg-white rounded-2xl p-6 shadow-lg h-full">
-                <div className="flex items-center mb-4">
-                  <div className="flex-shrink-0 w-12 h-12 bg-black rounded-full flex items-center justify-center">
-                    <span className="text-white font-semibold text-lg">{review.name[0]}</span>
-                  </div>
-                  <div className="ml-4">
-                    <h3 className="font-semibold text-black">{review.name}</h3>
-                    <div className="flex items-center">
-                      {[...Array(review.rating)].map((_, i) => (
-                        <span key={i} className="text-yellow-400 text-lg">★</span>
-                      ))}
-                      {review.verified && (
-                        <span className="ml-2 text-xs text-green-600 font-medium">✓ Verified</span>
-                      )}
+          {(reviews.length > 0 ? reviews.concat(reviews) : fallbackReviews.concat(fallbackReviews)).map((review, index) => {
+            const displayName = 'customer_name' in review ? review.customer_name : review.name;
+            const displayContent = 'content' in review ? review.content : review.text;
+            const isVerified = 'is_approved' in review ? review.is_approved : review.verified;
+            
+            return (
+              <div key={index} className="inline-block flex-shrink-0 w-80 mx-4">
+                <div className="bg-white rounded-2xl p-6 shadow-lg h-full">
+                  <div className="flex items-center mb-4">
+                    <div className="flex-shrink-0 w-12 h-12 bg-black rounded-full flex items-center justify-center">
+                      <span className="text-white font-semibold text-lg">
+                        {displayName[0]}
+                      </span>
+                    </div>
+                    <div className="ml-4">
+                      <h3 className="font-semibold text-black">{displayName}</h3>
+                      <div className="flex items-center">
+                        {[...Array(review.rating)].map((_, i) => (
+                          <span key={i} className="text-yellow-400 text-lg">★</span>
+                        ))}
+                        {isVerified && (
+                          <span className="ml-2 text-xs text-green-600 font-medium">✓ Verified</span>
+                        )}
+                      </div>
                     </div>
                   </div>
+                  <p className="text-neutral-700 leading-relaxed text-sm">{displayContent}</p>
                 </div>
-                <p className="text-neutral-700 leading-relaxed text-sm">{review.text}</p>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

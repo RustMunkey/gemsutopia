@@ -19,6 +19,16 @@ export default function Reviews() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all'); // all, approved, pending, featured
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newReview, setNewReview] = useState({
+    customer_name: '',
+    customer_email: '',
+    rating: 5,
+    title: '',
+    content: '',
+    is_approved: true,
+    is_featured: false
+  });
 
   useEffect(() => {
     fetchReviews();
@@ -92,6 +102,55 @@ export default function Reviews() {
     }
   };
 
+  const createReview = async () => {
+    try {
+      const response = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: newReview.customer_name,
+          email: newReview.customer_email || 'admin@gemsutopia.com',
+          rating: newReview.rating,
+          title: newReview.title,
+          review: newReview.content
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        // If review was created, approve it immediately since it's admin-added
+        const token = localStorage.getItem('admin-token');
+        await fetch(`/api/admin/reviews/${data.review.id}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            is_approved: newReview.is_approved,
+            is_featured: newReview.is_featured
+          })
+        });
+
+        setShowAddModal(false);
+        setNewReview({
+          customer_name: '',
+          customer_email: '',
+          rating: 5,
+          title: '',
+          content: '',
+          is_approved: true,
+          is_featured: false
+        });
+        fetchReviews();
+      }
+    } catch (error) {
+      console.error('Error creating review:', error);
+    }
+  };
+
   const filteredReviews = reviews.filter(review => {
     switch (filter) {
       case 'approved':
@@ -141,9 +200,17 @@ export default function Reviews() {
           <h1 className="text-2xl font-bold text-white mb-2">Customer Reviews</h1>
           <p className="text-slate-400">Manage customer feedback and testimonials</p>
         </div>
-        <div className="bg-black border border-white/20 rounded-lg px-4 py-2">
-          <span className="text-white text-lg font-semibold">{reviews.length}</span>
-          <span className="text-slate-400 ml-2">Total Reviews</span>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="bg-white text-black px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors"
+          >
+            Add Review
+          </button>
+          <div className="bg-black border border-white/20 rounded-lg px-4 py-2">
+            <span className="text-white text-lg font-semibold">{reviews.length}</span>
+            <span className="text-slate-400 ml-2">Total Reviews</span>
+          </div>
         </div>
       </div>
 
@@ -263,6 +330,115 @@ export default function Reviews() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Add Review Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-black border border-white/20 rounded-lg p-6 max-w-md w-full">
+            <h2 className="text-xl font-bold text-white mb-4">Add New Review</h2>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-white mb-1">Customer Name *</label>
+                <input
+                  type="text"
+                  value={newReview.customer_name}
+                  onChange={(e) => setNewReview(prev => ({ ...prev, customer_name: e.target.value }))}
+                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white"
+                  placeholder="Enter customer name"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-white mb-1">Email (Optional)</label>
+                <input
+                  type="email"
+                  value={newReview.customer_email}
+                  onChange={(e) => setNewReview(prev => ({ ...prev, customer_email: e.target.value }))}
+                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white"
+                  placeholder="Enter email address"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-white mb-1">Rating *</label>
+                <div className="flex gap-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setNewReview(prev => ({ ...prev, rating: star }))}
+                      className={`text-2xl ${star <= newReview.rating ? 'text-yellow-400' : 'text-gray-600'}`}
+                    >
+                      ★
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-white mb-1">Title (Optional)</label>
+                <input
+                  type="text"
+                  value={newReview.title}
+                  onChange={(e) => setNewReview(prev => ({ ...prev, title: e.target.value }))}
+                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white"
+                  placeholder="Review title"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-white mb-1">Review Content *</label>
+                <textarea
+                  value={newReview.content}
+                  onChange={(e) => setNewReview(prev => ({ ...prev, content: e.target.value }))}
+                  rows={4}
+                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white resize-none"
+                  placeholder="Enter review content"
+                  required
+                />
+              </div>
+
+              <div className="flex items-center gap-4">
+                <label className="flex items-center text-white">
+                  <input
+                    type="checkbox"
+                    checked={newReview.is_approved}
+                    onChange={(e) => setNewReview(prev => ({ ...prev, is_approved: e.target.checked }))}
+                    className="mr-2"
+                  />
+                  Auto-approve
+                </label>
+                <label className="flex items-center text-white">
+                  <input
+                    type="checkbox"
+                    checked={newReview.is_featured}
+                    onChange={(e) => setNewReview(prev => ({ ...prev, is_featured: e.target.checked }))}
+                    className="mr-2"
+                  />
+                  Feature review
+                </label>
+              </div>
+            </div>
+
+            <div className="flex gap-2 mt-6">
+              <button
+                onClick={createReview}
+                className="flex-1 bg-white text-black px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors"
+              >
+                Add Review
+              </button>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="flex-1 bg-transparent border border-white/20 text-white px-4 py-2 rounded-lg font-medium hover:bg-white/10 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
