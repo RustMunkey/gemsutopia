@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Star } from 'lucide-react';
+import { Star, Mail, TextCursorInput } from 'lucide-react';
 
 export default function Reviews() {
   const [showModal, setShowModal] = useState(false);
@@ -411,39 +411,38 @@ export default function Reviews() {
       {/* Review Modal */}
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-          <div className="bg-black rounded-3xl shadow-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto relative">
-            <div className="text-center mb-8">
-              <h3 className="text-3xl font-bold text-white mb-4">Share Your Experience</h3>
-              <p className="text-lg text-gray-300 max-w-2xl mx-auto">
-                Your feedback helps us grow and helps other customers make informed decisions. 
-                We&apos;d love to hear about your experience with Gemsutopia!
+          <div className="bg-white border-4 border-black rounded-3xl shadow-2xl p-6 max-w-lg w-full relative">
+            <div className="text-center mb-6">
+              <h3 className="text-2xl font-bold text-black mb-2">Share Your Experience</h3>
+              <p className="text-sm text-gray-600">
+                Your feedback helps us grow and helps other customers make informed decisions.
               </p>
             </div>
 
             {/* Close Button */}
             <button
               onClick={() => setShowModal(false)}
-              className="absolute top-6 right-6 text-white hover:text-gray-300 text-2xl"
+              className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 text-2xl"
             >
               ×
             </button>
 
             {submitMessage && (
-              <div className={`p-4 rounded-lg mb-6 text-center ${
+              <div className={`p-3 rounded-lg mb-4 text-center text-sm ${
                 submitMessage.includes('Thank you') 
-                  ? 'bg-green-900 text-green-200 border border-green-700' 
-                  : 'bg-red-900 text-red-200 border border-red-700'
+                  ? 'bg-green-100 text-green-800 border border-green-300' 
+                  : 'bg-red-100 text-red-800 border border-red-300'
               }`}>
                 {submitMessage}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-white mb-2 text-center">
-                  Rating *
+                <label className="block text-sm font-medium text-black mb-2 text-center">
+                  Rating
                 </label>
-                <div className="flex justify-center gap-2 mb-4">
+                <div className="flex justify-center gap-1 mb-2">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button
                       key={star}
@@ -452,16 +451,16 @@ export default function Reviews() {
                       className={`p-1 rounded transition-colors ${
                         star <= reviewForm.rating 
                           ? 'text-yellow-400 hover:text-yellow-500' 
-                          : 'text-gray-500 hover:text-yellow-400'
+                          : 'text-gray-300 hover:text-yellow-400'
                       }`}
                     >
                       <Star 
-                        className={`h-8 w-8 ${star <= reviewForm.rating ? 'fill-current' : ''}`} 
+                        className={`h-6 w-6 ${star <= reviewForm.rating ? 'fill-current' : ''}`} 
                       />
                     </button>
                   ))}
                 </div>
-                <p className="text-sm text-gray-400 text-center">
+                <p className="text-xs text-gray-500 text-center">
                   {reviewForm.rating === 0 ? 'Please select a rating' : 
                    reviewForm.rating === 1 ? 'Poor' :
                    reviewForm.rating === 2 ? 'Fair' :
@@ -471,56 +470,58 @@ export default function Reviews() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-white mb-2">
+                <label className="block text-sm font-medium text-black mb-1">
                   Review Title (Optional)
                 </label>
                 <input
                   type="text"
                   value={reviewForm.title}
                   onChange={(e) => setReviewForm(prev => ({ ...prev, title: e.target.value }))}
-                  className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-white"
+                  className="w-full px-3 py-2 border-2 border-black bg-white text-black rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-300 text-sm"
                   placeholder="Give your review a title..."
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-white mb-2">
-                  Your Review *
+                <label className="block text-sm font-medium text-black mb-1">
+                  Your Review
                 </label>
                 <textarea
                   value={reviewForm.review}
                   onChange={(e) => setReviewForm(prev => ({ ...prev, review: e.target.value }))}
-                  rows={5}
-                  className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-white resize-none"
+                  rows={3}
+                  className="w-full px-3 py-2 border-2 border-black bg-white text-black rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-300 resize-none text-sm"
                   placeholder="Share your experience with Gemsutopia..."
                   required
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-white mb-2">
-                    Your Name *
+                  <label className="block text-sm font-medium text-black mb-1 flex items-center gap-1">
+                    <TextCursorInput className="h-4 w-4" />
+                    Your Name
                   </label>
                   <input
                     type="text"
                     value={reviewForm.name}
                     onChange={(e) => setReviewForm(prev => ({ ...prev, name: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-white"
+                    className="w-full px-3 py-2 border-2 border-black bg-white text-black rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-300 text-sm"
                     placeholder="Enter your name"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-white mb-2">
-                    Email Address *
+                  <label className="block text-sm font-medium text-black mb-1 flex items-center gap-1">
+                    <Mail className="h-4 w-4" />
+                    Email Address
                   </label>
                   <input
                     type="email"
                     value={reviewForm.email}
                     onChange={(e) => setReviewForm(prev => ({ ...prev, email: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-600 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-white"
+                    className="w-full px-3 py-2 border-2 border-black bg-white text-black rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-300 text-sm"
                     placeholder="Enter your email"
                     required
                   />
@@ -528,15 +529,15 @@ export default function Reviews() {
               </div>
 
 
-            <div className="text-center">
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="bg-white text-black px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-200 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed"
-              >
-                {isSubmitting ? 'Submitting...' : 'Submit Review'}
-              </button>
-            </div>
+              <div className="text-center pt-2">
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="bg-black text-white px-6 py-2 rounded-lg font-semibold text-sm hover:bg-gray-800 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? 'Submitting...' : 'Submit Review'}
+                </button>
+              </div>
             </form>
           </div>
         </div>
