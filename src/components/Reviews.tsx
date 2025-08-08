@@ -357,7 +357,7 @@ export default function Reviews() {
         
       {/* Infinite Scrolling Reviews - Full Width */}
       <div className="overflow-hidden">
-        <div className="flex animate-[scroll_60s_linear_infinite] hover:[animation-play-state:paused]">
+        <div className="flex animate-[scroll_30s_linear_infinite] hover:[animation-play-state:paused]">
           {/* First set of reviews */}
           {reviews.concat(reviews).map((review, index) => (
             <div key={index} className="inline-block flex-shrink-0 w-80 mx-4">
