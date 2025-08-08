@@ -51,57 +51,139 @@ export default function About() {
           />
         </div>
 
-        {/* Statistics Row */}
-        <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-6">
-          {/* Satisfied Customers */}
-          <div className="bg-black border border-white/20 rounded-2xl px-6 py-6 shadow-lg">
-            <div className="text-center">
-              <div className="text-2xl md:text-3xl font-bold text-white mb-2">
-                {customerCount.toLocaleString()}+
-              </div>
-              <div className="text-sm md:text-base text-gray-300 font-medium">
-                Satisfied Customers
-              </div>
-            </div>
-          </div>
+        {/* Statistics Scrolling Row */}
+        <div className="mt-12 overflow-hidden">
+          <div className="flex animate-[scroll-right_20s_linear_infinite] hover:[animation-play-state:paused]">
+            {/* Duplicate the stats for infinite scroll */}
+            {[...Array(2)].map((_, setIndex) => (
+              <>
+                {/* Satisfied Customers */}
+                <div key={`customers-${setIndex}`} className="inline-block flex-shrink-0 mx-4">
+                  <div className="bg-transparent border-2 border-black rounded-2xl px-6 py-6 shadow-lg">
+                    <div className="text-center">
+                      <div className="text-2xl md:text-3xl font-bold text-black mb-2">
+                        {customerCount.toLocaleString()}+
+                      </div>
+                      <div className="text-sm md:text-base text-black font-medium">
+                        Satisfied Customers
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
-          {/* Gemstones Sold */}
-          <div className="bg-black border border-white/20 rounded-2xl px-6 py-6 shadow-lg">
-            <div className="text-center">
-              <div className="text-2xl md:text-3xl font-bold text-white mb-2">
-                2,500+
-              </div>
-              <div className="text-sm md:text-base text-gray-300 font-medium">
-                Gemstones Sold
-              </div>
-            </div>
-          </div>
+                {/* Gemstones Sold */}
+                <div key={`gemstones-${setIndex}`} className="inline-block flex-shrink-0 mx-4">
+                  <div className="bg-transparent border-2 border-black rounded-2xl px-6 py-6 shadow-lg">
+                    <div className="text-center">
+                      <div className="text-2xl md:text-3xl font-bold text-black mb-2">
+                        2,500+
+                      </div>
+                      <div className="text-sm md:text-base text-black font-medium">
+                        Gemstones Sold
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
-          {/* Countries Served */}
-          <div className="bg-black border border-white/20 rounded-2xl px-6 py-6 shadow-lg">
-            <div className="text-center">
-              <div className="text-2xl md:text-3xl font-bold text-white mb-2">
-                25+
-              </div>
-              <div className="text-sm md:text-base text-gray-300 font-medium">
-                Countries Served
-              </div>
-            </div>
-          </div>
+                {/* Countries Served */}
+                <div key={`countries-${setIndex}`} className="inline-block flex-shrink-0 mx-4">
+                  <div className="bg-transparent border-2 border-black rounded-2xl px-6 py-6 shadow-lg">
+                    <div className="text-center">
+                      <div className="text-2xl md:text-3xl font-bold text-black mb-2">
+                        25+
+                      </div>
+                      <div className="text-sm md:text-base text-black font-medium">
+                        Countries Served
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
-          {/* Years in Business */}
-          <div className="bg-black border border-white/20 rounded-2xl px-6 py-6 shadow-lg">
-            <div className="text-center">
-              <div className="text-2xl md:text-3xl font-bold text-white mb-2">
-                5+
-              </div>
-              <div className="text-sm md:text-base text-gray-300 font-medium">
-                Years Experience
-              </div>
-            </div>
+                {/* Years Experience */}
+                <div key={`years-${setIndex}`} className="inline-block flex-shrink-0 mx-4">
+                  <div className="bg-transparent border-2 border-black rounded-2xl px-6 py-6 shadow-lg">
+                    <div className="text-center">
+                      <div className="text-2xl md:text-3xl font-bold text-black mb-2">
+                        5+
+                      </div>
+                      <div className="text-sm md:text-base text-black font-medium">
+                        Years Experience
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Premium Quality */}
+                <div key={`quality-${setIndex}`} className="inline-block flex-shrink-0 mx-4">
+                  <div className="bg-transparent border-2 border-black rounded-2xl px-6 py-6 shadow-lg">
+                    <div className="text-center">
+                      <div className="text-2xl md:text-3xl font-bold text-black mb-2">
+                        100%
+                      </div>
+                      <div className="text-sm md:text-base text-black font-medium">
+                        Premium Quality
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Authentic Gems */}
+                <div key={`authentic-${setIndex}`} className="inline-block flex-shrink-0 mx-4">
+                  <div className="bg-transparent border-2 border-black rounded-2xl px-6 py-6 shadow-lg">
+                    <div className="text-center">
+                      <div className="text-2xl md:text-3xl font-bold text-black mb-2">
+                        100%
+                      </div>
+                      <div className="text-sm md:text-base text-black font-medium">
+                        Authentic Gems
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Secure Shipping */}
+                <div key={`shipping-${setIndex}`} className="inline-block flex-shrink-0 mx-4">
+                  <div className="bg-transparent border-2 border-black rounded-2xl px-6 py-6 shadow-lg">
+                    <div className="text-center">
+                      <div className="text-2xl md:text-3xl font-bold text-black mb-2">
+                        24/7
+                      </div>
+                      <div className="text-sm md:text-base text-black font-medium">
+                        Secure Shipping
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Customer Support */}
+                <div key={`support-${setIndex}`} className="inline-block flex-shrink-0 mx-4">
+                  <div className="bg-transparent border-2 border-black rounded-2xl px-6 py-6 shadow-lg">
+                    <div className="text-center">
+                      <div className="text-2xl md:text-3xl font-bold text-black mb-2">
+                        24/7
+                      </div>
+                      <div className="text-sm md:text-base text-black font-medium">
+                        Customer Support
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            ))}
           </div>
         </div>
       </div>
+      
+      <style jsx global>{`
+        @keyframes scroll-right {
+          0% {
+            transform: translateX(-100%);
+          }
+          100% {
+            transform: translateX(0);
+          }
+        }
+      `}</style>
     </section>
   );
 }
