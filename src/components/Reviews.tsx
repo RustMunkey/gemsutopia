@@ -470,7 +470,7 @@ export default function Reviews() {
 
       {/* Review Modal */}
       {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 flex items-center justify-center z-[9999] p-4 bg-black/50">
           <div className="bg-white border-4 border-black rounded-3xl shadow-2xl p-6 max-w-lg w-full relative">
             <div className="text-center mb-6">
               <h3 className="text-2xl font-bold text-black mb-2">Share Your Experience</h3>
