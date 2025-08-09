@@ -59,7 +59,7 @@ export default function About() {
         <div className="flex animate-[scroll-right_20s_linear_infinite] hover:[animation-play-state:paused]">
           {/* Duplicate the stats for infinite scroll */}
           {[...Array(2)].map((_, setIndex) => (
-            <>
+            <div key={`stats-set-${setIndex}`} className="contents">
               {/* Satisfied Customers */}
               <div key={`customers-${setIndex}`} className="inline-block flex-shrink-0 mx-4">
                 <div className="bg-black rounded-2xl px-6 py-6 shadow-lg">
@@ -171,7 +171,7 @@ export default function About() {
                   </div>
                 </div>
               </div>
-            </>
+            </div>
           ))}
         </div>
       </div>
