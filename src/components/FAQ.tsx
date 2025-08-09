@@ -24,7 +24,7 @@ export default function FAQ() {
   ];
 
   return (
-    <section className="bg-neutral-100 py-16">
+    <section className="relative z-10 py-16">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-black mb-4">Frequently Asked Questions</h2>
@@ -33,11 +33,11 @@ export default function FAQ() {
           </p>
         </div>
         
-        <div className="space-y-4">
+        <div className="space-y-4 py-4">
           {faqs.map((faq, index) => (
-            <div key={index} className="border border-neutral-200 rounded-2xl overflow-hidden">
+            <div key={index} className="border border-neutral-200 rounded-2xl overflow-hidden drop-shadow-lg">
               <button
-                className="w-full text-left p-6 bg-white hover:bg-neutral-50 transition-colors flex justify-between items-center"
+                className="w-full text-left p-6 bg-white/80 backdrop-blur-sm hover:bg-white/90 transition-colors flex justify-between items-center"
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
               >
                 <span className="font-semibold text-black text-lg">{faq.question}</span>
@@ -46,7 +46,7 @@ export default function FAQ() {
                 </span>
               </button>
               {openIndex === index && (
-                <div className="px-6 pb-6 bg-neutral-50">
+                <div className="px-6 pb-6 bg-white/70 backdrop-blur-sm">
                   <p className="text-neutral-700 leading-relaxed">{faq.answer}</p>
                 </div>
               )}

@@ -398,7 +398,7 @@ export default function Reviews() {
   };
 
   return (
-    <section className="bg-neutral-100 py-16">
+    <section className="relative z-10 py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-black mb-4">See What Customers are Saying!</h2>
@@ -409,7 +409,7 @@ export default function Reviews() {
       </div>
         
       {/* Infinite Scrolling Reviews - Full Width */}
-      <div className="overflow-hidden">
+      <div className="overflow-hidden py-4">
         <div className="flex animate-[scroll_20s_linear_infinite] hover:[animation-play-state:paused]">
           {/* First set of reviews */}
           {(reviews.length > 0 ? reviews.concat(reviews) : fallbackReviews.concat(fallbackReviews)).map((review, index) => {
@@ -419,18 +419,18 @@ export default function Reviews() {
             
             return (
               <div key={index} className="inline-block flex-shrink-0 w-80 mx-4">
-                <div className="bg-white rounded-2xl p-6 shadow-lg h-full">
-                  <div className="flex items-center mb-4">
-                    <div className="flex-shrink-0 w-12 h-12 bg-black rounded-full flex items-center justify-center">
-                      <span className="text-white font-semibold text-lg">
+                <div className="bg-white rounded-2xl p-4 shadow-lg drop-shadow-lg">
+                  <div className="flex items-center mb-3">
+                    <div className="flex-shrink-0 w-10 h-10 bg-black rounded-full flex items-center justify-center">
+                      <span className="text-white font-semibold text-sm">
                         {displayName[0]}
                       </span>
                     </div>
-                    <div className="ml-4">
-                      <h3 className="font-semibold text-black">{displayName}</h3>
+                    <div className="ml-3">
+                      <h3 className="font-semibold text-black text-sm">{displayName}</h3>
                       <div className="flex items-center">
                         {[...Array(review.rating)].map((_, i) => (
-                          <span key={i} className="text-yellow-400 text-lg">★</span>
+                          <span key={i} className="text-yellow-400 text-sm">★</span>
                         ))}
                         {isVerified && (
                           <span className="ml-2 text-xs text-green-600 font-medium">✓ Verified</span>
@@ -438,7 +438,7 @@ export default function Reviews() {
                       </div>
                     </div>
                   </div>
-                  <p className="text-neutral-700 leading-relaxed text-sm">{displayContent}</p>
+                  <p className="text-neutral-700 leading-relaxed text-xs">{displayContent}</p>
                 </div>
               </div>
             );

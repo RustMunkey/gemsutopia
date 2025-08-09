@@ -6,13 +6,22 @@ export default function About() {
     <div className="bg-black min-h-screen flex flex-col">
       <Header />
       
-      <div className="flex-grow bg-neutral-100 py-16">
+      <div 
+        className="flex-grow py-16"
+        style={{
+          backgroundImage: "url('/images/whitemarble.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundAttachment: "fixed"
+        }}
+      >
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h1 className="text-3xl md:text-4xl font-bold text-black mb-4">About Gemsutopia</h1>
-          </div>
-          
-          <div className="prose prose-lg max-w-none text-neutral-700">
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
+            <div className="text-center mb-12">
+              <h1 className="text-3xl md:text-4xl font-bold text-black mb-4">About Gemsutopia</h1>
+            </div>
+            
+            <div className="prose prose-lg max-w-none text-neutral-700">
             <p className="text-xl leading-relaxed mb-8">
               First of all, thanks for stopping by — I&apos;m Reese, founder of Gemsutopia and a proud Canadian gem dealer based in Alberta.
             </p>
@@ -51,6 +60,7 @@ export default function About() {
             <p className="text-right font-semibold text-black">
               — Reese @ Gemsutopia
             </p>
+            </div>
           </div>
         </div>
       </div>

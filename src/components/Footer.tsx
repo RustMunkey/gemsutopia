@@ -5,7 +5,9 @@ import Image from 'next/image';
 
 export default function Footer() {
   return (
-    <div className="bg-black text-white w-full h-[50vh] flex flex-col justify-between border-t border-white/20">
+    <div className="bg-black text-white w-full h-[50vh] flex flex-col justify-between border-t border-white/20 relative" style={{ 
+      filter: 'drop-shadow(0 -10px 20px rgba(0, 0, 0, 0.3))' 
+    }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-8">
         <div className="flex justify-between items-center">
           <Image 

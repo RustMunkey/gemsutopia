@@ -12,10 +12,19 @@ export default function Home() {
     <div className="min-h-[200vh] flex flex-col">
       <Header />
       <Hero />
-      <About />
-      <Featured />
-      <Reviews />
-      <FAQ />
+      <div
+        style={{
+          backgroundImage: "url('/images/whitemarble.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundAttachment: "fixed"
+        }}
+      >
+        <About />
+        <Featured />
+        <Reviews />
+        <FAQ />
+      </div>
       <div className="flex-grow max-h-20"></div>
       <Footer />
       <ScrollToTop />
