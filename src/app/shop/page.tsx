@@ -2,7 +2,8 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { IconStar, IconStarFilled, IconShoppingBag, IconShoppingBagCheck, IconFilter } from '@tabler/icons-react';
+import { IconStar, IconStarFilled, IconFilter } from '@tabler/icons-react';
+import { ShoppingBag, Check } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useGemPouch } from '@/contexts/GemPouchContext';
@@ -123,17 +124,26 @@ export default function Shop() {
     <div className="min-h-screen flex flex-col bg-black">
       <Header />
       
-      <div className="flex-grow bg-neutral-100 py-16">
+      <div 
+        className="flex-grow py-16"
+        style={{
+          backgroundImage: "url('/images/whitemarble.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundAttachment: "fixed"
+        }}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h1 className="text-3xl md:text-4xl font-bold text-black mb-4">Gem Shop</h1>
-            <p className="text-lg text-neutral-600 max-w-2xl mx-auto">
-              Discover our complete collection of premium gemstones, hand-selected and ethically sourced from Alberta, Canada
-            </p>
-          </div>
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 mb-8 shadow-lg">
+            <div className="text-center mb-12">
+              <h1 className="text-3xl md:text-4xl font-bold text-black mb-4">Gem Shop</h1>
+              <p className="text-lg text-neutral-600 max-w-2xl mx-auto">
+                Discover our complete collection of premium gemstones, hand-selected and ethically sourced from Alberta, Canada
+              </p>
+            </div>
 
-          {/* Filters and Sorting */}
-          <div className="bg-white rounded-lg p-6 mb-8 shadow-lg">
+            {/* Filters and Sorting */}
+            <div className="bg-white/70 rounded-lg p-6 mb-8 shadow-md">
             <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
               <div className="flex items-center gap-2 text-black">
                 <IconFilter className="h-5 w-5" />
@@ -268,18 +278,18 @@ export default function Shop() {
                     </div>
                     <button
                       onClick={(e) => toggleGemPouch(product.id, e)}
-                      className="text-white hover:text-neutral-300 transition-colors p-1"
+                      className="text-white hover:text-neutral-300 transition-colors p-1 relative"
                     >
-                      {isInPouch(product.id) ? (
-                        <IconShoppingBagCheck className="h-6 w-6" strokeWidth={2} />
-                      ) : (
-                        <IconShoppingBag className="h-6 w-6" strokeWidth={2} />
+                      <ShoppingBag className="h-6 w-6" strokeWidth={2} />
+                      {isInPouch(product.id) && (
+                        <Check className="absolute bottom-0 right-0 h-4 w-4 text-green-500" strokeWidth={4} />
                       )}
                     </button>
                   </div>
                 </div>
               );
             })}
+          </div>
           </div>
         </div>
       </div>

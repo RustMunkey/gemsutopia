@@ -7,14 +7,23 @@ export default function Support() {
     <div className="bg-black min-h-screen flex flex-col">
       <Header />
       
-      <div className="flex-grow bg-neutral-100 py-16">
+      <div 
+        className="flex-grow py-16"
+        style={{
+          backgroundImage: "url('/images/whitemarble.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundAttachment: "fixed"
+        }}
+      >
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h1 className="text-3xl md:text-4xl font-bold text-black mb-4">Support Center</h1>
-            <p className="text-lg text-neutral-600">We&apos;re here to help you with any questions</p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
+            <div className="text-center mb-12">
+              <h1 className="text-3xl md:text-4xl font-bold text-black mb-4">Support Center</h1>
+              <p className="text-lg text-neutral-600">We&apos;re here to help you with any questions</p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
             <div className="text-center p-6 bg-white rounded-lg shadow-sm">
               <Mail className="h-12 w-12 text-black mx-auto mb-4" />
               <h3 className="text-xl font-bold text-black mb-2">Email Support</h3>
@@ -72,6 +81,7 @@ export default function Support() {
                 </p>
               </div>
             </div>
+          </div>
           </div>
         </div>
       </div>

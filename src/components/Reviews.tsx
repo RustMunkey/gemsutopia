@@ -612,6 +612,12 @@ export default function Reviews() {
             transform: translateX(-100%);
           }
         }
+        
+        @media (max-width: 768px) {
+          .animate-\\[scroll_20s_linear_infinite\\] {
+            animation: scroll 30s linear infinite;
+          }
+        }
       `}</style>
     </section>
   );

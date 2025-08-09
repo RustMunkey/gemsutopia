@@ -6,14 +6,23 @@ export default function ReturnsExchange() {
     <div className="bg-black min-h-screen flex flex-col">
       <Header />
       
-      <div className="flex-grow bg-neutral-100 py-16">
+      <div 
+        className="flex-grow py-16"
+        style={{
+          backgroundImage: "url('/images/whitemarble.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundAttachment: "fixed"
+        }}
+      >
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h1 className="text-3xl md:text-4xl font-bold text-black mb-4">Returns & Exchange</h1>
-            <p className="text-lg text-neutral-600">We want you to love your gemstones</p>
-          </div>
-          
-          <div className="prose prose-lg max-w-none text-neutral-700 space-y-8">
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
+            <div className="text-center mb-12">
+              <h1 className="text-3xl md:text-4xl font-bold text-black mb-4">Returns & Exchange</h1>
+              <p className="text-lg text-neutral-600">We want you to love your gemstones</p>
+            </div>
+            
+            <div className="prose prose-lg max-w-none text-neutral-700 space-y-8">
             <section>
               <h2 className="text-2xl font-bold text-black mb-4">Our Return Policy</h2>
               <p>
@@ -122,6 +131,7 @@ export default function ReturnsExchange() {
                 <strong>Response Time:</strong> We typically respond to all emails within 24 hours.
               </p>
             </section>
+            </div>
           </div>
         </div>
       </div>

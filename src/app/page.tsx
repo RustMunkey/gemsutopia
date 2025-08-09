@@ -15,8 +15,9 @@ export default function Home() {
       <div
         style={{
           backgroundImage: "url('/images/whitemarble.jpg')",
-          backgroundSize: "cover",
+          backgroundSize: "100% 100%",
           backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
           backgroundAttachment: "fixed"
         }}
       >

@@ -4,6 +4,7 @@ import { Star, ShoppingBag } from 'lucide-react';
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import Dropdown from './Dropdown';
 import { useGemPouch } from '../contexts/GemPouchContext';
 import { useWishlist } from '../contexts/WishlistContext';
@@ -14,15 +15,22 @@ export default function Header() {
   const { itemCount } = useGemPouch();
   const { itemCount: wishlistCount } = useWishlist();
   const { getContent } = useCMSContent();
+  const pathname = usePathname();
   
   // Get marquee settings
   const marqueeEnabled = getContent('marquee', 'enabled') !== 'false'; // Show by default
   const marqueeText = getContent('marquee', 'text') || '🎉 Grand Opening Sale - Up to 25% Off All Items! 🎉';
   const gradientFrom = getContent('marquee', 'gradient_from') || '#9333ea'; // purple-600
   const gradientTo = getContent('marquee', 'gradient_to') || '#db2777'; // pink-600
+  
+  // Add drop shadow to all pages except front page
+  const isHomePage = pathname === '/';
+  const headerClass = isHomePage 
+    ? "bg-black text-white relative m-0 border-b border-white/20"
+    : "bg-black text-white relative m-0 border-b border-white/20 shadow-lg";
 
   return (
-    <header className="bg-black text-white relative m-0 border-b border-white/20">
+    <header className={headerClass}>
       {marqueeEnabled && (
         <div 
           className="text-white py-1 overflow-hidden"

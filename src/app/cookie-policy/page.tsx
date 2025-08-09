@@ -6,14 +6,23 @@ export default function CookiePolicy() {
     <div className="bg-black min-h-screen flex flex-col">
       <Header />
       
-      <div className="flex-grow bg-neutral-100 py-16">
+      <div 
+        className="flex-grow py-16"
+        style={{
+          backgroundImage: "url('/images/whitemarble.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundAttachment: "fixed"
+        }}
+      >
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h1 className="text-3xl md:text-4xl font-bold text-black mb-4">Cookie Policy</h1>
-            <p className="text-lg text-neutral-600">Last updated: January 2025</p>
-          </div>
-          
-          <div className="prose prose-lg max-w-none text-neutral-700 space-y-8">
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
+            <div className="text-center mb-12">
+              <h1 className="text-3xl md:text-4xl font-bold text-black mb-4">Cookie Policy</h1>
+              <p className="text-lg text-neutral-600">Last updated: January 2025</p>
+            </div>
+            
+            <div className="prose prose-lg max-w-none text-neutral-700 space-y-8">
             <section>
               <h2 className="text-2xl font-bold text-black mb-4">What Are Cookies?</h2>
               <p>
@@ -112,6 +121,7 @@ export default function CookiePolicy() {
                 If you have any questions about our use of cookies, please contact us at gemsutopia@gmail.com.
               </p>
             </section>
+            </div>
           </div>
         </div>
       </div>

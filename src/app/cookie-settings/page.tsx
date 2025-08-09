@@ -47,20 +47,29 @@ export default function CookieSettings() {
     <div className="bg-black min-h-screen flex flex-col">
       <Header />
       
-      <div className="flex-grow bg-neutral-100 py-16">
+      <div 
+        className="flex-grow py-16"
+        style={{
+          backgroundImage: "url('/images/whitemarble.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundAttachment: "fixed"
+        }}
+      >
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h1 className="text-3xl md:text-4xl font-bold text-black mb-4">Cookie Settings</h1>
-            <p className="text-lg text-neutral-600">Manage your cookie preferences</p>
-          </div>
-          
-          {saved && (
-            <div className="bg-green-100 border border-green-200 text-green-800 px-4 py-3 rounded-lg mb-6 text-center">
-              ✅ Cookie preferences saved successfully!
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
+            <div className="text-center mb-12">
+              <h1 className="text-3xl md:text-4xl font-bold text-black mb-4">Cookie Settings</h1>
+              <p className="text-lg text-neutral-600">Manage your cookie preferences</p>
             </div>
-          )}
-          
-          <div className="bg-white rounded-lg shadow-sm p-8 space-y-8">
+            
+            {saved && (
+              <div className="bg-green-100 border border-green-200 text-green-800 px-4 py-3 rounded-lg mb-6 text-center">
+                ✅ Cookie preferences saved successfully!
+              </div>
+            )}
+            
+            <div className="bg-white rounded-lg shadow-sm p-8 space-y-8">
             <div className="text-neutral-700">
               <p className="mb-6">
                 We use cookies to enhance your browsing experience, provide personalized content, and analyze our traffic. 
@@ -200,6 +209,7 @@ export default function CookieSettings() {
                 for detailed information about how we use cookies.
               </p>
             </div>
+          </div>
           </div>
         </div>
       </div>
