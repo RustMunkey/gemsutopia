@@ -46,18 +46,21 @@ export default function ContactUs() {
   };
 
   return (
-    <div className="bg-black min-h-screen flex flex-col">
-      <Header />
-      
+    <div className="min-h-screen flex flex-col relative">
+      {/* Fixed Background */}
       <div 
-        className="flex-grow py-16"
+        className="fixed inset-0 z-0"
         style={{
           backgroundImage: "url('/images/whitemarble.jpg')",
           backgroundSize: "cover",
           backgroundPosition: "center",
-          backgroundAttachment: "fixed"
+          backgroundRepeat: "no-repeat"
         }}
-      >
+      />
+      
+      <Header />
+      
+      <div className="flex-grow py-16 relative z-10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
           <div className="text-center mb-12">

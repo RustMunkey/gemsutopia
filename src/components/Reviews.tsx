@@ -24,6 +24,20 @@ type DisplayReview = Review | FallbackReview;
 
 export default function Reviews() {
   const [showModal, setShowModal] = useState(false);
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (showModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showModal]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   // Fetch reviews from database
@@ -470,8 +484,8 @@ export default function Reviews() {
 
       {/* Review Modal */}
       {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-[9999] p-4 bg-black/50">
-          <div className="bg-white border-4 border-black rounded-3xl shadow-2xl p-6 max-w-lg w-full relative">
+        <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/30 backdrop-blur-md" style={{ zIndex: 999999 }}>
+          <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-lg w-full relative">
             <div className="text-center mb-6">
               <h3 className="text-2xl font-bold text-black mb-2">Share Your Experience</h3>
               <p className="text-sm text-gray-600">

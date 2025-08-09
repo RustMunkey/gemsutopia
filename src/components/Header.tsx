@@ -1,6 +1,6 @@
 'use client';
 import { IconMenu2 } from '@tabler/icons-react';
-import { Star, ShoppingBag } from 'lucide-react';
+import { Star, ShoppingBag, ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -25,6 +25,8 @@ export default function Header() {
   
   // Add drop shadow to all pages except front page
   const isHomePage = pathname === '/';
+  const isShopPage = pathname === '/shop';
+  const isProductPage = pathname.startsWith('/product/');
   const headerClass = isHomePage 
     ? "bg-black text-white relative m-0 border-b border-white/20"
     : "bg-black text-white relative m-0 border-b border-white/20 shadow-lg";
@@ -47,17 +49,26 @@ export default function Header() {
       )}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center h-16">
+          {/* Logo (left side) / Back button on product pages */}
           <div className="flex items-center">
-            <Link href="/" className="cursor-pointer">
-              <Image 
-                src="/logos/gem.png" 
-                alt="Gem"
-                width={48}
-                height={48}
-                className="w-auto h-8 object-contain"
-              />
-            </Link>
+            {isProductPage ? (
+              <Link href="/shop" className="cursor-pointer text-white hover:text-gray-300">
+                <ArrowLeft className="h-6 w-6" strokeWidth={2} />
+              </Link>
+            ) : (
+              <Link href="/" className="cursor-pointer">
+                <Image 
+                  src="/logos/gem.png" 
+                  alt="Gem"
+                  width={32}
+                  height={32}
+                  className="w-auto h-6 object-contain"
+                />
+              </Link>
+            )}
           </div>
+          
+          {/* Desktop navigation */}
           <div className="flex-1 flex justify-start pl-8">
             <div className="hidden md:flex items-center gap-6">
               <a href="/shop" className="text-white hover:text-gray-300 text-sm font-bold">Shop</a>
@@ -66,13 +77,61 @@ export default function Header() {
               <a href="/support" className="text-white hover:text-gray-300 text-sm font-bold">Support</a>
             </div>
           </div>
+          
+          {/* Right side items */}
           <div className="flex items-center gap-6">
-            <button 
-              className="text-white hover:text-gray-300 md:hidden"
-              onClick={() => setIsDropdownOpen(true)}
-            >
-              <IconMenu2 className="h-8 w-8" />
-            </button>
+            {/* Mobile hamburger and Shop button/Shopping bag/Back button */}
+            <div className="md:hidden flex items-center gap-4">
+              {isProductPage ? (
+                <div className="flex items-center gap-4">
+                  <a href="/wishlist" className="text-white hover:text-gray-300 flex items-center gap-2 relative">
+                    {wishlistCount > 0 ? (
+                      <Star fill="white" className="h-6 w-6" strokeWidth={2} />
+                    ) : (
+                      <Star className="h-6 w-6" strokeWidth={2} />
+                    )}
+                  </a>
+                  <a href="/gem-pouch" className="text-white hover:text-gray-300 flex items-center gap-2 relative">
+                    <ShoppingBag className="h-6 w-6" strokeWidth={2} />
+                    {itemCount > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center">
+                        {itemCount}
+                      </span>
+                    )}
+                  </a>
+                </div>
+              ) : !isShopPage ? (
+                <a href="/shop" className="border border-white text-white hover:bg-white hover:text-black active:bg-white active:text-black text-sm font-bold px-10 py-2 rounded-full transition-all">
+                  Shop
+                </a>
+              ) : (
+                <div className="flex items-center gap-4">
+                  <a href="/wishlist" className="text-white hover:text-gray-300 flex items-center gap-2 relative">
+                    {wishlistCount > 0 ? (
+                      <Star fill="white" className="h-6 w-6" strokeWidth={2} />
+                    ) : (
+                      <Star className="h-6 w-6" strokeWidth={2} />
+                    )}
+                  </a>
+                  <a href="/gem-pouch" className="text-white hover:text-gray-300 flex items-center gap-2 relative">
+                    <ShoppingBag className="h-6 w-6" strokeWidth={2} />
+                    {itemCount > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center">
+                        {itemCount}
+                      </span>
+                    )}
+                  </a>
+                </div>
+              )}
+              <button 
+                className="text-white hover:text-gray-300"
+                onClick={() => setIsDropdownOpen(true)}
+              >
+                <IconMenu2 className="h-8 w-8" />
+              </button>
+            </div>
+            
+            {/* Desktop items */}
             <div className="hidden md:flex items-center gap-4">
               <a href="/wishlist" className="text-white hover:text-gray-300 flex items-center gap-2 relative">
                 {wishlistCount > 0 ? (

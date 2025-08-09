@@ -8,6 +8,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useGemPouch } from '@/contexts/GemPouchContext';
 import { useWishlist } from '@/contexts/WishlistContext';
+import { extractVibrantColor } from '@/utils/colorExtraction';
 
 export default function Shop() {
   const router = useRouter();
@@ -17,6 +18,8 @@ export default function Shop() {
   const [sortBy, setSortBy] = useState('default');
   const [priceFilter, setPriceFilter] = useState('all');
   const [gemType, setGemType] = useState('all');
+  const [productColors, setProductColors] = useState<{ [key: number]: string }>({});
+  const [isClient, setIsClient] = useState(false);
   
   const toggleWishlist = (productId: number, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -56,6 +59,11 @@ export default function Shop() {
     }
   };
   
+  // Set client-side flag
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   // Add swipe detection
   useEffect(() => {
     let startY = 0;
@@ -102,6 +110,28 @@ export default function Shop() {
     { id: 16, name: 'Mountain Jade', type: 'jade', price: 229, originalPrice: 299, image: '/images/Review-5.jpg' }
   ];
 
+  // Extract colors from product images (only on client side)
+  useEffect(() => {
+    if (!isClient) return;
+    
+    const extractColors = async () => {
+      const colors: { [key: number]: string } = {};
+      
+      for (const product of products) {
+        try {
+          const color = await extractVibrantColor(product.image);
+          colors[product.id] = color;
+        } catch (error) {
+          colors[product.id] = '#1f2937'; // fallback
+        }
+      }
+      
+      setProductColors(colors);
+    };
+    
+    extractColors();
+  }, [isClient]);
+
   // Filter and sort products
   const filteredProducts = products
     .filter(product => {
@@ -121,30 +151,103 @@ export default function Shop() {
     });
 
   return (
-    <div className="min-h-screen flex flex-col bg-black">
-      <Header />
-      
+    <div className="min-h-screen flex flex-col relative">
+      {/* Fixed Background */}
       <div 
-        className="flex-grow py-16"
+        className="fixed inset-0 z-0"
         style={{
           backgroundImage: "url('/images/whitemarble.jpg')",
           backgroundSize: "cover",
           backgroundPosition: "center",
-          backgroundAttachment: "fixed"
+          backgroundRepeat: "no-repeat"
         }}
-      >
+      />
+      
+      <Header />
+      
+      <div className="flex-grow py-16 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 mb-8 shadow-lg">
-            <div className="text-center mb-12">
-              <h1 className="text-3xl md:text-4xl font-bold text-black mb-4">Gem Shop</h1>
-              <p className="text-lg text-neutral-600 max-w-2xl mx-auto">
-                Discover our complete collection of premium gemstones, hand-selected and ethically sourced from Alberta, Canada
-              </p>
+          <div className="text-center mb-12">
+            <h1 className="text-3xl md:text-4xl font-bold text-black mb-4">Gem Collection</h1>
+            <p className="text-lg text-neutral-600 max-w-2xl mx-auto">
+              Explore our curated selection of authentic Canadian gemstones, personally mined and carefully chosen by Reese from the pristine landscapes of Alberta
+            </p>
+          </div>
+
+          {/* Filters and Sorting */}
+          <div className="bg-white/70 rounded-lg p-4 mb-8 shadow-md">
+            {/* Mobile Layout */}
+            <div className="block md:hidden">
+              <div className="flex items-center gap-2 text-black mb-4">
+                <IconFilter className="h-5 w-5" />
+                <span className="font-semibold">Filter & Sort</span>
+              </div>
+              
+              <div className="space-y-3">
+                {/* Sort By */}
+                <div>
+                  <label htmlFor="sort" className="block text-sm font-medium text-black mb-1">Sort by:</label>
+                  <select
+                    id="sort"
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white text-black"
+                  >
+                    <option value="default">Default</option>
+                    <option value="name">Name A-Z</option>
+                    <option value="price-low">Price: Low to High</option>
+                    <option value="price-high">Price: High to Low</option>
+                  </select>
+                </div>
+
+                {/* Price Filter */}
+                <div>
+                  <label htmlFor="price" className="block text-sm font-medium text-black mb-1">Price:</label>
+                  <select
+                    id="price"
+                    value={priceFilter}
+                    onChange={(e) => setPriceFilter(e.target.value)}
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white text-black"
+                  >
+                    <option value="all">All Prices</option>
+                    <option value="under200">Under $200</option>
+                    <option value="200to300">$200 - $300</option>
+                    <option value="over300">Over $300</option>
+                  </select>
+                </div>
+
+                {/* Gem Type Filter */}
+                <div>
+                  <label htmlFor="gemType" className="block text-sm font-medium text-black mb-1">Type:</label>
+                  <select
+                    id="gemType"
+                    value={gemType}
+                    onChange={(e) => setGemType(e.target.value)}
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white text-black"
+                  >
+                    <option value="all">All Types</option>
+                    <option value="sapphire">Sapphire</option>
+                    <option value="peridot">Peridot</option>
+                    <option value="ammolite">Ammolite</option>
+                    <option value="garnet">Garnet</option>
+                    <option value="quartz">Quartz</option>
+                    <option value="agate">Agate</option>
+                    <option value="jasper">Jasper</option>
+                    <option value="amethyst">Amethyst</option>
+                    <option value="topaz">Topaz</option>
+                    <option value="opal">Opal</option>
+                    <option value="tourmaline">Tourmaline</option>
+                    <option value="moonstone">Moonstone</option>
+                    <option value="labradorite">Labradorite</option>
+                    <option value="citrine">Citrine</option>
+                    <option value="jade">Jade</option>
+                  </select>
+                </div>
+              </div>
             </div>
 
-            {/* Filters and Sorting */}
-            <div className="bg-white/70 rounded-lg p-6 mb-8 shadow-md">
-            <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
+            {/* Desktop Layout */}
+            <div className="hidden md:flex flex-col lg:flex-row gap-4 items-center justify-between">
               <div className="flex items-center gap-2 text-black">
                 <IconFilter className="h-5 w-5" />
                 <span className="font-semibold">Filter & Sort:</span>
@@ -153,9 +256,9 @@ export default function Shop() {
               <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
                 {/* Sort By */}
                 <div className="flex items-center gap-2">
-                  <label htmlFor="sort" className="text-sm font-medium text-black">Sort by:</label>
+                  <label htmlFor="sort-desktop" className="text-sm font-medium text-black">Sort by:</label>
                   <select
-                    id="sort"
+                    id="sort-desktop"
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
                     className="border border-gray-300 rounded px-3 py-1 text-sm bg-white text-black"
@@ -169,9 +272,9 @@ export default function Shop() {
 
                 {/* Price Filter */}
                 <div className="flex items-center gap-2">
-                  <label htmlFor="price" className="text-sm font-medium text-black">Price:</label>
+                  <label htmlFor="price-desktop" className="text-sm font-medium text-black">Price:</label>
                   <select
-                    id="price"
+                    id="price-desktop"
                     value={priceFilter}
                     onChange={(e) => setPriceFilter(e.target.value)}
                     className="border border-gray-300 rounded px-3 py-1 text-sm bg-white text-black"
@@ -185,9 +288,9 @@ export default function Shop() {
 
                 {/* Gem Type Filter */}
                 <div className="flex items-center gap-2">
-                  <label htmlFor="gemType" className="text-sm font-medium text-black">Type:</label>
+                  <label htmlFor="gemType-desktop" className="text-sm font-medium text-black">Type:</label>
                   <select
-                    id="gemType"
+                    id="gemType-desktop"
                     value={gemType}
                     onChange={(e) => setGemType(e.target.value)}
                     className="border border-gray-300 rounded px-3 py-1 text-sm bg-white text-black"
@@ -217,14 +320,18 @@ export default function Shop() {
               Showing {filteredProducts.length} of {products.length} gems
             </div>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        </div>
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {filteredProducts.map((product) => {
               const discountPercent = Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
+              const cardColor = isClient ? (productColors[product.id] || '#1f2937') : '#1f2937';
               return (
                 <div 
                   key={product.id} 
-                  className="bg-black rounded-2xl p-6 shadow-2xl shadow-black/60 translate-x-1 translate-y-1 transition-transform duration-200 ease-out cursor-pointer product-card select-none"
+                  className="rounded-2xl p-2 shadow-2xl shadow-black/60 translate-x-1 translate-y-1 transition-transform duration-200 ease-out cursor-pointer product-card select-none h-full flex flex-col"
+                  style={{ backgroundColor: cardColor }}
                   onClick={(e) => {
                     e.stopPropagation();
                     // Navigate to product page and scroll to top
@@ -233,7 +340,7 @@ export default function Shop() {
                   }}
                 >
                   {/* Content */}
-                  <div className="aspect-square bg-neutral-100 rounded-lg mb-4 overflow-hidden relative">
+                  <div className="aspect-square bg-neutral-100 rounded-lg mb-2 overflow-hidden relative">
                     <div className="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded z-10">
                       {discountPercent}% OFF
                     </div>
@@ -257,24 +364,24 @@ export default function Shop() {
                       />
                     </div>
                   </div>
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-xl font-semibold text-white">{product.name}</h3>
-                    <button
-                      onClick={(e) => toggleWishlist(product.id, e)}
-                      className="text-white hover:text-yellow-400 transition-colors p-1"
-                    >
-                      {isInWishlist(product.id) ? (
-                        <IconStarFilled className="h-6 w-6 text-yellow-400" />
-                      ) : (
-                        <IconStar className="h-6 w-6" />
-                      )}
-                    </button>
-                  </div>
-                  <p className="text-neutral-300 text-sm leading-relaxed min-h-[3rem]">Hand-mined {product.type} from Alberta, Canada. This premium quality gemstone features exceptional clarity and natural beauty, ethically sourced with care.</p>
-                  <div className="mt-3 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-neutral-400 line-through">${product.originalPrice}</span>
-                      <span className="text-lg font-bold text-white">${product.price}</span>
+                  <h3 className="text-xl font-semibold text-white mb-2 text-center min-h-[3.5rem] flex items-center justify-center">{product.name}</h3>
+                  <p className="text-neutral-300 text-sm leading-relaxed min-h-[3rem] md:block hidden flex-grow">Hand-mined {product.type} from Alberta, Canada. This premium quality gemstone features exceptional clarity and natural beauty, ethically sourced with care.</p>
+                  <div className="mt-auto pt-3 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={(e) => toggleWishlist(product.id, e)}
+                        className="text-white hover:text-yellow-400 transition-colors p-1"
+                      >
+                        {isInWishlist(product.id) ? (
+                          <IconStarFilled className="h-6 w-6 text-yellow-400" />
+                        ) : (
+                          <IconStar className="h-6 w-6" />
+                        )}
+                      </button>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-white line-through">${product.originalPrice}</span>
+                        <span className="text-lg font-bold text-white">${product.price}</span>
+                      </div>
                     </div>
                     <button
                       onClick={(e) => toggleGemPouch(product.id, e)}
@@ -289,7 +396,6 @@ export default function Shop() {
                 </div>
               );
             })}
-          </div>
           </div>
         </div>
       </div>

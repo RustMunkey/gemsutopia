@@ -5,11 +5,12 @@ import Image from 'next/image';
 
 export default function Footer() {
   return (
-    <div className="bg-black text-white w-full h-[50vh] flex flex-col justify-between border-t border-white/20 relative" style={{ 
-      filter: 'drop-shadow(0 -10px 20px rgba(0, 0, 0, 0.3))' 
+    <div className="bg-black text-white w-full h-[50vh] flex flex-col justify-between border-t border-white/20 relative z-10" style={{ 
+      filter: 'drop-shadow(0 -10px 20px rgba(0, 0, 0, 0.3))',
+      borderRadius: '0px'
     }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-8">
-        <div className="flex justify-between items-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-8 bg-black">
+        <div className="flex justify-between items-center bg-black">
           <Image 
             src="/logos/gem.png" 
             alt="Gem"
@@ -30,8 +31,8 @@ export default function Footer() {
           </div>
         </div>
       </div>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full md:hidden">
-        <div className="mb-8 mt-4 divide-y divide-white/20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full md:hidden bg-black">
+        <div className="mb-8 mt-4 divide-y divide-white/20 bg-black">
           <details className="group py-3">
             <summary className="flex justify-between items-center cursor-pointer list-none">
               <span className="text-white text-sm font-semibold">Company</span>
@@ -75,8 +76,8 @@ export default function Footer() {
           </details>
         </div>
       </div>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full hidden md:block">
-        <div className="grid grid-cols-4 gap-6 mb-8 mt-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full hidden md:block bg-black">
+        <div className="grid grid-cols-4 gap-6 mb-8 mt-12 bg-black">
           <div>
             <h4 className="text-white text-sm font-semibold mb-3">Company</h4>
             <div className="flex flex-col gap-2">
@@ -108,8 +109,8 @@ export default function Footer() {
           </div>
         </div>
       </div>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pb-8">
-        <div className="space-y-4">
+      <div className="w-full pb-8 bg-black px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto space-y-4 bg-black">
           <div className="mt-8 mb-4">
             <p className="text-white text-left text-sm">Sign up for exclusive promotions, new arrivals, and special offers delivered straight to your inbox!</p>
           </div>
@@ -124,10 +125,10 @@ export default function Footer() {
               Subscribe
             </button>
           </div>
-          <div className="pt-4">
-            <div className="flex flex-col md:flex-row md:justify-between md:items-center space-y-4 md:space-y-0">
-              <p className="text-sm text-center md:text-left">© 2025 Gemsutopia. All rights reserved.</p>
-              <div className="flex flex-wrap justify-center md:justify-end gap-4">
+          <div className="pt-4 bg-black -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:justify-between md:items-center space-y-4 md:space-y-0 bg-black">
+              <p className="text-sm text-center md:text-left bg-black">© 2025 Gemsutopia. All rights reserved.</p>
+              <div className="flex flex-wrap justify-center md:justify-end gap-4 bg-black">
                 <div className="text-white text-2xl">
                   <FontAwesomeIcon icon={faCcAmex} />
                 </div>

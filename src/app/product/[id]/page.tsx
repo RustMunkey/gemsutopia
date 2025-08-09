@@ -27,9 +27,22 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const productImage = images[productId - 1] || images[0];
   
   return (
-    <div className="bg-black min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col relative">
+      {/* Fixed Background */}
+      <div 
+        className="fixed inset-0 z-0"
+        style={{
+          backgroundImage: "url('/images/whitemarble.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat"
+        }}
+      />
+      
       <Header />
-      <ProductContent productId={productId} productImage={productImage} />
+      <div className="relative z-10">
+        <ProductContent productId={productId} productImage={productImage} />
+      </div>
       <Footer />
     </div>
   );

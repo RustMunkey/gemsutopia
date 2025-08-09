@@ -6,6 +6,7 @@ import { Star, ShoppingBag, Check } from 'lucide-react';
 import { useGemPouch } from '../contexts/GemPouchContext';
 import { useWishlist } from '../contexts/WishlistContext';
 import { useCMSContent } from '@/hooks/useCMSContent';
+import { extractVibrantColor } from '@/utils/colorExtraction';
 
 interface Product {
   id: string;
@@ -31,7 +32,14 @@ export default function Featured() {
   const { getContent } = useCMSContent();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [productColors, setProductColors] = useState<{ [key: string]: string }>({});
+  const [isClient, setIsClient] = useState(false);
   
+  // Set client-side flag
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   useEffect(() => {
     fetchProducts();
     
@@ -46,6 +54,30 @@ export default function Featured() {
       window.removeEventListener('products-updated', handleProductsUpdated);
     };
   }, []);
+
+  // Extract colors from product images (only on client side)
+  useEffect(() => {
+    if (!isClient || products.length === 0) return;
+    
+    const extractColors = async () => {
+      const colors: { [key: string]: string } = {};
+      
+      for (const product of products) {
+        if (product.images && product.images.length > 0) {
+          try {
+            const color = await extractVibrantColor(product.images[0]);
+            colors[product.id] = color;
+          } catch (error) {
+            colors[product.id] = '#1f2937'; // fallback
+          }
+        }
+      }
+      
+      setProductColors(colors);
+    };
+    
+    extractColors();
+  }, [isClient, products]);
 
   const fetchProducts = async () => {
     try {
@@ -132,7 +164,7 @@ export default function Featured() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-black mb-4">
-            {getContent('featured', 'section_title') || 'Featured Finds'}
+            {getContent('featured', 'section_title') || 'Featured Gems'}
           </h2>
           <p className="text-lg text-neutral-600 max-w-2xl mx-auto">
             {getContent('featured', 'section_subtitle') || 'Discover our curated collection of premium gemstones'}
@@ -149,14 +181,13 @@ export default function Featured() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {products.map((product) => (
+            {products.map((product) => {
+              const cardColor = isClient ? (productColors[product.id] || '#1f2937') : '#1f2937';
+              return (
                 <div 
                   key={product.id} 
                   className="rounded-2xl p-6 shadow-2xl translate-x-1 translate-y-1 transition-transform duration-200 ease-out cursor-pointer product-card select-none"
-                  style={product.metadata?.use_gradient 
-                    ? { background: `linear-gradient(to right, ${product.metadata?.card_gradient_from || '#9333ea'}, ${product.metadata?.card_gradient_to || '#db2777'})` }
-                    : { backgroundColor: product.metadata?.card_color || '#000000' }
-                  }
+                  style={{ backgroundColor: cardColor }}
                   onClick={(e) => {
                     e.stopPropagation();
                     // Navigate to product page and scroll to top
@@ -223,7 +254,8 @@ export default function Featured() {
                     </button>
                   </div>
                 </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
