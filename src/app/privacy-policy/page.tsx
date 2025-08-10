@@ -26,103 +26,101 @@ export default function PrivacyPolicy() {
             </div>
             
             <div className="prose prose-lg max-w-none text-neutral-700 space-y-8">
-            <section>
-              <h2 className="text-2xl font-bold text-black mb-4">1. Information We Collect</h2>
-              <p>
-                We collect information you provide directly to us, such as when you create an account, make a purchase, subscribe to our newsletter, or contact us for support.
+              <p className="text-lg mb-6">
+                This Privacy Policy describes how and when Gemsutopia ("I", "me", "my") collects, uses, and shares information when you purchase an item from Gemsutopia (Gemsutopia.ca) contact me, or otherwise use my services through this site.
               </p>
+              
+              <p className="mb-6">
+                You agree that by purchasing an item from Gemsutopia or otherwise interacting with Gemsutopia, you have read, understood, and agree to be bound by all of the terms of this Privacy Policy. If you do not agree, you must leave Gemsutopia immediately.
+              </p>
+              
+              <p className="mb-6">
+                I may change this Privacy Policy from time to time. If I make changes, I will notify you by revising the date at the top of the page.
+              </p>
+              
+              <p className="mb-6">
+                This Privacy Policy does not apply to the practices of third parties that I do not own or control through Gemsutopia such as Gemrockauctions or Etsy.
+              </p>
+              
+              <p className="mb-8">
+                Additionally, I will make every reasonable effort to inform you when I interact with third parties with your information; however, you are solely responsible for reviewing, understanding, and agreeing to or not agreeing to any third-party privacy policies.
+              </p>
+
+            <section>
+              <h2 className="text-2xl font-bold text-black mb-4">Information I Collect</h2>
               <p>
-                This may include your name, email address, phone number, shipping and billing addresses, payment information, and any other information you choose to provide.
+                To fulfill your order, you must provide me with certain information such as your name, e-mail address, postal address, payment information, and the details of the product that you're ordering. You may also choose to provide me with additional personal information from time to time if you contact me directly.
               </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold text-black mb-4">2. How We Use Your Information</h2>
-              <p>We use the information we collect to:</p>
+              <h2 className="text-2xl font-bold text-black mb-4">Why I Need Your Information and How I Use It</h2>
+              <p className="mb-4">I collect, use and share your information in several legally-permissible ways, including:</p>
               <ul className="list-disc ml-6 space-y-2">
-                <li>Process and fulfill your orders</li>
-                <li>Communicate with you about your orders and our services</li>
-                <li>Send you promotional emails and newsletters (with your consent)</li>
-                <li>Improve our website and customer service</li>
-                <li>Comply with legal obligations</li>
+                <li>As needed to provide my services, such as when I use your information to fulfill your order, to settle disputes, or to provide you with customer support;</li>
+                <li>When you have provided your affirmative consent, which you may revoke at any time, such as by signing up for my mailing list or to receive notifications from me;</li>
+                <li>If necessary to comply with a court order or legal obligation, such as retaining information about your purchases if required by tax law; and</li>
+                <li>As necessary for my own legitimate interests, if those legitimate interests are not overridden by your rights or interests, such as (a) providing and enhancing my services;</li>
               </ul>
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold text-black mb-4">3. Information Sharing</h2>
-              <p>
-                We do not sell, trade, or otherwise transfer your personal information to third parties without your consent, except as described in this policy.
+              <h2 className="text-2xl font-bold text-black mb-4">Information Sharing and Disclosure</h2>
+              <p className="mb-4">
+                Protecting my customers' personal information is crucially important to my business and something I take very seriously. For these reasons, I share your personal information only for very limited reasons and in limited circumstances, as follows:
               </p>
-              <p>We may share your information with:</p>
-              <ul className="list-disc ml-6 space-y-2">
-                <li>Payment processors to handle transactions</li>
-                <li>Shipping carriers to deliver your orders</li>
-                <li>Email service providers to send newsletters (if subscribed)</li>
-                <li>Legal authorities when required by law</li>
+              <ul className="list-disc ml-6 space-y-4">
+                <li>
+                  <strong>With Third-Party Service Providers.</strong> I engage the following trusted third parties to perform functions and provider services to my shop:
+                  <br /><br />
+                  I share you personal information with these third parties, but only to the extent necessary to perform these services;
+                </li>
+                <li>
+                  <strong>In the Event of a Business Transfer.</strong> If I sell or merge my business, I may disclose your information as part of that transaction, only to the extent permitted by law.
+                </li>
+                <li>
+                  <strong>In Compliance with Laws.</strong> I may collect, use, retain, and share your information if I have a good faith belief that doing so is reasonably necessary to: (a) respond to legal process or to government requests; (b) perform legal obligations to which I am bound by agreements; (c) prevent, investigate, and address fraud and other illegal activity, security, or technical issues; or (d) protect the rights, property, and safety of my customers, or others.
+                </li>
               </ul>
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold text-black mb-4">4. Data Security</h2>
+              <h2 className="text-2xl font-bold text-black mb-4">How Long I Store Your Information</h2>
               <p>
-                We implement appropriate security measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction. However, no method of transmission over the internet is 100% secure.
+                I retain your personal information only for as long as necessary to provide you with my services and as otherwise described in my Privacy Policy. However, I may also be required to retain this information to comply with my legal and regulatory obligations, to resolve disputes, and to enforce or perform under my agreements. I generally keep your data for the following time period: five (5) years.
               </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold text-black mb-4">5. Cookies and Tracking</h2>
+              <h2 className="text-2xl font-bold text-black mb-4">Transfers of Personal Information Outside the EU</h2>
               <p>
-                We use cookies and similar technologies to enhance your browsing experience, analyze website traffic, and personalize content. You can control cookie settings through your browser preferences.
-              </p>
-              <p>
-                For detailed information about our cookie usage, please refer to our Cookie Policy.
+                I may store and process your information through third-party hosting services in the US and other jurisdictions. As a result, I may transfer your personal information to a jurisdiction with different data protection and government surveillance laws than your jurisdiction has. If I am required to transfer information about you outside of the EU, I rely on Privacy Shield as the legal basis for the transfer, as Google Cloud is Privacy Shield certified.
               </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold text-black mb-4">6. Email Communications</h2>
-              <p>
-                If you subscribe to our newsletter, you will receive promotional emails about new products, sales, and special offers. You can unsubscribe at any time by clicking the unsubscribe link in our emails.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-bold text-black mb-4">7. Your Rights</h2>
-              <p>You have the right to:</p>
-              <ul className="list-disc ml-6 space-y-2">
-                <li>Access the personal information we have about you</li>
-                <li>Request correction of inaccurate information</li>
-                <li>Request deletion of your personal information</li>
-                <li>Opt-out of marketing communications</li>
-                <li>Withdraw consent where applicable</li>
+              <h2 className="text-2xl font-bold text-black mb-4">Your Rights</h2>
+              <p className="mb-4">If you reside in certain territories, including the EU, you have a number of rights in relation to your personal information. While some of these rights apply generally, certain rights apply only in certain limited cases. Your rights are as follows:</p>
+              <ul className="list-disc ml-6 space-y-3">
+                <li>
+                  <strong>Right to Access.</strong> You may have the right to access and receive a copy of the personal information I hold about you by contacting me using the contact information below.
+                </li>
+                <li>
+                  <strong>Right to Change, Restrict, or Delete.</strong> You may also have rights to change, restrict my use of, or delete your personal information. Absent exceptional circumstances (such as where I am required to store information for legal reasons) I will generally delete your personal information upon your request.
+                </li>
+                <li>
+                  <strong>Right to Object.</strong> You can object to (a) my processing of some of your information based on my legitimate interests and (b) receiving marketing messages from me. In such cases, I will delete your personal information unless I have compelling and legitimate grounds to continue storing and using your information or if it is needed for legal reasons.
+                </li>
+                <li>
+                  <strong>Right to Complain.</strong> If you reside in the EU and wish to raise a concern about my use of your information (and without prejudice to any other rights you may have), you have the right to do so with your local data protection authority.
+                </li>
               </ul>
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold text-black mb-4">8. Children&apos;s Privacy</h2>
+              <h2 className="text-2xl font-bold text-black mb-4">How to Contact Me</h2>
               <p>
-                Our website is not intended for children under 13 years of age. We do not knowingly collect personal information from children under 13.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-bold text-black mb-4">9. International Users</h2>
-              <p>
-                Gemsutopia operates from Canada. If you are accessing our website from outside Canada, please be aware that your information may be transferred to and stored in Canada.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-bold text-black mb-4">10. Changes to This Policy</h2>
-              <p>
-                We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new policy on this page with an updated &ldquo;Last updated&rdquo; date.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-bold text-black mb-4">11. Contact Us</h2>
-              <p>
-                If you have any questions about this Privacy Policy or our data practices, please contact us at gemsutopia@gmail.com.
+                You may reach me with any concerns relating to privacy at Gemsutopia@gmail.com
               </p>
             </section>
             </div>
