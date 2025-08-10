@@ -11,10 +11,21 @@ export default function GemPouch() {
   const { items, removeItem } = useGemPouch();
   const totalPrice = items.reduce((sum, item) => sum + item.price, 0);
   return (
-    <div className="bg-black min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col relative">
+      {/* Fixed Background */}
+      <div 
+        className="fixed inset-0 z-0"
+        style={{
+          backgroundImage: "url('/images/whitemarble.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat"
+        }}
+      />
+      
       <Header />
       
-      <div className="flex-grow bg-neutral-100 py-16">
+      <div className="flex-grow py-16 relative z-10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h1 className="text-3xl md:text-4xl font-bold text-black mb-4">Gem Pouch</h1>
@@ -72,16 +83,18 @@ export default function GemPouch() {
                   <span className="text-xl font-semibold text-black">Total:</span>
                   <span className="text-2xl font-bold text-black">${totalPrice}</span>
                 </div>
-                <button className="w-full bg-black text-white py-3 px-8 rounded-full font-semibold hover:bg-neutral-800 transition-colors">
+                <Link href="/checkout" className="block w-full bg-black text-white py-3 px-8 rounded-full font-semibold hover:bg-neutral-800 transition-colors text-center">
                   Proceed to Checkout
-                </button>
+                </Link>
               </div>
             </div>
           )}
         </div>
       </div>
       
-      <Footer />
+      <div className="relative z-10">
+        <Footer />
+      </div>
     </div>
   );
 }

@@ -20,32 +20,41 @@ const GemPouchContext = createContext<GemPouchContextType | undefined>(undefined
 
 export function GemPouchProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<GemPouchItem[]>([]);
+  const [isClient, setIsClient] = useState(false);
 
-  // Load from localStorage on mount
+  // Set client flag
   useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Load from localStorage on mount (client only)
+  useEffect(() => {
+    if (!isClient) return;
+    
     const savedItems = localStorage.getItem('gemPouch');
     if (savedItems) {
       setItems(JSON.parse(savedItems));
     }
-  }, []);
+  }, [isClient]);
 
-  // Save to localStorage whenever items change
+  // Save to localStorage whenever items change (client only)
   useEffect(() => {
+    if (!isClient) return;
     localStorage.setItem('gemPouch', JSON.stringify(items));
-  }, [items]);
+  }, [items, isClient]);
 
   const addItem = (item: GemPouchItem) => {
-    setItems(prev => {
-      const exists = prev.find(i => i.id === item.id);
-      if (exists) {
-        return prev; // Don't add duplicates
-      }
-      return [...prev, item];
-    });
+    setItems(prev => [...prev, item]); // Allow multiple copies of same item
   };
 
   const removeItem = (id: number) => {
-    setItems(prev => prev.filter(item => item.id !== id));
+    setItems(prev => {
+      const index = prev.findIndex(item => item.id === id);
+      if (index > -1) {
+        return prev.filter((_, i) => i !== index); // Remove only the first occurrence
+      }
+      return prev;
+    });
   };
 
   const isInPouch = (id: number) => {

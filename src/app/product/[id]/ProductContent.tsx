@@ -12,11 +12,13 @@ interface ProductContentProps {
 }
 
 export default function ProductContent({ productId, productImage }: ProductContentProps) {
-  const { addItem, removeItem, isInPouch } = useGemPouch();
+  const { addItem, removeItem, isInPouch, items } = useGemPouch();
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist();
   const [productColor, setProductColor] = useState('#1f2937');
   const [isClient, setIsClient] = useState(false);
-  const [cartQuantity, setCartQuantity] = useState(0);
+  
+  // Get actual quantity from gem pouch context
+  const cartQuantity = items.filter(item => item.id === productId).length;
 
   // Product data (matching shop page structure with stock)
   const products = [
@@ -86,14 +88,12 @@ export default function ProductContent({ productId, productImage }: ProductConte
       };
       
       addItem(productData);
-      setCartQuantity(prev => prev + 1);
     }
   };
 
   const handleDecreaseQuantity = () => {
     if (cartQuantity > 0) {
       removeItem(productId);
-      setCartQuantity(prev => prev - 1);
     }
   };
 
@@ -151,33 +151,40 @@ export default function ProductContent({ productId, productImage }: ProductConte
             </div>
             
             <div className="space-y-3 md:space-y-4">
-              <div className="w-full bg-black text-white py-3 md:py-4 px-6 md:px-8 rounded-full font-semibold text-base md:text-lg flex items-center justify-between">
-                {cartQuantity > 0 && (
-                  <button 
-                    onClick={handleDecreaseQuantity}
-                    className="text-white hover:text-gray-300 text-xl font-bold w-8 h-8 flex items-center justify-center"
-                  >
-                    -
-                  </button>
-                )}
+              <div className="w-full bg-black text-white py-3 md:py-4 px-6 md:px-8 rounded-full font-semibold text-base md:text-lg flex items-center justify-between min-h-[52px] md:min-h-[60px]">
                 <button 
-                  onClick={handleIncreaseQuantity}
-                  disabled={cartQuantity >= product.stock}
-                  className="flex-1 text-center"
+                  onClick={handleDecreaseQuantity}
+                  className={`text-white hover:text-gray-300 text-xl font-bold w-8 h-8 flex items-center justify-center ${cartQuantity === 0 ? 'invisible' : ''}`}
                 >
-                  Add to Cart
+                  -
                 </button>
-                {cartQuantity > 0 && (
+                <div className="flex-1 flex items-center justify-center">
                   <button 
                     onClick={handleIncreaseQuantity}
                     disabled={cartQuantity >= product.stock}
-                    className="text-white hover:text-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed text-xl font-bold w-8 h-8 flex items-center justify-center"
+                    className="text-center"
                   >
-                    +
+                    {cartQuantity > 0 ? `Add to Cart (${cartQuantity})` : 'Add to Cart'}
                   </button>
-                )}
+                </div>
+                <button 
+                  onClick={handleIncreaseQuantity}
+                  disabled={cartQuantity >= product.stock}
+                  className={`text-white hover:text-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed text-xl font-bold w-8 h-8 flex items-center justify-center ${cartQuantity === 0 ? 'invisible' : ''}`}
+                >
+                  +
+                </button>
               </div>
-              <button className="w-full border-2 border-black text-black py-3 md:py-4 px-6 md:px-8 rounded-full font-semibold text-base md:text-lg hover:bg-black hover:text-white transition-colors">
+              <button 
+                onClick={() => {
+                  if (cartQuantity === 0) {
+                    handleIncreaseQuantity(); // Add to cart first if nothing is in cart
+                  }
+                  // Then navigate to checkout
+                  window.location.href = '/checkout';
+                }}
+                className="w-full border-2 border-black text-black py-3 md:py-4 px-6 md:px-8 rounded-full font-semibold text-base md:text-lg hover:bg-black hover:text-white transition-colors"
+              >
                 Buy Now
               </button>
             </div>

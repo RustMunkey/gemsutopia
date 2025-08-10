@@ -1,8 +1,9 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Star, ShoppingBag, Check } from 'lucide-react';
+import { ShoppingBag, Check } from 'lucide-react';
+import { IconStar, IconStarFilled } from '@tabler/icons-react';
 import { useGemPouch } from '../contexts/GemPouchContext';
 import { useWishlist } from '../contexts/WishlistContext';
 import { useCMSContent } from '@/hooks/useCMSContent';
@@ -31,9 +32,35 @@ export default function Featured() {
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist();
   const { getContent } = useCMSContent();
   const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [productColors, setProductColors] = useState<{ [key: string]: string }>({});
+  const [productColors, setProductColors] = useState<{ [key: number]: string }>({});
   const [isClient, setIsClient] = useState(false);
+  const [translateX, setTranslateX] = useState(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const animationRef = useRef<number>();
+  const startTimeRef = useRef<number>(0);
+  
+  // Use exact shop page product structure
+  const shopProducts = [
+    { id: 1, name: 'Alberta Sapphire', type: 'sapphire', price: 299, originalPrice: 399, image: '/images/Review1.jpg' },
+    { id: 2, name: 'Canadian Peridot', type: 'peridot', price: 199, originalPrice: 249, image: '/images/Review2.jpg' },
+    { id: 3, name: 'Ammolite Gem', type: 'ammolite', price: 459, originalPrice: 599, image: '/images/Review3.jpg' },
+    { id: 4, name: 'Blue Jay Sapphire', type: 'sapphire', price: 349, originalPrice: 449, image: '/images/Review4.jpg' },
+    { id: 5, name: 'Alberta Garnet', type: 'garnet', price: 179, originalPrice: 229, image: '/images/Review5.jpg' },
+    { id: 6, name: 'Canadian Quartz', type: 'quartz', price: 129, originalPrice: 169, image: '/images/Review6.jpg' },
+    { id: 7, name: 'Prairie Agate', type: 'agate', price: 89, originalPrice: 119, image: '/images/Review7.jpg' },
+    { id: 8, name: 'Rocky Mountain Jasper', type: 'jasper', price: 99, originalPrice: 129, image: '/images/Review8.jpg' },
+    { id: 9, name: 'Alberta Amethyst', type: 'amethyst', price: 219, originalPrice: 289, image: '/images/Review9.jpg' },
+    { id: 10, name: 'Canadian Topaz', type: 'topaz', price: 259, originalPrice: 329, image: '/images/Review10.jpg' },
+    { id: 11, name: 'Northern Opal', type: 'opal', price: 389, originalPrice: 519, image: '/images/Review12.jpg' },
+    { id: 12, name: 'Foothills Tourmaline', type: 'tourmaline', price: 299, originalPrice: 399, image: '/images/Review13.jpg' },
+    { id: 13, name: 'Prairie Moonstone', type: 'moonstone', price: 169, originalPrice: 219, image: '/images/Review14.jpg' },
+    { id: 14, name: 'Canadian Labradorite', type: 'labradorite', price: 149, originalPrice: 199, image: '/images/8680a65c-0c82-4529-a8f2-a051344e565a.webp' },
+    { id: 15, name: 'Alberta Citrine', type: 'citrine', price: 139, originalPrice: 179, image: '/images/c07009ff-cd86-45d0-858e-441993683280.webp' },
+    { id: 16, name: 'Mountain Jade', type: 'jade', price: 229, originalPrice: 299, image: '/images/Review-5.jpg' }
+  ];
+
+  // Use shop products for scrolling
+  const productsToShow = shopProducts;
   
   // Set client-side flag
   useEffect(() => {
@@ -57,19 +84,17 @@ export default function Featured() {
 
   // Extract colors from product images (only on client side)
   useEffect(() => {
-    if (!isClient || products.length === 0) return;
+    if (!isClient) return;
     
     const extractColors = async () => {
-      const colors: { [key: string]: string } = {};
+      const colors: { [key: number]: string } = {};
       
-      for (const product of products) {
-        if (product.images && product.images.length > 0) {
-          try {
-            const color = await extractVibrantColor(product.images[0]);
-            colors[product.id] = color;
-          } catch (error) {
-            colors[product.id] = '#1f2937'; // fallback
-          }
+      for (const product of productsToShow) {
+        try {
+          const color = await extractVibrantColor(product.image);
+          colors[product.id] = color;
+        } catch (error) {
+          colors[product.id] = '#1f2937'; // fallback
         }
       }
       
@@ -77,7 +102,7 @@ export default function Featured() {
     };
     
     extractColors();
-  }, [isClient, products]);
+  }, [isClient]);
 
   const fetchProducts = async () => {
     try {
@@ -89,8 +114,6 @@ export default function Featured() {
       }
     } catch (error) {
       console.error('Error fetching products:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -132,61 +155,90 @@ export default function Featured() {
     }
   };
   
-  // Add swipe detection
+  // Simple automatic infinite scroll animation
   useEffect(() => {
-    let startY = 0;
+    if (!isClient) return;
     
-    const handleTouchStart = (e: TouchEvent) => {
-      startY = e.touches[0].clientY;
-    };
+    startTimeRef.current = Date.now(); // Set start time only on client
     
-    const handleTouchMove = (e: TouchEvent) => {
-      const currentY = e.touches[0].clientY;
-      const diffY = Math.abs(currentY - startY);
+    const animate = () => {
+      const now = Date.now();
+      const elapsed = (now - startTimeRef.current) / 1000; // Convert to seconds
+      const speed = 80; // pixels per second - faster speed
+      const newTranslateX = -(elapsed * speed);
       
-      // If significant vertical movement detected, clear hover
-      if (diffY > 10) {
-        // Clear hover effects if needed
+      setTranslateX(newTranslateX);
+      animationRef.current = requestAnimationFrame(animate);
+    };
+
+    animationRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
       }
     };
+  }, [isClient]);
+
+  // Calculate normalized translate position for infinite loop
+  const [cardWidth, setCardWidth] = useState(400);
+  
+  useEffect(() => {
+    if (!isClient) return;
     
-    document.addEventListener('touchstart', handleTouchStart);
-    document.addEventListener('touchmove', handleTouchMove);
+    const calculateCardWidth = () => {
+      const width = window.innerWidth < 768 ? 
+        (window.innerWidth * 0.5 - 12 + 16) : // Mobile: 50vw cards (same as shop)
+        window.innerWidth < 1024 ? 
+          (window.innerWidth * 0.3333 - 16 + 24) : // Medium: 33.33vw cards  
+          (window.innerWidth * 0.25 - 16 + 24); // Large: 25vw cards
+      setCardWidth(width);
+    };
+    
+    calculateCardWidth();
+    window.addEventListener('resize', calculateCardWidth);
     
     return () => {
-      document.removeEventListener('touchstart', handleTouchStart);
-      document.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('resize', calculateCardWidth);
     };
-  }, []);
-  
+  }, [isClient]);
+  const oneSetWidth = productsToShow.length * cardWidth;
+  const normalizedTranslateX = ((translateX % oneSetWidth) + oneSetWidth) % oneSetWidth - oneSetWidth;
+
   return (
-    <section className="relative z-10 py-16">
+    <section className="bg-black py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-black mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
             {getContent('featured', 'section_title') || 'Featured Gems'}
           </h2>
-          <p className="text-lg text-neutral-600 max-w-2xl mx-auto">
+          <p className="text-lg text-neutral-300 max-w-2xl mx-auto">
             {getContent('featured', 'section_subtitle') || 'Discover our curated collection of premium gemstones'}
           </p>
         </div>
+      </div>
         
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
-          </div>
-        ) : products.length === 0 ? (
-          <div className="text-center py-12 text-neutral-600">
-            <p className="text-lg">No featured products available</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {products.map((product) => {
-              const cardColor = isClient ? (productColors[product.id] || '#1f2937') : '#1f2937';
-              return (
+      {/* Infinite Scrolling Cards - Full Width */}
+      <div className="overflow-hidden py-4 -mx-4 sm:-mx-6 lg:-mx-8">
+        <div 
+          ref={scrollContainerRef}
+          className="flex"
+          style={{
+            transform: `translateX(${normalizedTranslateX}px)`,
+            willChange: 'transform',
+            width: 'max-content'
+          }}
+        >
+          {/* Triple the products for seamless infinite scroll */}
+          {productsToShow.concat(productsToShow).concat(productsToShow).map((product, index) => {
+            // Add unique key for infinite scroll duplicates
+            const cardColor = isClient ? (productColors[product.id] || '#1f2937') : '#1f2937';
+            const discountPercent = Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
+            
+            return (
+              <div key={`${product.id}-${index}`} className="inline-block flex-shrink-0 w-[calc(50vw-0.75rem)] md:w-[calc(33.33vw-1rem)] lg:w-[calc(25vw-1rem)] mx-2 md:mx-3">
                 <div 
-                  key={product.id} 
-                  className="rounded-2xl p-6 shadow-2xl translate-x-1 translate-y-1 transition-transform duration-200 ease-out cursor-pointer product-card select-none"
+                  className="rounded-2xl p-2 shadow-2xl shadow-black/60 translate-x-1 translate-y-1 transition-transform duration-200 ease-out cursor-pointer product-card select-none h-full flex flex-col"
                   style={{ backgroundColor: cardColor }}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -196,14 +248,9 @@ export default function Featured() {
                   }}
                 >
                   {/* Content */}
-                  <div className="aspect-square bg-neutral-100 rounded-lg mb-4 overflow-hidden relative">
-                    {product.on_sale && product.sale_price && (
-                      <div className="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded z-10">
-                        {Math.round((1 - product.sale_price / product.price) * 100)}% OFF
-                      </div>
-                    )}
+                  <div className="aspect-square bg-neutral-100 rounded-lg mb-2 overflow-hidden relative">
                     <Image 
-                      src={product.images[0] || '/images/placeholder.jpg'} 
+                      src={product.image} 
                       alt={product.name}
                       fill
                       className="object-cover select-none pointer-events-none"
@@ -222,44 +269,38 @@ export default function Featured() {
                       />
                     </div>
                   </div>
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-xl font-semibold text-white">{product.name}</h3>
-                    <button
-                      onClick={(e) => toggleWishlist(product.id, e)}
-                      className="text-white hover:text-yellow-400 transition-colors p-1"
-                    >
-                      {isInWishlist(parseInt(product.id)) ? (
-                        <Star fill="currentColor" className="h-6 w-6 text-yellow-400" />
-                      ) : (
-                        <Star className="h-6 w-6" />
-                      )}
-                    </button>
-                  </div>
-                  <p className="text-neutral-300 text-sm leading-relaxed min-h-[3rem]">{product.description}</p>
-                  <div className="mt-3 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      {product.on_sale && product.sale_price && (
-                        <span className="text-sm text-neutral-400 line-through">${product.price}</span>
-                      )}
-                      <span className="text-lg font-bold text-white">${product.on_sale && product.sale_price ? product.sale_price : product.price}</span>
-                    </div>
-                    <button
-                      onClick={(e) => toggleGemPouch(product.id, e)}
-                      className="text-white hover:text-neutral-300 transition-colors p-1 relative"
-                    >
-                      <ShoppingBag className="h-6 w-6" strokeWidth={2} />
-                      {isInPouch(parseInt(product.id)) && (
-                        <Check className="absolute bottom-0 right-0 h-4 w-4 text-green-500" strokeWidth={4} />
-                      )}
-                    </button>
-                  </div>
+                  <h3 className="text-xl font-semibold text-white mb-2 text-center min-h-[3.5rem] flex items-center justify-center">{product.name}</h3>
+                  <p className="text-neutral-300 text-sm leading-relaxed min-h-[3rem] md:block hidden flex-grow text-center">Hand-mined {product.type} from Alberta, Canada. This premium quality gemstone features exceptional clarity and natural beauty, ethically sourced with care.</p>
                 </div>
-              );
-            })}
-          </div>
-        )}
+              </div>
+            );
+          })}
+        </div>
       </div>
-      <style jsx>{`
+      <style jsx global>{`
+        @keyframes scroll {
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            transform: translateX(-100%);
+          }
+        }
+        
+        .scrollbar-hide {
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+        
+        @media (max-width: 768px) {
+          .animate-\[scroll_15s_linear_infinite\] {
+            animation: scroll 20s linear infinite;
+          }
+        }
+        
         @media (hover: hover) and (pointer: fine) {
           .product-card:hover {
             transform: translateY(-8px) !important;

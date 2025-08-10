@@ -156,10 +156,12 @@ export default function Header() {
         </div>
       </div>
       
-      <Dropdown 
-        isOpen={isDropdownOpen} 
-        onClose={() => setIsDropdownOpen(false)} 
-      />
+      {isDropdownOpen && (
+        <Dropdown 
+          isOpen={isDropdownOpen} 
+          onClose={() => setIsDropdownOpen(false)} 
+        />
+      )}
     </header>
   );
 }

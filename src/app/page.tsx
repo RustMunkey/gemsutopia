@@ -27,6 +27,9 @@ export default function Home() {
       <div className="relative z-10 md:z-auto">
         <Hero />
       </div>
+      <div className="relative z-10 md:z-auto">
+        <Featured />
+      </div>
       <div
         className="relative z-10 md:z-auto"
         style={{
@@ -38,7 +41,6 @@ export default function Home() {
         }}
       >
         <About />
-        <Featured />
         <Reviews />
         <FAQ />
       </div>

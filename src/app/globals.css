@@ -119,12 +119,25 @@
   html {
     scroll-behavior: smooth;
     height: 100%;
+    touch-action: pan-y pinch-zoom;
+    overscroll-behavior-x: none;
   }
   body {
     @apply bg-background text-foreground;
     height: 100%;
     overflow: auto;
     -webkit-overflow-scrolling: touch;
+    touch-action: pan-y pinch-zoom;
+    overscroll-behavior-x: none;
+    -webkit-touch-callout: none;
+  }
+  
+  /* Allow text selection on specific elements */
+  input, textarea, [contenteditable] {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
   }
   
   /* Prevent mobile browser chrome from affecting viewport */

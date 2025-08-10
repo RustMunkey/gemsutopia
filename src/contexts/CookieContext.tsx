@@ -31,8 +31,16 @@ export function CookieProvider({ children }: { children: ReactNode }) {
   const [preferences, setPreferences] = useState<CookiePreferences>(defaultPreferences);
   const [hasConsented, setHasConsented] = useState(false);
   const [showBanner, setShowBanner] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  // Set client flag
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
+    if (!isClient) return;
+    
     // Check if user has already made a choice
     const savedPreferences = localStorage.getItem('cookiePreferences');
     const hasConsentedBefore = localStorage.getItem('cookieConsent');
@@ -46,7 +54,7 @@ export function CookieProvider({ children }: { children: ReactNode }) {
       // Show banner if no previous consent
       setShowBanner(true);
     }
-  }, []);
+  }, [isClient]);
 
   const loadGoogleAnalytics = (analyticsEnabled: boolean) => {
     if (analyticsEnabled && typeof window !== 'undefined') {

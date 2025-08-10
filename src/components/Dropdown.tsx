@@ -2,6 +2,8 @@
 import { IconStar, IconX } from '@tabler/icons-react';
 import { ShoppingBag, Store, Info, Mail, HelpCircle } from 'lucide-react';
 import Image from 'next/image';
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 interface DropdownProps {
   isOpen: boolean;
@@ -9,15 +11,20 @@ interface DropdownProps {
 }
 
 export default function Dropdown({ isOpen, onClose }: DropdownProps) {
-  if (!isOpen) return null;
+  const [mounted, setMounted] = useState(false);
 
-  return (
-    <>
-      {/* Dropdown */}
-      <div 
-        className="fixed inset-0 bg-black/50 backdrop-blur-lg z-50 md:hidden transform transition-all duration-300 ease-in-out"
-        onClick={onClose}
-      >
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!isOpen || !mounted) return null;
+
+  const dropdownContent = (
+    <div 
+      className="fixed inset-0 bg-black/50 backdrop-blur-lg md:hidden transform transition-all duration-300 ease-in-out"
+      style={{ zIndex: 999999 }}
+      onClick={onClose}
+    >
         <div className="h-full flex flex-col relative" onClick={(e) => e.stopPropagation()}>
           {/* Header */}
           <div className="absolute top-0 left-0 right-0 bg-black py-3 overflow-hidden z-10">
@@ -117,7 +124,8 @@ export default function Dropdown({ isOpen, onClose }: DropdownProps) {
           </div>
           </div>
         </div>
-      </div>
-    </>
+    </div>
   );
+
+  return createPortal(dropdownContent, document.body);
 }

@@ -12,15 +12,27 @@ export default function Wishlist() {
   const { items, removeItem } = useWishlist();
   const { addItem: addToGemPouch, isInPouch } = useGemPouch();
   return (
-    <div className="bg-black min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col relative">
+      {/* Fixed Background */}
+      <div 
+        className="fixed inset-0 z-0"
+        style={{
+          backgroundImage: "url('/images/whitemarble.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat"
+        }}
+      />
+      
       <Header />
       
-      <div className="flex-grow bg-neutral-100 py-16">
+      <div className="flex-grow py-16 relative z-10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h1 className="text-3xl md:text-4xl font-bold text-black mb-4">Wishlist</h1>
-            <p className="text-lg text-neutral-600">Your saved gemstones and jewelry</p>
-          </div>
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
+            <div className="text-center mb-12">
+              <h1 className="text-3xl md:text-4xl font-bold text-black mb-4">Wishlist</h1>
+              <p className="text-lg text-neutral-600">Your saved gemstones and jewelry</p>
+            </div>
           
           {items.length === 0 ? (
             /* Empty wishlist state */
@@ -32,7 +44,7 @@ export default function Wishlist() {
               <p className="text-neutral-600 mb-8">Save your favorite gems to your wishlist for easy access.</p>
               
               <Link
-                href="/"
+                href="/shop"
                 className="inline-block bg-black text-white py-3 px-8 rounded-full font-semibold hover:bg-neutral-800 transition-colors"
               >
                 Discover Gems
@@ -80,10 +92,13 @@ export default function Wishlist() {
               ))}
             </div>
           )}
+          </div>
         </div>
       </div>
       
-      <Footer />
+      <div className="relative z-10">
+        <Footer />
+      </div>
     </div>
   );
 }

@@ -3,10 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { config } from '@fortawesome/fontawesome-svg-core';
 import '@fortawesome/fontawesome-svg-core/styles.css';
-import { GemPouchProvider } from '../contexts/GemPouchContext';
-import { WishlistProvider } from '../contexts/WishlistContext';
-import { CookieProvider } from '../contexts/CookieContext';
-import CookieBanner from '../components/CookieBanner';
+import ClientLayout from './ClientLayout';
 
 config.autoAddCss = false;
 
@@ -37,15 +34,15 @@ export default function RootLayout({
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black`}
+        style={{ 
+          touchAction: 'pan-y pinch-zoom',
+          overscrollBehaviorX: 'none',
+          WebkitTouchCallout: 'none'
+        }}
       >
-        <CookieProvider>
-          <WishlistProvider>
-            <GemPouchProvider>
-              {children}
-              <CookieBanner />
-            </GemPouchProvider>
-          </WishlistProvider>
-        </CookieProvider>
+        <ClientLayout>
+          {children}
+        </ClientLayout>
       </body>
     </html>
   );

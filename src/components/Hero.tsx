@@ -74,7 +74,7 @@ export default function Hero() {
   // Show loading state or empty state
   if (loading || images.length === 0) {
     return (
-      <section className="bg-black h-[85vh] sm:h-[85vh] md:h-[60vh] lg:h-[calc(100vh-110px)] md:mt-2 flex-shrink-0">
+      <section className="bg-black h-[60vh] sm:h-[50vh] md:h-[60vh] lg:h-[65vh] md:mt-2 flex-shrink-0">
         <div className="w-full h-full flex items-center justify-center">
           {loading ? (
             <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white"></div>
@@ -90,44 +90,79 @@ export default function Hero() {
   }
 
   return (
-    <section className="bg-black h-[85vh] sm:h-[85vh] md:h-[60vh] lg:h-[calc(100vh-110px)] md:mt-2 flex-shrink-0">
+    <section className="bg-black h-[60vh] sm:h-[50vh] md:h-[60vh] lg:h-[65vh] md:mt-2 flex-shrink-0">
         <div className="w-full h-full flex items-center justify-center">
           <div className="w-full h-full flex items-center justify-center relative">
-            {/* Left click area */}
+            {/* Left margin click area - only the margin space */}
             <button 
               onClick={prevSlide}
-              className="absolute left-0 top-0 w-1/2 h-full z-10 bg-transparent cursor-pointer"
+              className="absolute left-0 top-0 w-6 sm:w-2 md:w-24 lg:w-40 h-full z-30 bg-transparent cursor-pointer"
               aria-label="Previous slide"
             />
             
-            {/* Right click area */}
+            {/* Right margin click area - only the margin space */}
             <button 
               onClick={nextSlide}
-              className="absolute right-0 top-0 w-1/2 h-full z-10 bg-transparent cursor-pointer"
+              className="absolute right-0 top-0 w-6 sm:w-2 md:w-24 lg:w-40 h-full z-30 bg-transparent cursor-pointer"
               aria-label="Next slide"
             />
             
-            {/* Slider */}
+            {/* Slider with 3-image preview */}
             <div 
               ref={scrollRef}
-              className="w-full h-full overflow-x-auto snap-x snap-mandatory scrollbar-hide"
+              className="w-full h-full overflow-hidden relative"
             >
-              <div className="flex h-full">
-                {images.map((src, index) => (
-                  <div key={index} className="w-full h-full flex-shrink-0 snap-center px-0 sm:px-0.5 md:px-1 lg:px-2 relative">
+              <div className="flex h-full items-center absolute inset-0">
+                {/* Previous Image - Left side, partially visible */}
+                <div 
+                  className="absolute left-0 top-0 h-full w-1/4 md:w-1/3 opacity-50 transition-all duration-300 z-10"
+                >
+                  <div className="bg-neutral-700 rounded-2xl w-full h-full overflow-hidden relative">
+                    <Image 
+                      src={images[(currentIndex - 1 + images.length) % images.length]} 
+                      alt={`Previous image`}
+                      fill
+                      className="object-cover"
+                      sizes="25vw"
+                      quality={60}
+                    />
+                  </div>
+                </div>
+                
+                {/* Active Image - Center, focused */}
+                <div 
+                  className="absolute inset-0 flex items-center justify-center z-20"
+                >
+                  <div className="w-full h-full px-0 sm:px-0.5 md:px-24 lg:px-40">
                     <div className="bg-neutral-700 rounded-2xl w-full h-full overflow-hidden relative">
                       <Image 
-                        src={src} 
-                        alt={`Hero image ${index + 1}`}
+                        src={images[currentIndex]} 
+                        alt={`Hero image ${currentIndex + 1}`}
                         fill
                         className="object-cover"
-                        priority={index === 0}
+                        priority
                         sizes="100vw"
                         quality={75}
                       />
                     </div>
                   </div>
-                ))}
+                </div>
+                
+                {/* Next Image - Right side, partially visible */}
+                <div 
+                  className="absolute right-0 top-0 h-full w-1/4 md:w-1/3 opacity-50 transition-all duration-300 z-10"
+                >
+                  <div className="bg-neutral-700 rounded-2xl w-full h-full overflow-hidden relative">
+                    <Image 
+                      src={images[(currentIndex + 1) % images.length]} 
+                      alt={`Next image`}
+                      fill
+                      className="object-cover"
+                      sizes="25vw"
+                      quality={60}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
             
