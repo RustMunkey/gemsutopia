@@ -35,8 +35,8 @@ export default function GemPouch() {
           {items.length === 0 ? (
             /* Empty cart state */
             <div className="text-center py-16">
-              <div className="w-24 h-24 bg-neutral-300 rounded-full flex items-center justify-center mx-auto mb-6">
-                <ShoppingBag className="h-10 w-10 text-neutral-500" strokeWidth={2} />
+              <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto mb-6" style={{filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))'}}>
+                <ShoppingBag className="h-10 w-10 text-black" strokeWidth={2} />
               </div>
               <h2 className="text-2xl font-semibold text-black mb-4">Your gem pouch is empty</h2>
               <p className="text-neutral-600 mb-8">Looks like you haven&apos;t added any gems to your pouch yet.</p>

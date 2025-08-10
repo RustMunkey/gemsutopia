@@ -98,7 +98,7 @@ export default function ProductContent({ productId, productImage }: ProductConte
   };
 
   return (
-    <div className="flex-grow bg-neutral-100 py-8 md:py-16">
+    <div className="flex-grow py-8 md:py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
           {/* Product Image */}

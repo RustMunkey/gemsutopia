@@ -19,7 +19,7 @@ export default function Footer() {
             className="w-auto h-6 object-contain"
           />
           <div className="flex gap-4">
-            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-white text-xl hover:text-gray-300 transition-colors">
+            <a href="https://www.instagram.com/shop.gemsutopia?igsh=OHU4aDdmbHp6eXhp&utm_source=qr" target="_blank" rel="noopener noreferrer" className="text-white text-xl hover:text-gray-300 transition-colors">
               <FontAwesomeIcon icon={faInstagram} />
             </a>
             <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-white text-xl hover:text-gray-300 transition-colors">
