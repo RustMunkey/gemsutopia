@@ -27,7 +27,7 @@ export default function PrivacyPolicy() {
             
             <div className="prose prose-lg max-w-none text-neutral-700 space-y-8">
               <p className="text-lg mb-6">
-                This Privacy Policy describes how and when Gemsutopia ("I", "me", "my") collects, uses, and shares information when you purchase an item from Gemsutopia (Gemsutopia.ca) contact me, or otherwise use my services through this site.
+                This Privacy Policy describes how and when Gemsutopia (&quot;I&quot;, &quot;me&quot;, &quot;my&quot;) collects, uses, and shares information when you purchase an item from Gemsutopia (Gemsutopia.ca) contact me, or otherwise use my services through this site.
               </p>
               
               <p className="mb-6">
@@ -49,7 +49,7 @@ export default function PrivacyPolicy() {
             <section>
               <h2 className="text-2xl font-bold text-black mb-4">Information I Collect</h2>
               <p>
-                To fulfill your order, you must provide me with certain information such as your name, e-mail address, postal address, payment information, and the details of the product that you're ordering. You may also choose to provide me with additional personal information from time to time if you contact me directly.
+                To fulfill your order, you must provide me with certain information such as your name, e-mail address, postal address, payment information, and the details of the product that you&apos;re ordering. You may also choose to provide me with additional personal information from time to time if you contact me directly.
               </p>
             </section>
 
@@ -67,7 +67,7 @@ export default function PrivacyPolicy() {
             <section>
               <h2 className="text-2xl font-bold text-black mb-4">Information Sharing and Disclosure</h2>
               <p className="mb-4">
-                Protecting my customers' personal information is crucially important to my business and something I take very seriously. For these reasons, I share your personal information only for very limited reasons and in limited circumstances, as follows:
+                Protecting my customers&apos; personal information is crucially important to my business and something I take very seriously. For these reasons, I share your personal information only for very limited reasons and in limited circumstances, as follows:
               </p>
               <ul className="list-disc ml-6 space-y-4">
                 <li>

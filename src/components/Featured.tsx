@@ -2,10 +2,6 @@
 import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { ShoppingBag, Check } from 'lucide-react';
-import { IconStar, IconStarFilled } from '@tabler/icons-react';
-import { useGemPouch } from '../contexts/GemPouchContext';
-import { useWishlist } from '../contexts/WishlistContext';
 import { useCMSContent } from '@/hooks/useCMSContent';
 import { extractVibrantColor } from '@/utils/colorExtraction';
 
@@ -28,15 +24,12 @@ interface Product {
 
 export default function Featured() {
   const router = useRouter();
-  const { addItem, removeItem, isInPouch } = useGemPouch();
-  const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist();
   const { getContent } = useCMSContent();
-  const [products, setProducts] = useState<Product[]>([]);
   const [productColors, setProductColors] = useState<{ [key: number]: string }>({});
   const [isClient, setIsClient] = useState(false);
   const [translateX, setTranslateX] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const animationRef = useRef<number>();
+  const animationRef = useRef<number | undefined>();
   const startTimeRef = useRef<number>(0);
   
   // Use exact shop page product structure
@@ -67,21 +60,6 @@ export default function Featured() {
     setIsClient(true);
   }, []);
 
-  useEffect(() => {
-    fetchProducts();
-    
-    // Listen for product updates from dashboard
-    const handleProductsUpdated = () => {
-      fetchProducts();
-    };
-    
-    window.addEventListener('products-updated', handleProductsUpdated);
-    
-    return () => {
-      window.removeEventListener('products-updated', handleProductsUpdated);
-    };
-  }, []);
-
   // Extract colors from product images (only on client side)
   useEffect(() => {
     if (!isClient) return;
@@ -104,56 +82,6 @@ export default function Featured() {
     extractColors();
   }, [isClient]);
 
-  const fetchProducts = async () => {
-    try {
-      const response = await fetch('/api/products?featured=true');
-      const data = await response.json();
-      
-      if (data.success) {
-        setProducts(data.products || []);
-      }
-    } catch (error) {
-      console.error('Error fetching products:', error);
-    }
-  };
-
-  const toggleWishlist = (productId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const product = products.find(p => p.id === productId);
-    if (!product) return;
-    
-    const productData = {
-      id: parseInt(productId),
-      name: product.name,
-      price: product.price,
-      image: product.images[0] || ''
-    };
-    
-    if (isInWishlist(parseInt(productId))) {
-      removeFromWishlist(parseInt(productId));
-    } else {
-      addToWishlist(productData);
-    }
-  };
-  
-  const toggleGemPouch = (productId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const product = products.find(p => p.id === productId);
-    if (!product) return;
-    
-    const productData = {
-      id: parseInt(productId),
-      name: product.name,
-      price: product.price,
-      image: product.images[0] || ''
-    };
-    
-    if (isInPouch(parseInt(productId))) {
-      removeItem(parseInt(productId));
-    } else {
-      addItem(productData);
-    }
-  };
   
   // Simple automatic infinite scroll animation
   useEffect(() => {
@@ -233,7 +161,6 @@ export default function Featured() {
           {productsToShow.concat(productsToShow).concat(productsToShow).map((product, index) => {
             // Add unique key for infinite scroll duplicates
             const cardColor = isClient ? (productColors[product.id] || '#1f2937') : '#1f2937';
-            const discountPercent = Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
             
             return (
               <div key={`${product.id}-${index}`} className="inline-block flex-shrink-0 w-[calc(50vw-0.75rem)] md:w-[calc(33.33vw-1rem)] lg:w-[calc(25vw-1rem)] mx-2 md:mx-3">
