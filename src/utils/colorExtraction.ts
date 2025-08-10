@@ -86,7 +86,7 @@ export const extractVibrantColor = (imageSrc: string): Promise<string> => {
         }
         
         resolve(bestColor);
-      } catch (e) {
+      } catch {
         resolve('#1f2937'); // fallback
       }
     };

@@ -5,22 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useCMSContent } from '@/hooks/useCMSContent';
 import { extractVibrantColor } from '@/utils/colorExtraction';
 
-interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  sale_price?: number;
-  images: string[];
-  on_sale: boolean;
-  featured: boolean;
-  metadata: {
-    card_color?: string;
-    card_gradient_from?: string;
-    card_gradient_to?: string;
-    use_gradient?: boolean;
-  };
-}
 
 export default function Featured() {
   const router = useRouter();
@@ -29,7 +13,7 @@ export default function Featured() {
   const [isClient, setIsClient] = useState(false);
   const [translateX, setTranslateX] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const animationRef = useRef<number | undefined>();
+  const animationRef = useRef<number | undefined>(undefined);
   const startTimeRef = useRef<number>(0);
   
   // Use exact shop page product structure
