@@ -415,55 +415,107 @@ export default function Reviews() {
     <section className="relative z-10 py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-black mb-4">See What Customers are Saying!</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-black mb-4">Reviews From Our Friends!</h2>
           <p className="text-lg text-neutral-600 max-w-2xl mx-auto">
             See what our customers are saying about our authentic gemstone collection
           </p>
         </div>
       </div>
         
-      {/* Infinite Scrolling Reviews - Full Width */}
-      <div className="overflow-hidden py-4">
-        <div className="flex animate-[scroll_20s_linear_infinite] hover:[animation-play-state:paused]">
-          {/* First set of reviews */}
-          {(reviews.length > 0 ? reviews.concat(reviews) : fallbackReviews.concat(fallbackReviews)).map((review, index) => {
-            const displayName = 'customer_name' in review ? review.customer_name : review.name;
-            const displayContent = 'content' in review ? review.content : review.text;
-            const isVerified = 'is_approved' in review ? review.is_approved : review.verified;
-            
+      {/* Reviews Display */}
+      <div className="py-4">
+        {(() => {
+          const displayReviews = reviews.length > 0 ? reviews : fallbackReviews;
+          const shouldCenter = displayReviews.length <= 4;
+          
+          if (shouldCenter) {
+            // Centered layout for 4 or fewer items
             return (
-              <div key={index} className="inline-block flex-shrink-0 w-80 mx-4">
-                <div className="bg-white rounded-2xl p-4 shadow-lg drop-shadow-lg">
-                  <div className="flex items-center mb-3">
-                    <div className="flex-shrink-0 w-10 h-10 bg-black rounded-full flex items-center justify-center">
-                      <span className="text-white font-semibold text-sm">
-                        {displayName[0]}
-                      </span>
-                    </div>
-                    <div className="ml-3">
-                      <h3 className="font-semibold text-black text-sm">{displayName}</h3>
-                      <div className="flex items-center">
-                        {[...Array(review.rating)].map((_, i) => (
-                          <span key={i} className="text-yellow-400 text-sm">★</span>
-                        ))}
-                        {isVerified && (
-                          <span className="ml-2 text-xs text-green-600 font-medium">✓ Verified</span>
-                        )}
+              <div className="flex justify-center items-stretch gap-4 flex-wrap max-w-6xl mx-auto px-4">
+                {displayReviews.map((review, index) => {
+                  const displayName = 'customer_name' in review ? review.customer_name : review.name;
+                  const displayContent = 'content' in review ? review.content : review.text;
+                  const isVerified = 'is_approved' in review ? review.is_approved : review.verified;
+                  
+                  return (
+                    <div key={index} className="flex-shrink-0 w-80">
+                      <div className="bg-white rounded-2xl p-4 shadow-lg drop-shadow-lg h-[140px] flex flex-col">
+                        <div className="flex items-center mb-3">
+                          <div className="flex-shrink-0 w-10 h-10 bg-black rounded-full flex items-center justify-center">
+                            <span className="text-white font-semibold text-sm">
+                              {displayName[0]}
+                            </span>
+                          </div>
+                          <div className="ml-3">
+                            <h3 className="font-semibold text-black text-sm">{displayName}</h3>
+                            <div className="flex items-center">
+                              {[...Array(review.rating)].map((_, i) => (
+                                <span key={i} className="text-yellow-400 text-sm">★</span>
+                              ))}
+                              {isVerified && (
+                                <span className="ml-2 text-xs text-green-600 font-medium">✓ Verified</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <p className="text-neutral-700 leading-relaxed text-xs flex-grow overflow-hidden">
+                          {displayContent.length > 120 ? `${displayContent.substring(0, 120)}...` : displayContent}
+                        </p>
                       </div>
                     </div>
-                  </div>
-                  <p className="text-neutral-700 leading-relaxed text-xs">{displayContent}</p>
+                  );
+                })}
+              </div>
+            );
+          } else {
+            // Scrolling layout for more than 4 items
+            return (
+              <div className="overflow-hidden">
+                <div className="flex animate-[scroll_20s_linear_infinite] hover:[animation-play-state:paused]">
+                  {displayReviews.concat(displayReviews).map((review, index) => {
+                    const displayName = 'customer_name' in review ? review.customer_name : review.name;
+                    const displayContent = 'content' in review ? review.content : review.text;
+                    const isVerified = 'is_approved' in review ? review.is_approved : review.verified;
+                    
+                    return (
+                      <div key={index} className="inline-block flex-shrink-0 w-80 mx-4">
+                        <div className="bg-white rounded-2xl p-4 shadow-lg drop-shadow-lg h-[140px] flex flex-col">
+                          <div className="flex items-center mb-3">
+                            <div className="flex-shrink-0 w-10 h-10 bg-black rounded-full flex items-center justify-center">
+                              <span className="text-white font-semibold text-sm">
+                                {displayName[0]}
+                              </span>
+                            </div>
+                            <div className="ml-3">
+                              <h3 className="font-semibold text-black text-sm">{displayName}</h3>
+                              <div className="flex items-center">
+                                {[...Array(review.rating)].map((_, i) => (
+                                  <span key={i} className="text-yellow-400 text-sm">★</span>
+                                ))}
+                                {isVerified && (
+                                  <span className="ml-2 text-xs text-green-600 font-medium">✓ Verified</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <p className="text-neutral-700 leading-relaxed text-xs flex-grow overflow-hidden">
+                            {displayContent.length > 120 ? `${displayContent.substring(0, 120)}...` : displayContent}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             );
-          })}
-        </div>
+          }
+        })()}
       </div>
 
       {/* Leave a Review Section */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mt-16">
         <div className="text-center">
-          <h3 className="text-3xl font-bold text-black mb-6">Leave a Review!</h3>
+          <h3 className="text-3xl md:text-4xl font-bold text-black mb-6">Leave a Review!</h3>
           
           {/* 5 Stars */}
           <div className="flex justify-center mb-8">

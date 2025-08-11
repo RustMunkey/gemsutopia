@@ -12,6 +12,7 @@ interface GemPouchContextType {
   items: GemPouchItem[];
   addItem: (item: GemPouchItem) => void;
   removeItem: (id: number) => void;
+  clearPouch: () => void;
   isInPouch: (id: number) => boolean;
   itemCount: number;
 }
@@ -57,6 +58,10 @@ export function GemPouchProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const clearPouch = () => {
+    setItems([]);
+  };
+
   const isInPouch = (id: number) => {
     return items.some(item => item.id === id);
   };
@@ -68,6 +73,7 @@ export function GemPouchProvider({ children }: { children: ReactNode }) {
       items,
       addItem,
       removeItem,
+      clearPouch,
       isInPouch,
       itemCount
     }}>

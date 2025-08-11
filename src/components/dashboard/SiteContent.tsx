@@ -3,6 +3,11 @@ import { useState, useEffect } from 'react';
 import { Edit2, X, ImageIcon, Type, Code, Package } from 'lucide-react';
 import Image from 'next/image';
 import { SiteContent, Product } from '@/lib/types/database';
+import FeaturedProductsManager from './FeaturedProductsManager';
+import StatsManager from './StatsManager';
+import GemFactsManager from './GemFactsManager';
+import FAQManager from './FAQManager';
+import QuotesManager from './QuotesManager';
 
 export default function SiteContentManager() {
   const [content, setContent] = useState<SiteContent[]>([]);
@@ -416,7 +421,7 @@ export default function SiteContentManager() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white">Site Content</h1>
-        <p className="text-slate-400">Edit your website content - click the edit button on any item to make changes</p>
+        <p className="text-slate-400">Edit your front page content - manage hero images, featured products, about section, and more</p>
       </div>
 
       <div className="space-y-6">
@@ -585,6 +590,61 @@ export default function SiteContentManager() {
                   
                   {/* Featured Products Management */}
                   <FeaturedProductsManager />
+                </div>
+              ) : sectionId === 'about' ? (
+                <div className="space-y-6">
+                  {/* About Section Text Content */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {sectionItems.map((item) => {
+                      const currentValue = getContentValue(item.section, item.key);
+                      const ContentIcon = getContentTypeIcon(item.type);
+                      
+                      return (
+                        <div key={`${item.section}-${item.key}`} className="bg-white/5 rounded-lg border border-white/10 p-4">
+                          <div className="flex items-center gap-3 mb-3">
+                            <ContentIcon className="h-4 w-4 text-slate-400" />
+                            <div className="flex-1">
+                              <p className="font-medium text-white text-sm">{item.label}</p>
+                              <p className="text-xs text-slate-400">{item.description}</p>
+                            </div>
+                            <button
+                              onClick={() => setEditingItem({ 
+                                id: content.find(c => c.section === item.section && c.key === item.key)?.id || '',
+                                section: item.section,
+                                key: item.key,
+                                content_type: item.type as SiteContent['content_type'],
+                                value: currentValue,
+                                metadata: {},
+                                is_active: true,
+                                created_at: '',
+                                updated_at: ''
+                              })}
+                              className="p-1 text-slate-400 hover:text-white"
+                              title={`Edit ${item.label}`}
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                          
+                          <div className="text-sm text-slate-300 bg-black/20 rounded p-2 border border-white/5">
+                            {currentValue || <span className="text-slate-500 italic">Not set</span>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  
+                  {/* Stats Management */}
+                  <StatsManager />
+                  
+                  {/* Gem Facts Management */}
+                  <GemFactsManager />
+                  
+                  {/* FAQ Management */}
+                  <FAQManager />
+                  
+                  {/* Quotes Management */}
+                  <QuotesManager />
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -958,526 +1018,5 @@ function AddContentModal({ onClose, onSave }: {
   );
 }
 
-function FeaturedProductsManager() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [showAddModal, setShowAddModal] = useState(false);
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  const fetchProducts = async () => {
-    try {
-      const token = localStorage.getItem('admin-token');
-      const response = await fetch('/api/products', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      const data = await response.json();
-      
-      if (data.success) {
-        setProducts(data.products || []);
-      }
-    } catch (error) {
-      console.error('Error fetching products:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const deleteProduct = async (productId: string) => {
-    if (!confirm('Are you sure you want to delete this product?')) return;
-
-    try {
-      const token = localStorage.getItem('admin-token');
-      const response = await fetch(`/api/products/${productId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        fetchProducts();
-        // Trigger event to refresh frontend products
-        window.dispatchEvent(new CustomEvent('products-updated'));
-      } else {
-        alert(data.message || 'Failed to delete product');
-      }
-    } catch (error) {
-      console.error('Error deleting product:', error);
-      alert('Failed to delete product');
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="bg-gradient-to-br from-black to-gray-900 rounded-2xl border border-white/20 p-6">
-        <div className="flex items-center justify-center h-32">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="bg-black rounded-2xl border border-white/20 p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h3 className="text-xl font-semibold text-white">Featured Products</h3>
-          <p className="text-slate-400">Manage your featured product cards</p>
-        </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="px-4 py-2 bg-white hover:bg-gray-200 text-black rounded-lg font-medium transition-colors"
-        >
-          Add Product
-        </button>
-      </div>
-
-      {products.length === 0 ? (
-        <div className="text-center py-12 text-slate-400 bg-white/5 rounded-lg border border-white/10">
-          <Package className="h-12 w-12 mx-auto mb-3 opacity-50" />
-          <p className="text-lg">No featured products yet</p>
-          <p className="text-sm mt-1">Click &quot;Add Product&quot; to create your first featured product</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {products.map((product) => (
-            <div key={product.id} className="bg-white/5 rounded-lg border border-white/10 overflow-hidden">
-              <div className="aspect-square bg-slate-700 overflow-hidden relative">
-                {product.images && product.images.length > 0 ? (
-                  <Image
-                    src={product.images[0]}
-                    alt={product.name}
-                    fill
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-slate-400">
-                    <ImageIcon className="h-12 w-12" />
-                  </div>
-                )}
-                <div 
-                  className="absolute inset-0 opacity-20"
-                  style={product.metadata?.use_gradient 
-                    ? { background: `linear-gradient(to right, ${product.metadata?.card_gradient_from || '#9333ea'}, ${product.metadata?.card_gradient_to || '#db2777'})` }
-                    : { backgroundColor: product.metadata?.card_color || '#000000' }
-                  }
-                />
-              </div>
-              
-              <div className="p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <h4 className="font-medium text-white truncate flex-1 mr-2">{product.name}</h4>
-                  {product.on_sale && (
-                    <span className="bg-red-500 text-white text-xs px-2 py-1 rounded">SALE</span>
-                  )}
-                </div>
-                
-                <p className="text-sm text-slate-300 line-clamp-2 mb-3">{product.description}</p>
-                
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    {product.on_sale && product.sale_price && (
-                      <span className="text-xs text-slate-400 line-through">${product.price}</span>
-                    )}
-                    <span className="text-sm font-bold text-white">${product.on_sale && product.sale_price ? product.sale_price : product.price}</span>
-                  </div>
-                </div>
-                
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setEditingProduct(product)}
-                    className="flex-1 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded text-sm transition-colors"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => deleteProduct(product.id)}
-                    className="px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded text-sm transition-colors"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {editingProduct && (
-        <ProductModal
-          product={editingProduct}
-          onClose={() => setEditingProduct(null)}
-          onSave={() => {
-            fetchProducts();
-            setEditingProduct(null);
-            // Trigger event to refresh frontend products
-            window.dispatchEvent(new CustomEvent('products-updated'));
-          }}
-        />
-      )}
-
-      {showAddModal && (
-        <ProductModal
-          product={null}
-          onClose={() => setShowAddModal(false)}
-          onSave={() => {
-            fetchProducts();
-            setShowAddModal(false);
-            // Trigger event to refresh frontend products
-            window.dispatchEvent(new CustomEvent('products-updated'));
-          }}
-        />
-      )}
-    </div>
-  );
-}
-
-function ProductModal({ product, onClose, onSave }: {
-  product: Product | null;
-  onClose: () => void;
-  onSave: () => void;
-}) {
-  const [formData, setFormData] = useState({
-    name: product?.name || '',
-    description: product?.description || '',
-    price: product?.price?.toString() || '',
-    original_price: product?.sale_price?.toString() || '',
-    image: (product?.images && product.images[0]) || '',
-    card_color: product?.metadata?.card_color || '#000000',
-    card_gradient_from: product?.metadata?.card_gradient_from || '#9333ea',
-    card_gradient_to: product?.metadata?.card_gradient_to || '#db2777',
-    use_gradient: product?.metadata?.use_gradient || false,
-    on_sale: product?.on_sale || false,
-    is_featured: product?.featured ?? true,
-    category: product?.category || 'featured'
-  });
-  const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
-
-  const handleImageUpload = async (file: File) => {
-    try {
-      setUploading(true);
-      const token = localStorage.getItem('admin-token');
-      
-      const formDataUpload = new FormData();
-      formDataUpload.append('file', file);
-      formDataUpload.append('folder', 'products');
-
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formDataUpload
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        setFormData(prev => ({ ...prev, image: data.url }));
-      } else {
-        alert('Failed to upload image');
-      }
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      alert('Failed to upload image');
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      const token = localStorage.getItem('admin-token');
-      const url = product ? `/api/products/${product.id}` : '/api/products';
-      const method = product ? 'PUT' : 'POST';
-
-      // Map form data to API format
-      const apiData = {
-        name: formData.name,
-        description: formData.description,
-        price: parseFloat(formData.price),
-        sale_price: formData.original_price ? parseFloat(formData.original_price) : null,
-        on_sale: formData.on_sale,
-        category: formData.category,
-        images: formData.image ? [formData.image] : [],
-        featured: formData.is_featured,
-        is_active: true,
-        metadata: {
-          card_color: formData.card_color,
-          card_gradient_from: formData.card_gradient_from,
-          card_gradient_to: formData.card_gradient_to,
-          use_gradient: formData.use_gradient
-        }
-      };
-
-      console.log('Sending API data:', apiData);
-      console.log('Token exists:', !!token);
-      console.log('URL:', url);
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(apiData)
-      });
-
-      console.log('Response status:', response.status);
-      
-      let data;
-      try {
-        const responseText = await response.text();
-        console.log('Response text:', responseText);
-        data = responseText ? JSON.parse(responseText) : {};
-      } catch (error) {
-        console.error('Error parsing response:', error);
-        alert('Failed to parse server response');
-        setLoading(false);
-        return;
-      }
-      
-      if (data.success) {
-        onSave();
-      } else {
-        alert(`Failed to ${product ? 'update' : 'create'} product: ${data.message || 'Unknown error'}`);
-      }
-    } catch (error) {
-      console.error(`Error ${product ? 'updating' : 'creating'} product:`, error);
-      alert(`Failed to ${product ? 'update' : 'create'} product`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-black border border-white/20 rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-white">
-            {product ? 'Edit Product' : 'Add Product'}
-          </h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-white">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Product Name *
-              </label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-white"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Price *
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                value={formData.price}
-                onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
-                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-white"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Category *
-              </label>
-              <select
-                value={formData.category}
-                onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-white"
-                required
-              >
-                <option value="featured">Featured</option>
-                <option value="rings">Rings</option>
-                <option value="necklaces">Necklaces</option>
-                <option value="bracelets">Bracelets</option>
-                <option value="earrings">Earrings</option>
-                <option value="raw-stones">Raw Stones</option>
-                <option value="crystals">Crystals</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Description
-            </label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              rows={3}
-              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-white"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Original Price (for sale)
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              value={formData.original_price}
-              onChange={(e) => setFormData(prev => ({ ...prev, original_price: e.target.value }))}
-              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-white"
-            />
-          </div>
-
-          {/* Card Background Section */}
-          <div className="space-y-4">
-            <h4 className="text-lg font-medium text-white">Card Background</h4>
-            
-            <div className="mb-4">
-              <div className="flex items-center gap-2 mb-3">
-                <input
-                  type="checkbox"
-                  id="use_gradient"
-                  checked={formData.use_gradient}
-                  onChange={(e) => setFormData(prev => ({ ...prev, use_gradient: e.target.checked }))}
-                  className="w-4 h-4 rounded"
-                />
-                <label htmlFor="use_gradient" className="text-sm font-medium text-slate-300">
-                  Use Gradient Background
-                </label>
-              </div>
-            </div>
-            
-            {formData.use_gradient ? (
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
-                    Gradient Start Color
-                  </label>
-                  <input
-                    type="color"
-                    value={formData.card_gradient_from}
-                    onChange={(e) => setFormData(prev => ({ ...prev, card_gradient_from: e.target.value }))}
-                    className="w-full h-10 bg-white/5 border border-white/10 rounded-lg cursor-pointer"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
-                    Gradient End Color
-                  </label>
-                  <input
-                    type="color"
-                    value={formData.card_gradient_to}
-                    onChange={(e) => setFormData(prev => ({ ...prev, card_gradient_to: e.target.value }))}
-                    className="w-full h-10 bg-white/5 border border-white/10 rounded-lg cursor-pointer"
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Background Color
-                </label>
-                <input
-                  type="color"
-                  value={formData.card_color}
-                  onChange={(e) => setFormData(prev => ({ ...prev, card_color: e.target.value }))}
-                  className="w-full h-10 bg-white/5 border border-white/10 rounded-lg cursor-pointer"
-                />
-              </div>
-            )}
-            
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Preview
-              </label>
-              <div 
-                className="w-full h-10 rounded-lg border border-white/10"
-                style={formData.use_gradient 
-                  ? { background: `linear-gradient(to right, ${formData.card_gradient_from}, ${formData.card_gradient_to})` }
-                  : { backgroundColor: formData.card_color || '#000000' }
-                }
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Product Image
-            </label>
-            <div className="space-y-2">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0])}
-                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:bg-white file:text-black hover:file:bg-gray-200"
-                disabled={uploading}
-              />
-              {uploading && <p className="text-sm text-white">Uploading...</p>}
-              {formData.image && (
-                <div className="mt-2">
-                  <Image src={formData.image} alt="Preview" width={80} height={80} className="h-20 w-20 object-cover rounded" />
-                </div>
-              )}
-            </div>
-          </div>
-
-
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="on_sale"
-                checked={formData.on_sale}
-                onChange={(e) => setFormData(prev => ({ ...prev, on_sale: e.target.checked }))}
-                className="rounded"
-              />
-              <label htmlFor="on_sale" className="text-sm text-slate-300">
-                On Sale
-              </label>
-            </div>
-          </div>
-
-          <div className="flex gap-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={loading}
-              className="flex-1 px-4 py-2 text-slate-400 hover:text-white disabled:opacity-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading || uploading}
-              className="flex-1 px-4 py-2 bg-white hover:bg-gray-200 disabled:bg-gray-400 text-black rounded-lg font-medium"
-            >
-              {loading ? 'Saving...' : (product ? 'Update Product' : 'Create Product')}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
 

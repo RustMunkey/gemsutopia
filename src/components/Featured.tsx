@@ -5,56 +5,76 @@ import { useRouter } from 'next/navigation';
 import { useCMSContent } from '@/hooks/useCMSContent';
 import { extractVibrantColor } from '@/utils/colorExtraction';
 
+interface FeaturedProduct {
+  id: string;
+  name: string;
+  type: string;
+  description: string;
+  image_url: string;
+  card_color?: string;
+  price: number;
+  original_price: number;
+  product_id?: number;
+  sort_order: number;
+  is_active: boolean;
+}
 
 export default function Featured() {
   const router = useRouter();
   const { getContent } = useCMSContent();
-  const [productColors, setProductColors] = useState<{ [key: number]: string }>({});
+  const [featuredProducts, setFeaturedProducts] = useState<FeaturedProduct[]>([]);
+  const [productColors, setProductColors] = useState<{ [key: string]: string }>({});
   const [isClient, setIsClient] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [translateX, setTranslateX] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const animationRef = useRef<number | undefined>(undefined);
   const startTimeRef = useRef<number>(0);
-  
-  // Use exact shop page product structure
-  const shopProducts = [
-    { id: 1, name: 'Alberta Sapphire', type: 'sapphire', price: 299, originalPrice: 399, image: '/images/Review1.jpg' },
-    { id: 2, name: 'Canadian Peridot', type: 'peridot', price: 199, originalPrice: 249, image: '/images/Review2.jpg' },
-    { id: 3, name: 'Ammolite Gem', type: 'ammolite', price: 459, originalPrice: 599, image: '/images/Review3.jpg' },
-    { id: 4, name: 'Blue Jay Sapphire', type: 'sapphire', price: 349, originalPrice: 449, image: '/images/Review4.jpg' },
-    { id: 5, name: 'Alberta Garnet', type: 'garnet', price: 179, originalPrice: 229, image: '/images/Review5.jpg' },
-    { id: 6, name: 'Canadian Quartz', type: 'quartz', price: 129, originalPrice: 169, image: '/images/Review6.jpg' },
-    { id: 7, name: 'Prairie Agate', type: 'agate', price: 89, originalPrice: 119, image: '/images/Review7.jpg' },
-    { id: 8, name: 'Rocky Mountain Jasper', type: 'jasper', price: 99, originalPrice: 129, image: '/images/Review8.jpg' },
-    { id: 9, name: 'Alberta Amethyst', type: 'amethyst', price: 219, originalPrice: 289, image: '/images/Review9.jpg' },
-    { id: 10, name: 'Canadian Topaz', type: 'topaz', price: 259, originalPrice: 329, image: '/images/Review10.jpg' },
-    { id: 11, name: 'Northern Opal', type: 'opal', price: 389, originalPrice: 519, image: '/images/Review12.jpg' },
-    { id: 12, name: 'Foothills Tourmaline', type: 'tourmaline', price: 299, originalPrice: 399, image: '/images/Review13.jpg' },
-    { id: 13, name: 'Prairie Moonstone', type: 'moonstone', price: 169, originalPrice: 219, image: '/images/Review14.jpg' },
-    { id: 14, name: 'Canadian Labradorite', type: 'labradorite', price: 149, originalPrice: 199, image: '/images/8680a65c-0c82-4529-a8f2-a051344e565a.webp' },
-    { id: 15, name: 'Alberta Citrine', type: 'citrine', price: 139, originalPrice: 179, image: '/images/c07009ff-cd86-45d0-858e-441993683280.webp' },
-    { id: 16, name: 'Mountain Jade', type: 'jade', price: 229, originalPrice: 299, image: '/images/Review-5.jpg' }
-  ];
-
-  // Use shop products for scrolling
-  const productsToShow = shopProducts;
   
   // Set client-side flag
   useEffect(() => {
     setIsClient(true);
   }, []);
 
+  // Fetch featured products from database
+  useEffect(() => {
+    const fetchFeaturedProducts = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch('/api/featured-products');
+        if (!response.ok) {
+          throw new Error('Failed to fetch featured products');
+        }
+        const data = await response.json();
+        setFeaturedProducts(data);
+      } catch (error) {
+        console.error('Error fetching featured products:', error);
+        // Fallback to empty array
+        setFeaturedProducts([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchFeaturedProducts();
+  }, []);
+
   // Extract colors from product images (only on client side)
   useEffect(() => {
-    if (!isClient) return;
+    if (!isClient || featuredProducts.length === 0) return;
     
     const extractColors = async () => {
-      const colors: { [key: number]: string } = {};
+      const colors: { [key: string]: string } = {};
       
-      for (const product of productsToShow) {
+      for (const product of featuredProducts) {
         try {
-          const color = await extractVibrantColor(product.image);
-          colors[product.id] = color;
+          // Use custom card_color if set, otherwise extract from image
+          if (product.card_color) {
+            colors[product.id] = product.card_color;
+          } else {
+            const color = await extractVibrantColor(product.image_url);
+            colors[product.id] = color;
+          }
         } catch (error) {
           colors[product.id] = '#1f2937'; // fallback
         }
@@ -64,12 +84,11 @@ export default function Featured() {
     };
     
     extractColors();
-  }, [isClient]);
+  }, [isClient, featuredProducts]);
 
-  
   // Simple automatic infinite scroll animation
   useEffect(() => {
-    if (!isClient) return;
+    if (!isClient || featuredProducts.length === 0) return;
     
     startTimeRef.current = Date.now(); // Set start time only on client
     
@@ -90,7 +109,7 @@ export default function Featured() {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [isClient]);
+  }, [isClient, featuredProducts]);
 
   // Calculate normalized translate position for infinite loop
   const [cardWidth, setCardWidth] = useState(400);
@@ -114,8 +133,47 @@ export default function Featured() {
       window.removeEventListener('resize', calculateCardWidth);
     };
   }, [isClient]);
-  const oneSetWidth = productsToShow.length * cardWidth;
-  const normalizedTranslateX = ((translateX % oneSetWidth) + oneSetWidth) % oneSetWidth - oneSetWidth;
+
+  const oneSetWidth = featuredProducts.length * cardWidth;
+  const normalizedTranslateX = oneSetWidth > 0 ? 
+    ((translateX % oneSetWidth) + oneSetWidth) % oneSetWidth - oneSetWidth : 0;
+
+  if (isLoading) {
+    return (
+      <section className="bg-black py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              {getContent('featured', 'section_title') || 'Featured Gems'}
+            </h2>
+            <p className="text-lg text-neutral-300 max-w-2xl mx-auto">
+              {getContent('featured', 'section_subtitle') || 'Discover our curated collection of premium gemstones'}
+            </p>
+          </div>
+          <div className="flex justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (featuredProducts.length === 0) {
+    return (
+      <section className="bg-black py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              {getContent('featured', 'section_title') || 'Featured Gems'}
+            </h2>
+            <p className="text-lg text-neutral-300">
+              No featured products available at the moment.
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="bg-black py-16">
@@ -130,63 +188,124 @@ export default function Featured() {
         </div>
       </div>
         
-      {/* Infinite Scrolling Cards - Full Width */}
-      <div className="overflow-hidden py-4 -mx-4 sm:-mx-6 lg:-mx-8">
-        <div 
-          ref={scrollContainerRef}
-          className="flex"
-          style={{
-            transform: `translateX(${normalizedTranslateX}px)`,
-            willChange: 'transform',
-            width: 'max-content'
-          }}
-        >
-          {/* Triple the products for seamless infinite scroll */}
-          {productsToShow.concat(productsToShow).concat(productsToShow).map((product, index) => {
-            // Add unique key for infinite scroll duplicates
-            const cardColor = isClient ? (productColors[product.id] || '#1f2937') : '#1f2937';
-            
+      {/* Featured Products Display */}
+      <div className="py-4 -mx-4 sm:-mx-6 lg:-mx-8">
+        {(() => {
+          const shouldCenter = featuredProducts.length <= 4;
+          
+          if (shouldCenter) {
+            // Centered layout for 4 or fewer items
             return (
-              <div key={`${product.id}-${index}`} className="inline-block flex-shrink-0 w-[calc(50vw-0.75rem)] md:w-[calc(33.33vw-1rem)] lg:w-[calc(25vw-1rem)] mx-2 md:mx-3">
+              <div className="flex justify-center items-stretch gap-4 flex-wrap max-w-6xl mx-auto px-4">
+                {featuredProducts.map((product) => {
+                  const cardColor = isClient ? (productColors[product.id] || '#1f2937') : '#1f2937';
+                  
+                  return (
+                    <div key={product.id} className="flex-shrink-0 w-[280px]">
+                      <div 
+                        className="rounded-2xl p-2 shadow-2xl shadow-black/60 translate-x-1 translate-y-1 transition-transform duration-200 ease-out cursor-pointer product-card select-none h-[400px] flex flex-col"
+                        style={{ backgroundColor: cardColor }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const targetId = product.product_id || product.id;
+                          router.push(`/product/${targetId}`);
+                          window.scrollTo(0, 0);
+                        }}
+                      >
+                        <div className="aspect-square bg-neutral-100 rounded-lg mb-2 overflow-hidden relative">
+                          <Image 
+                            src={product.image_url} 
+                            alt={product.name}
+                            fill
+                            className="object-cover select-none pointer-events-none"
+                            draggable={false}
+                            onContextMenu={(e) => e.preventDefault()}
+                            sizes="280px"
+                            quality={75}
+                          />
+                          <div className="absolute bottom-2 right-2 z-10">
+                            <Image 
+                              src="/logos/gems-logo.png" 
+                              alt="Gemsutopia"
+                              width={32}
+                              height={32}
+                              className="h-8 opacity-70 object-contain"
+                            />
+                          </div>
+                        </div>
+                        <h3 className="text-xl font-semibold text-white mb-2 text-center min-h-[3.5rem] flex items-center justify-center">{product.name}</h3>
+                        <p className="text-neutral-300 text-sm leading-relaxed flex-grow text-center overflow-hidden">
+                          {product.description.length > 100 ? `${product.description.substring(0, 100)}...` : product.description}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          } else {
+            // Scrolling layout for more than 4 items
+            return (
+              <div className="overflow-hidden">
                 <div 
-                  className="rounded-2xl p-2 shadow-2xl shadow-black/60 translate-x-1 translate-y-1 transition-transform duration-200 ease-out cursor-pointer product-card select-none h-full flex flex-col"
-                  style={{ backgroundColor: cardColor }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    // Navigate to product page and scroll to top
-                    router.push(`/product/${product.id}`);
-                    window.scrollTo(0, 0);
+                  ref={scrollContainerRef}
+                  className="flex"
+                  style={{
+                    transform: `translateX(${normalizedTranslateX}px)`,
+                    willChange: 'transform',
+                    width: 'max-content'
                   }}
                 >
-                  {/* Content */}
-                  <div className="aspect-square bg-neutral-100 rounded-lg mb-2 overflow-hidden relative">
-                    <Image 
-                      src={product.image} 
-                      alt={product.name}
-                      fill
-                      className="object-cover select-none pointer-events-none"
-                      draggable={false}
-                      onContextMenu={(e) => e.preventDefault()}
-                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      quality={75}
-                    />
-                    <div className="absolute bottom-2 right-2 z-10">
-                      <Image 
-                        src="/logos/gems-logo.png" 
-                        alt="Gemsutopia"
-                        width={32}
-                        height={32}
-                        className="h-8 opacity-70 object-contain"
-                      />
-                    </div>
-                  </div>
-                  <h3 className="text-xl font-semibold text-white mb-2 text-center min-h-[3.5rem] flex items-center justify-center">{product.name}</h3>
-                  <p className="text-neutral-300 text-sm leading-relaxed min-h-[3rem] md:block hidden flex-grow text-center">Hand-mined {product.type} from Alberta, Canada. This premium quality gemstone features exceptional clarity and natural beauty, ethically sourced with care.</p>
+                  {/* Triple the products for seamless infinite scroll */}
+                  {featuredProducts.concat(featuredProducts).concat(featuredProducts).map((product, index) => {
+                    const cardColor = isClient ? (productColors[product.id] || '#1f2937') : '#1f2937';
+                    
+                    return (
+                      <div key={`${product.id}-${index}`} className="inline-block flex-shrink-0 w-[calc(50vw-0.75rem)] md:w-[calc(33.33vw-1rem)] lg:w-[calc(25vw-1rem)] mx-2 md:mx-3">
+                        <div 
+                          className="rounded-2xl p-2 shadow-2xl shadow-black/60 translate-x-1 translate-y-1 transition-transform duration-200 ease-out cursor-pointer product-card select-none h-[400px] flex flex-col"
+                          style={{ backgroundColor: cardColor }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const targetId = product.product_id || product.id;
+                            router.push(`/product/${targetId}`);
+                            window.scrollTo(0, 0);
+                          }}
+                        >
+                          <div className="aspect-square bg-neutral-100 rounded-lg mb-2 overflow-hidden relative">
+                            <Image 
+                              src={product.image_url} 
+                              alt={product.name}
+                              fill
+                              className="object-cover select-none pointer-events-none"
+                              draggable={false}
+                              onContextMenu={(e) => e.preventDefault()}
+                              sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                              quality={75}
+                            />
+                            <div className="absolute bottom-2 right-2 z-10">
+                              <Image 
+                                src="/logos/gems-logo.png" 
+                                alt="Gemsutopia"
+                                width={32}
+                                height={32}
+                                className="h-8 opacity-70 object-contain"
+                              />
+                            </div>
+                          </div>
+                          <h3 className="text-xl font-semibold text-white mb-2 text-center min-h-[3.5rem] flex items-center justify-center">{product.name}</h3>
+                          <p className="text-neutral-300 text-sm leading-relaxed flex-grow text-center overflow-hidden md:block hidden">
+                            {product.description.length > 100 ? `${product.description.substring(0, 100)}...` : product.description}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             );
-          })}
-        </div>
+          }
+        })()}
       </div>
       <style jsx global>{`
         @keyframes scroll {

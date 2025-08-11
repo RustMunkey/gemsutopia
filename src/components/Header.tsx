@@ -1,6 +1,6 @@
 'use client';
 import { IconMenu2 } from '@tabler/icons-react';
-import { Star, ShoppingBag, ArrowLeft } from 'lucide-react';
+import { Star, ShoppingBag, ArrowLeft, Plane } from 'lucide-react';
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -19,7 +19,7 @@ export default function Header() {
   
   // Get marquee settings
   const marqueeEnabled = getContent('marquee', 'enabled') !== 'false'; // Show by default
-  const marqueeText = getContent('marquee', 'text') || '🎉 Grand Opening Sale - Up to 25% Off All Items! 🎉';
+  const marqueeText = getContent('marquee', 'text') || 'Grand Opening Sale - Up to 25% Off All Items!';
   const gradientFrom = getContent('marquee', 'gradient_from') || '#9333ea'; // purple-600
   const gradientTo = getContent('marquee', 'gradient_to') || '#db2777'; // pink-600
   
@@ -38,10 +38,12 @@ export default function Header() {
           className="text-white py-1 overflow-hidden"
           style={{ background: `linear-gradient(to right, ${gradientFrom}, ${gradientTo})` }}
         >
-          <div className="flex animate-scroll whitespace-nowrap">
+          <div className="flex animate-scroll-forward whitespace-nowrap">
             {Array.from({ length: 8 }).map((_, index) => (
-              <p key={index} className="text-sm font-medium px-8">
+              <p key={index} className="text-sm font-medium px-8 flex items-center gap-2">
+                <Plane className="h-4 w-4 rotate-45" />
                 {marqueeText}
+                <Plane className="h-4 w-4 rotate-45" />
               </p>
             ))}
           </div>
