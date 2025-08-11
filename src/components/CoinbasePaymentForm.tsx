@@ -14,13 +14,13 @@ interface CoinbasePaymentFormProps {
     zipCode: string;
     country: string;
   };
-  onPaymentSuccess: (details: any) => void;
+  onPaymentSuccess: (details: Record<string, unknown>) => void;
   onPaymentError: (error: string) => void;
 }
 
 const CoinbasePaymentForm = ({ items, customerInfo, onPaymentSuccess, onPaymentError }: CoinbasePaymentFormProps) => {
   const [loading, setLoading] = useState(false);
-  const [chargeData, setChargeData] = useState<any>(null);
+  const [chargeData, setChargeData] = useState<Record<string, unknown> | null>(null);
   const [checkingPayment, setCheckingPayment] = useState(false);
 
   // Calculate total
@@ -55,7 +55,7 @@ const CoinbasePaymentForm = ({ items, customerInfo, onPaymentSuccess, onPaymentE
       }
 
       setChargeData(data);
-    } catch (error) {
+    } catch {
       onPaymentError('Failed to create crypto payment. Please try again.');
     } finally {
       setLoading(false);
@@ -77,8 +77,7 @@ const CoinbasePaymentForm = ({ items, customerInfo, onPaymentSuccess, onPaymentE
         onPaymentError('Payment expired or was canceled. Please try again.');
         setChargeData(null);
       }
-    } catch (error) {
-      console.error('Error checking payment status:', error);
+    } catch {
     } finally {
       setCheckingPayment(false);
     }
@@ -90,7 +89,7 @@ const CoinbasePaymentForm = ({ items, customerInfo, onPaymentSuccess, onPaymentE
 
     const interval = setInterval(checkPaymentStatus, 5000);
     return () => clearInterval(interval);
-  }, [chargeData?.id]);
+  }, [chargeData?.id, checkPaymentStatus]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -115,7 +114,7 @@ const CoinbasePaymentForm = ({ items, customerInfo, onPaymentSuccess, onPaymentE
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [chargeData]);
+  }, [chargeData, onPaymentError]);
 
   return (
     <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-lg">

@@ -75,7 +75,7 @@ export default function Featured() {
             const color = await extractVibrantColor(product.image_url);
             colors[product.id] = color;
           }
-        } catch (error) {
+        } catch {
           colors[product.id] = '#1f2937'; // fallback
         }
       }

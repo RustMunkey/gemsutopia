@@ -15,7 +15,7 @@ interface PayPalPaymentFormProps {
     zipCode: string;
     country: string;
   };
-  onPaymentSuccess: (details: any) => void;
+  onPaymentSuccess: (details: Record<string, unknown>) => void;
   onPaymentError: (error: string) => void;
 }
 
@@ -29,7 +29,7 @@ const PayPalButtonWrapper = ({ items, customerInfo, onPaymentSuccess, onPaymentE
   const tax = Math.round((subtotal + shipping) * 0.13 * 100) / 100;
   const total = subtotal + shipping + tax;
 
-  const createOrder = (data: any, actions: any) => {
+  const createOrder = (data: Record<string, unknown>, actions: Record<string, unknown>) => {
     return actions.order.create({
       purchase_units: [
         {
@@ -80,7 +80,7 @@ const PayPalButtonWrapper = ({ items, customerInfo, onPaymentSuccess, onPaymentE
     });
   };
 
-  const onApprove = async (data: any, actions: any) => {
+  const onApprove = async (data: Record<string, unknown>, actions: Record<string, unknown>) => {
     setProcessing(true);
     try {
       const details = await actions.order.capture();
@@ -107,14 +107,14 @@ const PayPalButtonWrapper = ({ items, customerInfo, onPaymentSuccess, onPaymentE
       }
 
       onPaymentSuccess(details);
-    } catch (error) {
+    } catch {
       onPaymentError('PayPal payment failed. Please try again.');
     } finally {
       setProcessing(false);
     }
   };
 
-  const onError = (err: any) => {
+  const onError = (err: Record<string, unknown>) => {
     console.error('PayPal error:', err);
     onPaymentError('PayPal payment failed. Please try again.');
   };
