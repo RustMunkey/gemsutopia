@@ -65,7 +65,7 @@ const PaymentForm = ({ items, customerInfo, onPaymentSuccess, onPaymentError }: 
         }
 
         setClientSecret(data.clientSecret);
-      } catch (error) {
+      } catch {
         onPaymentError('Failed to initialize payment');
       }
     };

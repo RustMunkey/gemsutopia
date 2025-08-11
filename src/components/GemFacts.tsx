@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Gem, RefreshCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 
 interface GemFact {
   id: string;

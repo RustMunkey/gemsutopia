@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Edit2, X, ImageIcon, Type, Code } from 'lucide-react';
 import Image from 'next/image';
 import { SiteContent } from '@/lib/types/database';
@@ -63,7 +63,7 @@ export default function SiteContentManager() {
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
 
-  const getHeroImages = (): string[] => {
+  const getHeroImages = useCallback((): string[] => {
     const heroItem = content.find(c => c.section === 'hero' && c.key === 'images');
     if (heroItem?.value) {
       try {
@@ -73,7 +73,7 @@ export default function SiteContentManager() {
       }
     }
     return [];
-  };
+  }, [content]);
 
   const updateHeroImages = async (images: string[]) => {
     try {
