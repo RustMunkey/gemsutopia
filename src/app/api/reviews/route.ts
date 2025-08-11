@@ -36,9 +36,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (review.length > 120) {
+    if (review.length > 500) {
       return NextResponse.json(
-        { success: false, message: 'Review must be 120 characters or less' },
+        { success: false, message: 'Review must be 500 characters or less' },
         { status: 400 }
       );
     }
