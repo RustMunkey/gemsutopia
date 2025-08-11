@@ -126,7 +126,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Missing product ID' }, { status: 400 });
     }
 
-    const updateData: Record<string, any> = {};
+    const updateData: Record<string, unknown> = {};
     if (name !== undefined) updateData.name = name;
     if (type !== undefined) updateData.type = type;
     if (description !== undefined) updateData.description = description;

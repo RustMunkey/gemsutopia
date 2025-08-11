@@ -96,7 +96,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Missing FAQ ID' }, { status: 400 });
     }
 
-    const updateData: Record<string, any> = {};
+    const updateData: Record<string, unknown> = {};
     if (question !== undefined) updateData.question = question;
     if (answer !== undefined) updateData.answer = answer;
     if (sort_order !== undefined) updateData.sort_order = sort_order;

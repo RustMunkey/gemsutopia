@@ -12,7 +12,7 @@ interface ProductContentProps {
 }
 
 export default function ProductContent({ productId, productImage }: ProductContentProps) {
-  const { addItem, removeItem, isInPouch, items } = useGemPouch();
+  const { addItem, removeItem, items } = useGemPouch();
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist();
   const [productColor, setProductColor] = useState('#1f2937');
   const [isClient, setIsClient] = useState(false);
@@ -55,7 +55,7 @@ export default function ProductContent({ productId, productImage }: ProductConte
       try {
         const color = await extractVibrantColor(productImage);
         setProductColor(color);
-      } catch (error) {
+      } catch {
         setProductColor('#1f2937'); // fallback
       }
     };

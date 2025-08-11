@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { checkRateLimit, recordFailedAttempt } from '../../../../lib/security/rateLimiter';
-import { sendLoginNotification, getClientIP, detectSuspiciousLogin } from '../../../../lib/security/notifications';
-import { sendVerificationCode } from '../../../../lib/security/twoFactor';
-import { isIPAllowed } from '../../../../lib/security/ipAllowlist';
+// import { checkRateLimit, recordFailedAttempt } from '../../../../lib/security/rateLimiter';
+// import { sendLoginNotification, getClientIP, detectSuspiciousLogin } from '../../../../lib/security/notifications';
+// import { sendVerificationCode } from '../../../../lib/security/twoFactor';
+// import { isIPAllowed } from '../../../../lib/security/ipAllowlist';
 import jwt from 'jsonwebtoken';
 
 // Get authorized credentials from environment variables
@@ -60,8 +60,8 @@ async function verifyCaptcha(token: string): Promise<boolean> {
 }
 
 export async function POST(request: NextRequest) {
-  const ip = getClientIP(request);
-  const userAgent = request.headers.get('user-agent') || 'Unknown';
+  // const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+  // const userAgent = request.headers.get('user-agent') || 'Unknown';
   
   try {
     // 🛡️ SECURITY LAYER 1: IP Allowlist Check (TEMPORARILY DISABLED)
@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
     if (step === 'initial') {
       const captchaValid = await verifyCaptcha(captchaToken);
       if (!captchaValid) {
-        recordFailedAttempt(ip);
+        // recordFailedAttempt(ip);
         return NextResponse.json(
           { message: 'Captcha verification failed' },
           { status: 400 }
@@ -110,8 +110,8 @@ export async function POST(request: NextRequest) {
       );
 
       if (!user) {
-        recordFailedAttempt(ip);
-        await sendLoginNotification(request, email, false, 'Invalid credentials');
+        // recordFailedAttempt(ip);
+        // await sendLoginNotification(request, email, false, 'Invalid credentials');
         
         return NextResponse.json(
           { 
@@ -123,18 +123,18 @@ export async function POST(request: NextRequest) {
       }
 
       // 🛡️ SECURITY LAYER 5: Suspicious Login Detection
-      const suspicious = detectSuspiciousLogin(email, ip, userAgent);
-      if (suspicious) {
-        await sendLoginNotification(request, email, false, 'Suspicious login attempt detected');
-        recordFailedAttempt(ip);
-        return NextResponse.json(
-          { message: 'Security check failed' },
-          { status: 403 }
-        );
-      }
+      // const suspicious = detectSuspiciousLogin(email, ip, userAgent);
+      // if (suspicious) {
+      //   // await sendLoginNotification(request, email, false, 'Suspicious login attempt detected');
+      //   // recordFailedAttempt(ip);
+      //   return NextResponse.json(
+      //     { message: 'Security check failed' },
+      //     { status: 403 }
+      //   );
+      // }
 
       // ✅ LOGIN SUCCESSFUL - Create JWT token
-      await sendLoginNotification(request, email, true);
+      // await sendLoginNotification(request, email, true);
       
       // Create JWT token for the session
       const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
@@ -173,7 +173,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Login error:', error);
-    await sendLoginNotification(request, 'unknown', false, 'Server error during login');
+    // await sendLoginNotification(request, 'unknown', false, 'Server error during login');
     
     return NextResponse.json(
       { message: 'Internal server error' },

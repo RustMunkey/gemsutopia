@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { IconStar, IconStarFilled, IconFilter } from '@tabler/icons-react';
@@ -91,7 +91,7 @@ export default function Shop() {
     };
   }, []);
   
-  const products = [
+  const products = useMemo(() => [
     { id: 1, name: 'Alberta Sapphire', type: 'sapphire', price: 299, originalPrice: 399, image: '/images/Review1.jpg' },
     { id: 2, name: 'Canadian Peridot', type: 'peridot', price: 199, originalPrice: 249, image: '/images/Review2.jpg' },
     { id: 3, name: 'Ammolite Gem', type: 'ammolite', price: 459, originalPrice: 599, image: '/images/Review3.jpg' },
@@ -108,7 +108,7 @@ export default function Shop() {
     { id: 14, name: 'Canadian Labradorite', type: 'labradorite', price: 149, originalPrice: 199, image: '/images/8680a65c-0c82-4529-a8f2-a051344e565a.webp' },
     { id: 15, name: 'Alberta Citrine', type: 'citrine', price: 139, originalPrice: 179, image: '/images/c07009ff-cd86-45d0-858e-441993683280.webp' },
     { id: 16, name: 'Mountain Jade', type: 'jade', price: 229, originalPrice: 299, image: '/images/Review-5.jpg' }
-  ];
+  ], []);
 
   // Extract colors from product images (only on client side)
   useEffect(() => {
@@ -121,7 +121,7 @@ export default function Shop() {
         try {
           const color = await extractVibrantColor(product.image);
           colors[product.id] = color;
-        } catch (error) {
+        } catch {
           colors[product.id] = '#1f2937'; // fallback
         }
       }
@@ -130,7 +130,7 @@ export default function Shop() {
     };
     
     extractColors();
-  }, [isClient]);
+  }, [isClient, products]);
 
   // Filter and sort products
   const filteredProducts = products

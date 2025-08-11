@@ -96,7 +96,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Missing gem fact ID' }, { status: 400 });
     }
 
-    const updateData: Record<string, any> = {};
+    const updateData: Record<string, unknown> = {};
     if (fact !== undefined) updateData.fact = fact;
     if (gem_type !== undefined) updateData.gem_type = gem_type;
     if (source !== undefined) updateData.source = source;

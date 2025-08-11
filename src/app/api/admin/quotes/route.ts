@@ -97,7 +97,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Missing quote ID' }, { status: 400 });
     }
 
-    const updateData: Record<string, any> = {};
+    const updateData: Record<string, unknown> = {};
     if (quote !== undefined) updateData.quote = quote;
     if (author !== undefined) updateData.author = author;
     if (gem_type !== undefined) updateData.gem_type = gem_type;

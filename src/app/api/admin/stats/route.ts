@@ -119,7 +119,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Missing stat ID' }, { status: 400 });
     }
 
-    const updateData: Record<string, any> = {};
+    const updateData: Record<string, unknown> = {};
     if (title !== undefined) updateData.title = title;
     if (value !== undefined) updateData.value = value;
     if (description !== undefined) updateData.description = description;

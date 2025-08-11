@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
 import { Eye, EyeOff, Mail, KeyRound } from 'lucide-react';
-import Image from 'next/image';
 
 export default function AdminLogin() {
   const [email, setEmail] = useState('');

@@ -2,21 +2,18 @@
 import { useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import StripePaymentForm from '@/components/StripePaymentForm';
-import PayPalPaymentForm from '@/components/PayPalPaymentForm';
-import CoinbasePaymentForm from '@/components/CoinbasePaymentForm';
 import { useGemPouch } from '@/contexts/GemPouchContext';
 import Image from 'next/image';
 import { ArrowLeft, CheckCircle, XCircle, CreditCard, Bitcoin } from 'lucide-react';
 import Link from 'next/link';
 
-type PaymentMethod = 'stripe' | 'paypal' | 'coinbase';
+// Payment methods temporarily disabled
 
 export default function Checkout() {
   const { items, clearPouch } = useGemPouch();
   const [paymentStep, setPaymentStep] = useState<'form' | 'payment-method' | 'payment' | 'success' | 'error'>('form');
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('stripe');
-  const [paymentError, setPaymentError] = useState<string>('');
+  // const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('stripe');
+  // const [paymentError, setPaymentError] = useState<string>('');
   const [paymentSuccess, setPaymentSuccess] = useState<{id: string; amount?: number} | null>(null);
   const [formData, setFormData] = useState({
     email: '',
@@ -66,27 +63,30 @@ export default function Checkout() {
       return;
     }
 
-    setPaymentStep('payment-method');
-  };
-
-  const handlePaymentMethodSelect = (method: PaymentMethod) => {
-    setPaymentMethod(method);
-    setPaymentStep('payment');
-  };
-
-  const handlePaymentSuccess = (details: any) => {
-    setPaymentSuccess({
-      id: details.id,
-      amount: details.amount || (total * 100) // PayPal and Coinbase might not have amount in same format
-    });
+    // Payment methods temporarily disabled - show success
+    setPaymentSuccess({ id: 'demo-order-' + Date.now(), amount: total * 100 });
     setPaymentStep('success');
     clearPouch();
   };
 
-  const handlePaymentError = (error: string) => {
-    setPaymentError(error);
-    setPaymentStep('error');
-  };
+  // const handlePaymentMethodSelect = (method: PaymentMethod) => {
+  //   setPaymentMethod(method);
+  //   setPaymentStep('payment');
+  // };
+
+  // const handlePaymentSuccess = (details: Record<string, unknown>) => {
+  //   setPaymentSuccess({
+  //     id: details.id as string,
+  //     amount: (details.amount as number) || (total * 100) // PayPal and Coinbase might not have amount in same format
+  //   });
+  //   setPaymentStep('success');
+  //   clearPouch();
+  // };
+
+  // const handlePaymentError = (error: string) => {
+  //   setPaymentError(error);
+  //   setPaymentStep('error');
+  // };
 
   if (items.length === 0 && paymentStep !== 'success') {
     return (
@@ -180,7 +180,7 @@ export default function Checkout() {
               <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-lg text-center">
                 <XCircle className="h-16 w-16 text-red-600 mx-auto mb-6" />
                 <h1 className="text-3xl font-bold text-black mb-4">Payment Failed</h1>
-                <p className="text-neutral-600 mb-6">{paymentError}</p>
+                <p className="text-neutral-600 mb-6">Payment processing is temporarily unavailable.</p>
                 <div className="flex gap-4 justify-center">
                   <button
                     onClick={() => setPaymentStep('payment-method')}
@@ -296,21 +296,21 @@ export default function Checkout() {
                       type="submit"
                       className="w-full bg-black text-white py-4 px-6 rounded-full font-semibold text-lg hover:bg-neutral-800 transition-colors"
                     >
-                      Continue to Payment Method
+                      Continue (Payment Coming Soon)
                     </button>
                   </form>
                 </div>
               )}
 
-              {/* Payment Method Selection */}
-              {paymentStep === 'payment-method' && (
+              {/* Payment Method Selection - Temporarily Disabled */}
+              {false && paymentStep === 'payment-method' && (
                 <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-lg">
                   <h2 className="text-2xl font-bold text-black mb-8">Choose Payment Method</h2>
                   
                   <div className="space-y-4">
                     {/* Credit Card / Stripe */}
                     <button
-                      onClick={() => handlePaymentMethodSelect('stripe')}
+                      onClick={() => {}}
                       className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-black hover:bg-gray-50 transition-colors text-left"
                     >
                       <div className="flex items-center gap-4">
@@ -324,7 +324,7 @@ export default function Checkout() {
 
                     {/* PayPal */}
                     <button
-                      onClick={() => handlePaymentMethodSelect('paypal')}
+                      onClick={() => {}}
                       className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors text-left"
                     >
                       <div className="flex items-center gap-4">
@@ -340,7 +340,7 @@ export default function Checkout() {
 
                     {/* Cryptocurrency */}
                     <button
-                      onClick={() => handlePaymentMethodSelect('coinbase')}
+                      onClick={() => {}}
                       className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-orange-500 hover:bg-orange-50 transition-colors text-left"
                     >
                       <div className="flex items-center gap-4">
@@ -362,33 +362,10 @@ export default function Checkout() {
                 </div>
               )}
 
-              {/* Payment Forms */}
-              {paymentStep === 'payment' && (
+              {/* Payment Forms - Temporarily Disabled */}
+              {false && paymentStep === 'payment' && (
                 <>
-                  {paymentMethod === 'stripe' && (
-                    <StripePaymentForm
-                      items={groupedItems}
-                      customerInfo={formData}
-                      onPaymentSuccess={handlePaymentSuccess}
-                      onPaymentError={handlePaymentError}
-                    />
-                  )}
-                  {paymentMethod === 'paypal' && (
-                    <PayPalPaymentForm
-                      items={groupedItems}
-                      customerInfo={formData}
-                      onPaymentSuccess={handlePaymentSuccess}
-                      onPaymentError={handlePaymentError}
-                    />
-                  )}
-                  {paymentMethod === 'coinbase' && (
-                    <CoinbasePaymentForm
-                      items={groupedItems}
-                      customerInfo={formData}
-                      onPaymentSuccess={handlePaymentSuccess}
-                      onPaymentError={handlePaymentError}
-                    />
-                  )}
+                  {/* Payment forms removed */}
                 </>
               )}
 
