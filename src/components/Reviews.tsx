@@ -44,7 +44,7 @@ export default function Reviews() {
     if (!isClient || reviews.length <= 4 || !containerRef.current) return;
     
     let animationId: number;
-    let startTime = performance.now();
+    const startTime = performance.now();
     const container = containerRef.current;
     
     // Calculate dimensions
