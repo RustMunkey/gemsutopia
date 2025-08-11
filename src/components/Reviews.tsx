@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Star, Mail, TextCursorInput } from 'lucide-react';
 
 interface Review {
@@ -17,6 +17,13 @@ interface Review {
 
 export default function Reviews() {
   const [showModal, setShowModal] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Set client-side flag
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -32,6 +39,46 @@ export default function Reviews() {
     };
   }, [showModal]);
   const [reviews, setReviews] = useState<Review[]>([]);
+  // Animation logic for smooth infinite scroll
+  useEffect(() => {
+    if (!isClient || reviews.length <= 4 || !containerRef.current) return;
+    
+    let animationId: number;
+    let startTime = performance.now();
+    const container = containerRef.current;
+    
+    // Calculate dimensions
+    const cardWidth = 352; // w-80 (320px) + mx-4 (32px margin) = 352px total width per card
+    const oneSetWidth = reviews.length * cardWidth;
+    
+    const animate = () => {
+      const now = performance.now();
+      const elapsed = (now - startTime) / 1000;
+      const speed = 45; // pixels per second - faster but still smooth
+      const translateX = -(elapsed * speed);
+      
+      // Better normalization to prevent glitches
+      let normalizedTranslateX = 0;
+      if (oneSetWidth > 0) {
+        const rawMod = translateX % oneSetWidth;
+        normalizedTranslateX = rawMod <= -oneSetWidth ? rawMod + oneSetWidth : rawMod;
+      }
+      
+      // Directly update the transform without causing React re-renders
+      container.style.transform = `translate3d(${normalizedTranslateX}px, 0, 0)`;
+      
+      animationId = requestAnimationFrame(animate);
+    };
+
+    animationId = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+      }
+    };
+  }, [isClient, reviews]);
+
   // Fetch reviews from database
   const fetchReviews = async () => {
     try {
@@ -53,296 +100,8 @@ export default function Reviews() {
     fetchReviews();
   }, []);
 
-  const fallbackReviews = [
-    {
-      name: "Sarah M.",
-      rating: 5,
-      text: "Absolutely stunning quality! The craftsmanship is endless and the beauty never fades.",
-      verified: true
-    },
-    {
-      name: "Michael R.",
-      rating: 5,
-      text: "The possibilities with these gems seem endless. Each piece tells its own story.",
-      verified: true
-    },
-    {
-      name: "Emma K.",
-      rating: 5,
-      text: "I could stare at these gemstones endlessly. The colors and patterns are mesmerizing.",
-      verified: true
-    },
-    {
-      name: "David L.",
-      rating: 5,
-      text: "The collection here is endless - so many unique pieces to choose from!",
-      verified: true
-    },
-    {
-      name: "Jessica T.",
-      rating: 5,
-      text: "My love for these gems is endless. Perfect quality and authentic sourcing.",
-      verified: true
-    },
-    {
-      name: "Ryan C.",
-      rating: 5,
-      text: "The beauty of these stones is endless. Highly recommend Gemsutopia!",
-      verified: true
-    },
-    {
-      name: "Amanda H.",
-      rating: 5,
-      text: "These gems have transformed my jewelry collection. The quality is exceptional!",
-      verified: true
-    },
-    {
-      name: "James P.",
-      rating: 5,
-      text: "Fast shipping and beautiful packaging. The gemstone exceeded my expectations.",
-      verified: true
-    },
-    {
-      name: "Lisa W.",
-      rating: 4,
-      text: "Gorgeous stones with amazing clarity. Will definitely be ordering more!",
-      verified: true
-    },
-    {
-      name: "Mark S.",
-      rating: 5,
-      text: "The authenticity certificate gives me complete confidence in my purchase.",
-      verified: true
-    },
-    {
-      name: "Rachel B.",
-      rating: 5,
-      text: "Customer service was incredible. They helped me find the perfect stone.",
-      verified: true
-    },
-    {
-      name: "Thomas G.",
-      rating: 5,
-      text: "The color saturation on my sapphire is breathtaking. Truly premium quality.",
-      verified: true
-    },
-    {
-      name: "Nicole F.",
-      rating: 5,
-      text: "I've been collecting gems for years, and this is the best source I've found.",
-      verified: true
-    },
-    {
-      name: "Kevin M.",
-      rating: 4,
-      text: "Great variety and competitive prices. The website is easy to navigate too.",
-      verified: true
-    },
-    {
-      name: "Sophia L.",
-      rating: 5,
-      text: "My emerald ring is stunning! The craftsmanship is absolutely perfect.",
-      verified: true
-    },
-    {
-      name: "Daniel K.",
-      rating: 5,
-      text: "Secure packaging ensured my delicate gemstone arrived in perfect condition.",
-      verified: true
-    },
-    {
-      name: "Victoria R.",
-      rating: 5,
-      text: "The investment value of these stones is excellent. Great for collectors.",
-      verified: true
-    },
-    {
-      name: "Alex C.",
-      rating: 5,
-      text: "Educational resources on the site helped me make an informed purchase.",
-      verified: true
-    },
-    {
-      name: "Grace T.",
-      rating: 4,
-      text: "Beautiful selection of rare gems. The photos match reality perfectly.",
-      verified: true
-    },
-    {
-      name: "Benjamin J.",
-      rating: 5,
-      text: "The healing properties information was very helpful and accurate.",
-      verified: true
-    },
-    {
-      name: "Olivia D.",
-      rating: 5,
-      text: "My custom setting turned out exactly as I envisioned. Amazing work!",
-      verified: true
-    },
-    {
-      name: "Christopher A.",
-      rating: 5,
-      text: "The gemstone grading is spot-on. Very trustworthy business practices.",
-      verified: true
-    },
-    {
-      name: "Megan Y.",
-      rating: 4,
-      text: "Love the monthly gem subscription box! Always exciting surprises.",
-      verified: true
-    },
-    {
-      name: "Nathan Z.",
-      rating: 5,
-      text: "The origin documentation for each stone shows incredible attention to detail.",
-      verified: true
-    },
-    {
-      name: "Isabella Q.",
-      rating: 5,
-      text: "Perfect for my metaphysical practice. The energy from these stones is pure.",
-      verified: true
-    },
-    {
-      name: "Matthew V.",
-      rating: 5,
-      text: "Professional gem cutting service exceeded all my expectations.",
-      verified: true
-    },
-    {
-      name: "Hannah N.",
-      rating: 4,
-      text: "Great educational workshops! Learned so much about gem identification.",
-      verified: true
-    },
-    {
-      name: "Ethan X.",
-      rating: 5,
-      text: "The rarity certificates add tremendous value to my collection.",
-      verified: true
-    },
-    {
-      name: "Chloe U.",
-      rating: 5,
-      text: "Ethical sourcing practices make me feel good about my purchases.",
-      verified: true
-    },
-    {
-      name: "Andrew I.",
-      rating: 5,
-      text: "The appraisal services are thorough and professionally done.",
-      verified: true
-    },
-    {
-      name: "Samantha O.",
-      rating: 4,
-      text: "Beautiful display cases available too. Great for showcasing collections.",
-      verified: true
-    },
-    {
-      name: "Joshua E.",
-      rating: 5,
-      text: "The gemstone cleaning service restored my old pieces to perfect condition.",
-      verified: true
-    },
-    {
-      name: "Ava W.",
-      rating: 5,
-      text: "Loyalty program rewards make collecting even more rewarding!",
-      verified: true
-    },
-    {
-      name: "Tyler R.",
-      rating: 5,
-      text: "Investment tracking tools help me monitor my collection's value growth.",
-      verified: true
-    },
-    {
-      name: "Madison T.",
-      rating: 4,
-      text: "The mobile app makes browsing and buying incredibly convenient.",
-      verified: true
-    },
-    {
-      name: "Jacob Y.",
-      rating: 5,
-      text: "Custom jewelry design service brought my vision to life perfectly.",
-      verified: true
-    },
-    {
-      name: "Emily U.",
-      rating: 5,
-      text: "The gemstone insurance recommendations were very helpful and practical.",
-      verified: true
-    },
-    {
-      name: "Noah I.",
-      rating: 5,
-      text: "Virtual consultations saved me time and helped me make better choices.",
-      verified: true
-    },
-    {
-      name: "Abigail O.",
-      rating: 4,
-      text: "The gem trading platform is innovative and user-friendly.",
-      verified: true
-    },
-    {
-      name: "Mason P.",
-      rating: 5,
-      text: "Expert gemologists available for questions - incredible knowledge base!",
-      verified: true
-    },
-    {
-      name: "Charlotte A.",
-      rating: 5,
-      text: "The community forums are full of helpful collectors and experts.",
-      verified: true
-    },
-    {
-      name: "Lucas S.",
-      rating: 5,
-      text: "Seasonal sales and promotions offer great value for premium stones.",
-      verified: true
-    },
-    {
-      name: "Amelia D.",
-      rating: 4,
-      text: "The wishlist feature helps me track stones I want for future purchases.",
-      verified: true
-    },
-    {
-      name: "William F.",
-      rating: 5,
-      text: "Quick authentication service confirmed my vintage gem's authenticity.",
-      verified: true
-    },
-    {
-      name: "Harper G.",
-      rating: 5,
-      text: "The care instructions included help keep my gems looking pristine.",
-      verified: true
-    },
-    {
-      name: "Elijah H.",
-      rating: 5,
-      text: "Bulk purchasing options are perfect for my jewelry business needs.",
-      verified: true
-    },
-    {
-      name: "Evelyn J.",
-      rating: 4,
-      text: "The gift wrapping service is elegant and perfect for special occasions.",
-      verified: true
-    },
-    {
-      name: "Logan K.",
-      rating: 5,
-      text: "The return policy is fair and customer-friendly. Great peace of mind!",
-      verified: true
-    }
-  ];
+  // Fallback reviews removed - only showing real reviews
+  
 
   // Review form state
   const [reviewForm, setReviewForm] = useState({
@@ -411,7 +170,7 @@ export default function Reviews() {
       {/* Reviews Display */}
       <div className="py-12">
         {(() => {
-          const displayReviews = reviews.length > 0 ? reviews : fallbackReviews;
+          const displayReviews = reviews; // Only show real reviews from database
           const shouldCenter = displayReviews.length <= 4;
           
           if (shouldCenter) {
@@ -419,9 +178,9 @@ export default function Reviews() {
             return (
               <div className="flex justify-center items-stretch gap-4 flex-wrap max-w-6xl mx-auto px-4 py-8">
                 {displayReviews.map((review, index) => {
-                  const displayName = 'customer_name' in review ? review.customer_name : review.name;
-                  const displayContent = 'content' in review ? review.content : review.text;
-                  const isVerified = 'is_approved' in review ? review.is_approved : review.verified;
+                  const displayName = review.customer_name;
+                  const displayContent = review.content;
+                  const isVerified = review.is_approved;
                   
                   return (
                     <div key={index} className="flex-shrink-0 w-80">
@@ -445,7 +204,7 @@ export default function Reviews() {
                           </div>
                         </div>
                         <p className="text-neutral-700 leading-relaxed text-xs flex-grow overflow-hidden">
-                          {displayContent.length > 120 ? `${displayContent.substring(0, 120)}...` : displayContent}
+                          {displayContent}
                         </p>
                       </div>
                     </div>
@@ -457,11 +216,20 @@ export default function Reviews() {
             // Scrolling layout for more than 4 items
             return (
               <div className="overflow-hidden py-8">
-                <div className="flex animate-[scroll_20s_linear_infinite] hover:[animation-play-state:paused]">
+                <div 
+                  ref={containerRef}
+                  className="flex"
+                  style={{
+                    willChange: 'transform',
+                    backfaceVisibility: 'hidden',
+                    WebkitBackfaceVisibility: 'hidden',
+                    transform: 'translateZ(0)'
+                  }}
+                >
                   {displayReviews.concat(displayReviews).concat(displayReviews).map((review, index) => {
-                    const displayName = 'customer_name' in review ? review.customer_name : review.name;
-                    const displayContent = 'content' in review ? review.content : review.text;
-                    const isVerified = 'is_approved' in review ? review.is_approved : review.verified;
+                    const displayName = review.customer_name;
+                    const displayContent = review.content;
+                    const isVerified = review.is_approved;
                     
                     return (
                       <div key={index} className="inline-block flex-shrink-0 w-80 mx-4">
@@ -485,7 +253,7 @@ export default function Reviews() {
                             </div>
                           </div>
                           <p className="text-neutral-700 leading-relaxed text-xs flex-grow overflow-hidden">
-                            {displayContent.length > 120 ? `${displayContent.substring(0, 120)}...` : displayContent}
+                            {displayContent}
                           </p>
                         </div>
                       </div>
@@ -606,10 +374,10 @@ export default function Reviews() {
                   rows={3}
                   className="w-full px-3 py-2 border-2 border-black bg-white text-black rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-300 resize-none text-sm"
                   placeholder="Share your experience with Gemsutopia..."
-                  maxLength={120}
+maxLength={500}
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">{reviewForm.review.length}/120 characters</p>
+                <p className="text-xs text-gray-500 mt-1">{reviewForm.review.length}/500 characters</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -660,22 +428,6 @@ export default function Reviews() {
         </div>
       )}
       
-      <style jsx global>{`
-        @keyframes scroll {
-          0% {
-            transform: translateX(0);
-          }
-          100% {
-            transform: translateX(-33.333%);
-          }
-        }
-        
-        @media (max-width: 768px) {
-          .animate-\\[scroll_20s_linear_infinite\\] {
-            animation: scroll 30s linear infinite;
-          }
-        }
-      `}</style>
     </section>
   );
 }
