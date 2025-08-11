@@ -423,7 +423,7 @@ export default function Reviews() {
       </div>
         
       {/* Reviews Display */}
-      <div className="py-4">
+      <div className="py-12">
         {(() => {
           const displayReviews = reviews.length > 0 ? reviews : fallbackReviews;
           const shouldCenter = displayReviews.length <= 4;
@@ -605,7 +605,9 @@ export default function Reviews() {
                   onChange={(e) => setReviewForm(prev => ({ ...prev, title: e.target.value }))}
                   className="w-full px-3 py-2 border-2 border-black bg-white text-black rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-300 text-sm"
                   placeholder="Give your review a title..."
+                  maxLength={100}
                 />
+                <p className="text-xs text-gray-500 mt-1">{reviewForm.title.length}/100 characters</p>
               </div>
 
               <div>
@@ -618,8 +620,10 @@ export default function Reviews() {
                   rows={3}
                   className="w-full px-3 py-2 border-2 border-black bg-white text-black rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-300 resize-none text-sm"
                   placeholder="Share your experience with Gemsutopia..."
+                  maxLength={120}
                   required
                 />
+                <p className="text-xs text-gray-500 mt-1">{reviewForm.review.length}/120 characters</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -634,6 +638,7 @@ export default function Reviews() {
                     onChange={(e) => setReviewForm(prev => ({ ...prev, name: e.target.value }))}
                     className="w-full px-3 py-2 border-2 border-black bg-white text-black rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-300 text-sm"
                     placeholder="Enter your name"
+                    maxLength={50}
                     required
                   />
                 </div>

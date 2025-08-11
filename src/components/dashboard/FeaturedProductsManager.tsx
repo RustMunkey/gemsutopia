@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Edit2, Plus, Trash2, Upload, Eye, EyeOff, GripVertical, Package } from 'lucide-react';
+import { Edit2, Plus, Trash2, Upload, Eye, EyeOff, Package } from 'lucide-react';
 import Image from 'next/image';
 
 interface FeaturedProduct {
@@ -280,7 +280,7 @@ function ProductModal({ product, onSave, onCancel, onUploadImage, uploading }: P
       try {
         const url = await onUploadImage(file);
         setFormData(prev => ({ ...prev, image_url: url }));
-      } catch (error) {
+      } catch {
         alert('Failed to upload image');
       }
     }

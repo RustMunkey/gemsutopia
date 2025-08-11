@@ -91,14 +91,6 @@ export default function Stats() {
                     <div className="text-sm md:text-base text-white font-medium">
                       {stat.title}
                     </div>
-                    {stat.is_real_time && (
-                      <div className="mt-2">
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-500/20 text-green-400">
-                          <div className="w-1.5 h-1.5 bg-green-400 rounded-full mr-1 animate-pulse"></div>
-                          Live
-                        </span>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
@@ -130,14 +122,6 @@ export default function Stats() {
                           <div className="text-sm md:text-base text-white font-medium">
                             {stat.title}
                           </div>
-                          {stat.is_real_time && (
-                            <div className="mt-2">
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-500/20 text-green-400">
-                                <div className="w-1.5 h-1.5 bg-green-400 rounded-full mr-1 animate-pulse"></div>
-                                Live
-                              </span>
-                            </div>
-                          )}
                         </div>
                       </div>
                     </div>

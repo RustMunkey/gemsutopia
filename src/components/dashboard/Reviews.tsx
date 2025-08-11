@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Star, Eye, EyeOff, Edit2, Trash2, Check, X } from 'lucide-react';
+import { Star, Eye, EyeOff, Trash2, Check, X } from 'lucide-react';
 
 interface Review {
   id: string;

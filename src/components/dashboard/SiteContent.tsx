@@ -1,8 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Edit2, X, ImageIcon, Type, Code, Package } from 'lucide-react';
+import { Edit2, X, ImageIcon, Type, Code } from 'lucide-react';
 import Image from 'next/image';
-import { SiteContent, Product } from '@/lib/types/database';
+import { SiteContent } from '@/lib/types/database';
 import FeaturedProductsManager from './FeaturedProductsManager';
 import StatsManager from './StatsManager';
 import GemFactsManager from './GemFactsManager';
@@ -60,7 +60,6 @@ export default function SiteContentManager() {
     { section: 'marquee', key: 'gradient_to', label: 'Gradient End Color', description: 'Ending color for the marquee background', type: 'color' }
   ];
 
-  const [heroImages, setHeroImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
 
@@ -117,7 +116,6 @@ export default function SiteContentManager() {
       const data = await response.json();
       if (data.success) {
         fetchContent();
-        setHeroImages(images);
         
         // Trigger a page refresh for hero section to update
         if (typeof window !== 'undefined') {
@@ -391,8 +389,8 @@ export default function SiteContentManager() {
   };
 
   useEffect(() => {
-    setHeroImages(getHeroImages());
-  }, [content]);
+    getHeroImages();
+  }, [content, getHeroImages]);
 
   const getContentValue = (section: string, key: string): string => {
     const item = content.find(c => c.section === section && c.key === key);

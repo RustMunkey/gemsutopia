@@ -21,6 +21,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate character limits
+    if (name.length > 50) {
+      return NextResponse.json(
+        { success: false, message: 'Name must be 50 characters or less' },
+        { status: 400 }
+      );
+    }
+
+    if (title && title.length > 100) {
+      return NextResponse.json(
+        { success: false, message: 'Title must be 100 characters or less' },
+        { status: 400 }
+      );
+    }
+
+    if (review.length > 120) {
+      return NextResponse.json(
+        { success: false, message: 'Review must be 120 characters or less' },
+        { status: 400 }
+      );
+    }
+
     // Create review data
     const reviewData = {
       customer_name: name,

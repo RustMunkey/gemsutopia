@@ -64,7 +64,7 @@ export default function Quote() {
         <QuoteIcon className="h-8 w-8 text-gray-400 mx-auto mb-4" />
         
         <blockquote className="text-lg text-gray-800 mb-4 italic leading-relaxed">
-          "{currentQuote.quote}"
+          &ldquo;{currentQuote.quote}&rdquo;
         </blockquote>
         
         <div className="flex items-center justify-center gap-3 mb-6">

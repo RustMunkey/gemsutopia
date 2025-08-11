@@ -131,7 +131,7 @@ export default function QuotesManager() {
               
               <div className="flex-grow">
                 <div className="flex items-center gap-2 mb-2">
-                  <p className="text-white font-medium line-clamp-2">"{quote.quote}"</p>
+                  <p className="text-white font-medium line-clamp-2">&ldquo;{quote.quote}&rdquo;</p>
                   {!quote.is_active && (
                     <span className="text-xs text-red-400 bg-red-400/10 px-2 py-1 rounded">
                       Inactive
