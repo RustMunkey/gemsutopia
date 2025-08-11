@@ -13,14 +13,7 @@ interface Review {
   created_at: string;
 }
 
-interface FallbackReview {
-  name: string;
-  rating: number;
-  text: string;
-  verified: boolean;
-}
 
-type DisplayReview = Review | FallbackReview;
 
 export default function Reviews() {
   const [showModal, setShowModal] = useState(false);
@@ -39,7 +32,6 @@ export default function Reviews() {
     };
   }, [showModal]);
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   // Fetch reviews from database
   const fetchReviews = async () => {
     try {
@@ -54,8 +46,6 @@ export default function Reviews() {
       console.error('Error fetching reviews:', error);
       // Fallback to empty array if fetch fails
       setReviews([]);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -365,10 +355,6 @@ export default function Reviews() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState('');
 
-  const handleRatingClick = (rating: number) => {
-    setReviewForm(prev => ({ ...prev, rating }));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -404,7 +390,7 @@ export default function Reviews() {
       } else {
         setSubmitMessage('Failed to submit review. Please try again.');
       }
-    } catch (error) {
+    } catch {
       setSubmitMessage('Failed to submit review. Please try again.');
     } finally {
       setIsSubmitting(false);
@@ -431,7 +417,7 @@ export default function Reviews() {
           if (shouldCenter) {
             // Centered layout for 4 or fewer items
             return (
-              <div className="flex justify-center items-stretch gap-4 flex-wrap max-w-6xl mx-auto px-4">
+              <div className="flex justify-center items-stretch gap-4 flex-wrap max-w-6xl mx-auto px-4 py-8">
                 {displayReviews.map((review, index) => {
                   const displayName = 'customer_name' in review ? review.customer_name : review.name;
                   const displayContent = 'content' in review ? review.content : review.text;
@@ -470,9 +456,9 @@ export default function Reviews() {
           } else {
             // Scrolling layout for more than 4 items
             return (
-              <div className="overflow-hidden">
+              <div className="overflow-hidden py-8">
                 <div className="flex animate-[scroll_20s_linear_infinite] hover:[animation-play-state:paused]">
-                  {displayReviews.concat(displayReviews).map((review, index) => {
+                  {displayReviews.concat(displayReviews).concat(displayReviews).map((review, index) => {
                     const displayName = 'customer_name' in review ? review.customer_name : review.name;
                     const displayContent = 'content' in review ? review.content : review.text;
                     const isVerified = 'is_approved' in review ? review.is_approved : review.verified;
@@ -680,7 +666,7 @@ export default function Reviews() {
             transform: translateX(0);
           }
           100% {
-            transform: translateX(-100%);
+            transform: translateX(-33.333%);
           }
         }
         

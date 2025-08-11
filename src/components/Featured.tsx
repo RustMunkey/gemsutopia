@@ -189,7 +189,7 @@ export default function Featured() {
       </div>
         
       {/* Featured Products Display */}
-      <div className="py-4 -mx-4 sm:-mx-6 lg:-mx-8">
+      <div className="py-8 -mx-4 sm:-mx-6 lg:-mx-8">
         {(() => {
           const shouldCenter = featuredProducts.length <= 4;
           
@@ -246,7 +246,7 @@ export default function Featured() {
           } else {
             // Scrolling layout for more than 4 items
             return (
-              <div className="overflow-hidden">
+              <div className="overflow-hidden py-8">
                 <div 
                   ref={scrollContainerRef}
                   className="flex"

@@ -99,36 +99,32 @@ export default function Stats() {
         </div>
       ) : (
         // Scrolling layout for more than 4 items
-        <div className="overflow-hidden">
+        <div className="overflow-hidden py-4">
           <div className="flex animate-[scroll-right_20s_linear_infinite] hover:[animation-play-state:paused]">
-            {/* Duplicate the stats for infinite scroll */}
-            {[...Array(2)].map((_, setIndex) => (
-              <div key={`stats-set-${setIndex}`} className="contents">
-                {stats.map((stat) => {
-                  const IconComponent = iconMap[stat.icon as keyof typeof iconMap];
-                  
-                  return (
-                    <div key={`${stat.id}-${setIndex}`} className="inline-block flex-shrink-0 mx-4">
-                      <div className="bg-black rounded-2xl px-6 py-6 shadow-lg w-[180px] h-[140px] flex flex-col justify-center">
-                        <div className="text-center">
-                          {IconComponent && (
-                            <div className="flex justify-center mb-2">
-                              <IconComponent className="h-6 w-6 text-white opacity-70" />
-                            </div>
-                          )}
-                          <div className="text-2xl md:text-3xl font-bold text-white mb-2">
-                            {stat.value}
-                          </div>
-                          <div className="text-sm md:text-base text-white font-medium">
-                            {stat.title}
-                          </div>
+            {/* Triple the stats for seamless infinite scroll */}
+            {stats.concat(stats).concat(stats).map((stat, index) => {
+              const IconComponent = iconMap[stat.icon as keyof typeof iconMap];
+              
+              return (
+                <div key={`${stat.id}-${index}`} className="inline-block flex-shrink-0 mx-4">
+                  <div className="bg-black rounded-2xl px-6 py-6 shadow-lg w-[180px] h-[140px] flex flex-col justify-center">
+                    <div className="text-center">
+                      {IconComponent && (
+                        <div className="flex justify-center mb-2">
+                          <IconComponent className="h-6 w-6 text-white opacity-70" />
                         </div>
+                      )}
+                      <div className="text-2xl md:text-3xl font-bold text-white mb-2">
+                        {stat.value}
+                      </div>
+                      <div className="text-sm md:text-base text-white font-medium">
+                        {stat.title}
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            ))}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -136,10 +132,10 @@ export default function Stats() {
       <style jsx global>{`
         @keyframes scroll-right {
           0% {
-            transform: translateX(-100%);
+            transform: translateX(0);
           }
           100% {
-            transform: translateX(0);
+            transform: translateX(-33.333%);
           }
         }
       `}</style>
