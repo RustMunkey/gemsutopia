@@ -233,9 +233,9 @@ export default function Featured() {
                             />
                           </div>
                         </div>
-                        <h3 className="text-xl font-semibold text-black mb-2 text-center min-h-[3.5rem] flex items-center justify-center">{product.name}</h3>
-                        <p className="text-neutral-600 text-sm leading-relaxed flex-grow text-center overflow-hidden">
-                          {product.description.length > 100 ? `${product.description.substring(0, 100)}...` : product.description}
+                        <h3 className="text-lg font-semibold text-black mb-2 text-center min-h-[2.5rem] flex items-center justify-center leading-tight">{product.name}</h3>
+                        <p className="text-neutral-600 text-xs leading-relaxed flex-grow text-center overflow-hidden">
+                          {product.description.length > 120 ? `${product.description.substring(0, 120)}...` : product.description}
                         </p>
                       </div>
                     </div>
@@ -293,9 +293,9 @@ export default function Featured() {
                               />
                             </div>
                           </div>
-                          <h3 className="text-xl font-semibold text-black mb-2 text-center min-h-[3.5rem] flex items-center justify-center">{product.name}</h3>
-                          <p className="text-neutral-600 text-sm leading-relaxed flex-grow text-center overflow-hidden md:block hidden">
-                            {product.description.length > 100 ? `${product.description.substring(0, 100)}...` : product.description}
+                          <h3 className="text-lg font-semibold text-black mb-2 text-center min-h-[2.5rem] flex items-center justify-center leading-tight">{product.name}</h3>
+                          <p className="text-neutral-600 text-xs leading-relaxed flex-grow text-center overflow-hidden md:block hidden">
+                            {product.description.length > 120 ? `${product.description.substring(0, 120)}...` : product.description}
                           </p>
                         </div>
                       </div>
