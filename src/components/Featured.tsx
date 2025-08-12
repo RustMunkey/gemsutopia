@@ -233,9 +233,9 @@ export default function Featured() {
                             />
                           </div>
                         </div>
-                        <h3 className="text-lg font-semibold text-black mb-2 text-center min-h-[2.5rem] flex items-center justify-center leading-tight">{product.name}</h3>
+                        <h3 className="text-lg font-semibold text-black mb-1 text-center min-h-[2.5rem] flex items-center justify-center leading-tight">{product.name}</h3>
                         <p className="text-neutral-600 text-xs leading-relaxed flex-grow text-center overflow-hidden">
-                          {product.description.length > 120 ? `${product.description.substring(0, 120)}...` : product.description}
+                          {product.description}
                         </p>
                       </div>
                     </div>
@@ -293,9 +293,9 @@ export default function Featured() {
                               />
                             </div>
                           </div>
-                          <h3 className="text-lg font-semibold text-black mb-2 text-center min-h-[2.5rem] flex items-center justify-center leading-tight">{product.name}</h3>
+                          <h3 className="text-lg font-semibold text-black mb-1 text-center min-h-[2.5rem] flex items-center justify-center leading-tight">{product.name}</h3>
                           <p className="text-neutral-600 text-xs leading-relaxed flex-grow text-center overflow-hidden md:block hidden">
-                            {product.description.length > 120 ? `${product.description.substring(0, 120)}...` : product.description}
+                            {product.description}
                           </p>
                         </div>
                       </div>

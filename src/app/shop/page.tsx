@@ -364,7 +364,7 @@ export default function Shop() {
                       />
                     </div>
                   </div>
-                  <h3 className="text-lg font-semibold text-black mb-2 text-center min-h-[2.5rem] flex items-center justify-center leading-tight">{product.name}</h3>
+                  <h3 className="text-lg font-semibold text-black mb-1 text-center min-h-[2.5rem] flex items-center justify-center leading-tight">{product.name}</h3>
                   <p className="text-neutral-600 text-xs leading-relaxed min-h-[2.5rem] md:block hidden flex-grow">Hand-mined {product.type} from Alberta, Canada. Premium quality gemstone with exceptional clarity and natural beauty.</p>
                   <div className="mt-auto pt-3 flex items-center justify-between">
                     <div className="flex items-center gap-3">
