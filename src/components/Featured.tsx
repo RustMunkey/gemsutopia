@@ -204,7 +204,7 @@ export default function Featured() {
                     <div key={product.id} className="flex-shrink-0 w-[320px]">
                       <div 
                         className="rounded-2xl p-3 shadow-lg drop-shadow-xl translate-x-1 translate-y-1 transition-transform duration-200 ease-out cursor-pointer product-card select-none h-[450px] flex flex-col"
-                        style={{ backgroundColor: '#f8f9fa' }}
+                        style={{ backgroundColor: '#f0f0f0' }}
                         onClick={(e) => {
                           e.stopPropagation();
                           const targetId = product.product_id || product.id;
@@ -264,7 +264,7 @@ export default function Featured() {
                       <div key={`${product.id}-${index}`} className="inline-block flex-shrink-0 w-[calc(50vw-0.75rem)] md:w-[calc(33.33vw-1rem)] lg:w-[calc(25vw-1rem)] mx-2 md:mx-3">
                         <div 
                           className="rounded-2xl p-3 shadow-lg drop-shadow-xl translate-x-1 translate-y-1 transition-transform duration-200 ease-out cursor-pointer product-card select-none h-[450px] flex flex-col"
-                          style={{ backgroundColor: '#f8f9fa' }}
+                          style={{ backgroundColor: '#f0f0f0' }}
                           onClick={(e) => {
                             e.stopPropagation();
                             const targetId = product.product_id || product.id;
