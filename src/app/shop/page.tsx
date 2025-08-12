@@ -330,8 +330,8 @@ export default function Shop() {
               return (
                 <div 
                   key={product.id} 
-                  className="rounded-2xl p-2 shadow-2xl shadow-black/60 translate-x-1 translate-y-1 transition-transform duration-200 ease-out cursor-pointer product-card select-none h-full flex flex-col"
-                  style={{ backgroundColor: cardColor }}
+                  className="rounded-2xl p-3 shadow-lg drop-shadow-xl translate-x-1 translate-y-1 transition-transform duration-200 ease-out cursor-pointer product-card select-none h-full flex flex-col"
+                  style={{ backgroundColor: 'white' }}
                   onClick={(e) => {
                     e.stopPropagation();
                     // Navigate to product page and scroll to top
@@ -364,13 +364,13 @@ export default function Shop() {
                       />
                     </div>
                   </div>
-                  <h3 className="text-xl font-semibold text-white mb-2 text-center min-h-[3.5rem] flex items-center justify-center">{product.name}</h3>
-                  <p className="text-neutral-300 text-sm leading-relaxed min-h-[3rem] md:block hidden flex-grow">Hand-mined {product.type} from Alberta, Canada. This premium quality gemstone features exceptional clarity and natural beauty, ethically sourced with care.</p>
+                  <h3 className="text-xl font-semibold text-black mb-2 text-center min-h-[3.5rem] flex items-center justify-center">{product.name}</h3>
+                  <p className="text-neutral-600 text-sm leading-relaxed min-h-[3rem] md:block hidden flex-grow">Hand-mined {product.type} from Alberta, Canada. This premium quality gemstone features exceptional clarity and natural beauty, ethically sourced with care.</p>
                   <div className="mt-auto pt-3 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <button
                         onClick={(e) => toggleWishlist(product.id, e)}
-                        className="text-white hover:text-yellow-400 transition-colors p-1"
+                        className="text-black hover:text-yellow-400 transition-colors p-1"
                       >
                         {isInWishlist(product.id) ? (
                           <IconStarFilled className="h-6 w-6 text-yellow-400" />
@@ -379,13 +379,13 @@ export default function Shop() {
                         )}
                       </button>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm text-white line-through">${product.originalPrice}</span>
-                        <span className="text-lg font-bold text-white">${product.price}</span>
+                        <span className="text-sm text-black line-through">${product.originalPrice}</span>
+                        <span className="text-lg font-bold text-black">${product.price}</span>
                       </div>
                     </div>
                     <button
                       onClick={(e) => toggleGemPouch(product.id, e)}
-                      className="text-white hover:text-neutral-300 transition-colors p-1 relative"
+                      className="text-black hover:text-neutral-600 transition-colors p-1 relative"
                     >
                       <ShoppingBag className="h-6 w-6" strokeWidth={2} />
                       {isInPouch(product.id) && (
