@@ -12,6 +12,9 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Lock, CreditCard } from 'lucide-react';
 
 const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+
+console.log('Stripe publishable key:', publishableKey ? 'Found' : 'Missing');
+
 const stripePromise = publishableKey ? loadStripe(publishableKey) : null;
 
 interface PaymentFormProps {
@@ -29,6 +32,14 @@ function StripeForm({ amount, customerData, items, onSuccess, onError }: Omit<Pa
   const [loading, setLoading] = useState(false);
   const [clientSecret, setClientSecret] = useState<string>('');
   const [cardErrors, setCardErrors] = useState<Record<string, string>>({});
+  const [stripeReady, setStripeReady] = useState(false);
+
+  // Check if Stripe is ready
+  useEffect(() => {
+    console.log('Stripe instance:', stripe);
+    console.log('Elements instance:', elements);
+    setStripeReady(!!stripe && !!elements);
+  }, [stripe, elements]);
 
   useEffect(() => {
     const createPaymentIntent = async () => {
@@ -168,7 +179,23 @@ function StripeForm({ amount, customerData, items, onSuccess, onError }: Omit<Pa
   if (!stripePromise) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-        <p className="text-red-800">Payment system is not configured. Please contact support.</p>
+        <p className="text-red-800">Payment system is not configured. Missing Stripe publishable key.</p>
+        <p className="text-red-600 text-sm mt-2">Key status: {publishableKey ? 'Found' : 'Missing'}</p>
+      </div>
+    );
+  }
+
+  if (!stripeReady) {
+    return (
+      <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 p-6">
+        <div className="flex items-center mb-6">
+          <CreditCard className="h-6 w-6 text-gray-600 mr-3" />
+          <h2 className="text-xl font-semibold text-gray-900">Payment Details</h2>
+        </div>
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mr-3"></div>
+          <p className="text-gray-600">Loading payment form...</p>
+        </div>
       </div>
     );
   }
