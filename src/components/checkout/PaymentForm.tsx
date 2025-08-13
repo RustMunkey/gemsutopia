@@ -38,7 +38,18 @@ function StripeForm({ amount, customerData, items, onSuccess, onError }: Omit<Pa
   useEffect(() => {
     console.log('Stripe instance:', stripe);
     console.log('Elements instance:', elements);
+    console.log('Stripe ready state:', !!stripe && !!elements);
     setStripeReady(!!stripe && !!elements);
+    
+    // Test element mounting
+    if (stripe && elements) {
+      setTimeout(() => {
+        const cardNumber = elements.getElement(CardNumberElement);
+        const cardExpiry = elements.getElement(CardExpiryElement);
+        const cardCvc = elements.getElement(CardCvcElement);
+        console.log('Card elements after mount:', { cardNumber, cardExpiry, cardCvc });
+      }, 1000);
+    }
   }, [stripe, elements]);
 
   useEffect(() => {
@@ -169,6 +180,7 @@ function StripeForm({ amount, customerData, items, onSuccess, onError }: Omit<Pa
   };
 
   const handleCardElementChange = (elementType: string) => (event: any) => {
+    console.log(`${elementType} element change:`, event);
     if (event.error) {
       setCardErrors(prev => ({ ...prev, [elementType]: event.error.message }));
     } else {
@@ -216,6 +228,7 @@ function StripeForm({ amount, customerData, items, onSuccess, onError }: Omit<Pa
             <CardNumberElement 
               options={cardElementOptions}
               onChange={handleCardElementChange('cardNumber')}
+              onReady={() => console.log('CardNumberElement ready')}
             />
           </div>
           {cardErrors.cardNumber && (
@@ -232,6 +245,7 @@ function StripeForm({ amount, customerData, items, onSuccess, onError }: Omit<Pa
               <CardExpiryElement 
                 options={cardElementOptions}
                 onChange={handleCardElementChange('cardExpiry')}
+                onReady={() => console.log('CardExpiryElement ready')}
               />
             </div>
             {cardErrors.cardExpiry && (
@@ -247,6 +261,7 @@ function StripeForm({ amount, customerData, items, onSuccess, onError }: Omit<Pa
               <CardCvcElement 
                 options={cardElementOptions}
                 onChange={handleCardElementChange('cardCvc')}
+                onReady={() => console.log('CardCvcElement ready')}
               />
             </div>
             {cardErrors.cardCvc && (
