@@ -96,10 +96,10 @@ function PaymentForm({
     style: {
       base: {
         fontSize: '16px',
-        color: '#ffffff',
+        color: '#000000',
         backgroundColor: 'transparent',
         '::placeholder': {
-          color: '#aab7c4',
+          color: '#6b7280',
         },
       },
       invalid: {
@@ -111,17 +111,19 @@ function PaymentForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="p-4 bg-white/5 border border-white/10 rounded-lg">
-        <label className="block text-white font-medium mb-3">
+      <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+        <label className="block text-black font-medium mb-3">
           Card Details
         </label>
-        <CardElement options={cardElementOptions} />
+        <div className="p-3 border border-gray-300 rounded bg-white">
+          <CardElement options={cardElementOptions} />
+        </div>
       </div>
 
       <button
         type="submit"
         disabled={!stripe || loading || !clientSecret}
-        className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
+        className="w-full py-3 px-4 bg-black hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
       >
         {loading ? 'Processing...' : `Pay $${amount.toFixed(2)}`}
       </button>
