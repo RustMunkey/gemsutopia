@@ -8,7 +8,13 @@ import {
 } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+
+if (!publishableKey) {
+  console.error('Stripe publishable key is missing. Please check NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY environment variable.');
+}
+
+const stripePromise = publishableKey ? loadStripe(publishableKey) : null;
 
 interface StripePaymentProps {
   amount: number;
@@ -124,6 +130,14 @@ function PaymentForm({
 }
 
 export default function StripePayment(props: StripePaymentProps) {
+  if (!stripePromise) {
+    return (
+      <div className={`${props.className} bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded`}>
+        <strong>Payment Error:</strong> Stripe is not configured properly. Please contact support.
+      </div>
+    );
+  }
+
   return (
     <div className={props.className}>
       <Elements stripe={stripePromise}>
