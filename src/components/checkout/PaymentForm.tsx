@@ -170,7 +170,6 @@ function StripeForm({ amount, customerData, items, onSuccess, onError }: Omit<Pa
         '::placeholder': {
           color: '#9ca3af',
         },
-        padding: '12px 0',
       },
       invalid: {
         color: '#ef4444',
@@ -226,7 +225,10 @@ function StripeForm({ amount, customerData, items, onSuccess, onError }: Omit<Pa
           </label>
           <div className="p-4 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-black focus-within:border-black min-h-[50px] flex items-center">
             <CardNumberElement 
-              options={cardElementOptions}
+              options={{
+                ...cardElementOptions,
+                placeholder: '1234 1234 1234 1234'
+              }}
               onChange={handleCardElementChange('cardNumber')}
               onReady={() => console.log('CardNumberElement ready')}
             />
@@ -243,7 +245,10 @@ function StripeForm({ amount, customerData, items, onSuccess, onError }: Omit<Pa
             </label>
             <div className="p-4 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-black focus-within:border-black min-h-[50px] flex items-center">
               <CardExpiryElement 
-                options={cardElementOptions}
+                options={{
+                  ...cardElementOptions,
+                  placeholder: 'MM/YY'
+                }}
                 onChange={handleCardElementChange('cardExpiry')}
                 onReady={() => console.log('CardExpiryElement ready')}
               />
@@ -259,7 +264,10 @@ function StripeForm({ amount, customerData, items, onSuccess, onError }: Omit<Pa
             </label>
             <div className="p-4 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-black focus-within:border-black min-h-[50px] flex items-center">
               <CardCvcElement 
-                options={cardElementOptions}
+                options={{
+                  ...cardElementOptions,
+                  placeholder: 'CVC'
+                }}
                 onChange={handleCardElementChange('cardCvc')}
                 onReady={() => console.log('CardCvcElement ready')}
               />
