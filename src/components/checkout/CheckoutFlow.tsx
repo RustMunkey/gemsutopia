@@ -130,8 +130,19 @@ export default function CheckoutFlow() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen relative">
+      {/* White Marble Background */}
+      <div 
+        className="fixed inset-0 z-0"
+        style={{
+          backgroundImage: "url('/images/whitemarble.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat"
+        }}
+      />
+      
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Progress Header */}
         <div className="mb-8">
           {currentStep !== 'success' && (
@@ -238,7 +249,7 @@ export default function CheckoutFlow() {
           {/* Order Summary Sidebar */}
           {currentStep !== 'success' && (
             <div className="lg:col-span-1">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sticky top-8">
+              <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 p-6 sticky top-8">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Order Summary</h3>
                 
                 <div className="space-y-4 mb-6">

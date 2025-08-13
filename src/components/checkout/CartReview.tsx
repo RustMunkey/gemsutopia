@@ -30,7 +30,7 @@ export default function CartReview({ items, onContinue }: CartReviewProps) {
   const subtotal = items.reduce((sum, item) => sum + item.price, 0);
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 p-6">
       <h2 className="text-xl font-semibold text-gray-900 mb-6">Review Your Items</h2>
       
       <div className="space-y-4 mb-8">

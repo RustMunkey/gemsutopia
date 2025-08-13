@@ -35,7 +35,7 @@ export default function PaymentMethods({ onSelect }: PaymentMethodsProps) {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 p-6">
       <div className="flex items-center mb-6">
         <Shield className="h-6 w-6 text-green-500 mr-3" />
         <h2 className="text-xl font-semibold text-gray-900">Choose Payment Method</h2>

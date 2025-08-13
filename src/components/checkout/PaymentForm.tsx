@@ -144,9 +144,11 @@ function StripeForm({ amount, customerData, items, onSuccess, onError }: Omit<Pa
       base: {
         fontSize: '16px',
         color: '#1f2937',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
         '::placeholder': {
           color: '#9ca3af',
         },
+        padding: '12px 0',
       },
       invalid: {
         color: '#ef4444',
@@ -172,7 +174,7 @@ function StripeForm({ amount, customerData, items, onSuccess, onError }: Omit<Pa
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 p-6">
       <div className="flex items-center mb-6">
         <CreditCard className="h-6 w-6 text-gray-600 mr-3" />
         <h2 className="text-xl font-semibold text-gray-900">Payment Details</h2>
@@ -183,7 +185,7 @@ function StripeForm({ amount, customerData, items, onSuccess, onError }: Omit<Pa
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Card Number *
           </label>
-          <div className="p-3 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-black focus-within:border-black">
+          <div className="p-4 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-black focus-within:border-black min-h-[50px] flex items-center">
             <CardNumberElement 
               options={cardElementOptions}
               onChange={handleCardElementChange('cardNumber')}
@@ -199,7 +201,7 @@ function StripeForm({ amount, customerData, items, onSuccess, onError }: Omit<Pa
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Expiry Date *
             </label>
-            <div className="p-3 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-black focus-within:border-black">
+            <div className="p-4 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-black focus-within:border-black min-h-[50px] flex items-center">
               <CardExpiryElement 
                 options={cardElementOptions}
                 onChange={handleCardElementChange('cardExpiry')}
@@ -214,7 +216,7 @@ function StripeForm({ amount, customerData, items, onSuccess, onError }: Omit<Pa
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Security Code (CVC) *
             </label>
-            <div className="p-3 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-black focus-within:border-black">
+            <div className="p-4 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-black focus-within:border-black min-h-[50px] flex items-center">
               <CardCvcElement 
                 options={cardElementOptions}
                 onChange={handleCardElementChange('cardCvc')}

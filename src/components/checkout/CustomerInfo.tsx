@@ -60,7 +60,7 @@ export default function CustomerInfo({ data, onContinue }: CustomerInfoProps) {
   const errorClasses = "border-red-300 focus:ring-red-500 focus:border-red-500";
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 p-6">
       <h2 className="text-xl font-semibold text-gray-900 mb-6">Shipping Information</h2>
       
       <form onSubmit={handleSubmit} className="space-y-6">
