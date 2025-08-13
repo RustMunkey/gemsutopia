@@ -7,7 +7,6 @@ import Image from 'next/image';
 import { ArrowLeft, CheckCircle, XCircle, CreditCard, Bitcoin } from 'lucide-react';
 import Link from 'next/link';
 import StripePayment from '@/components/payments/StripePayment';
-import PayPalPayment from '@/components/payments/PayPalPayment';
 
 export default function Checkout() {
   const { items, clearPouch } = useGemPouch();
@@ -343,25 +342,9 @@ export default function Checkout() {
                   )}
 
                   {selectedPaymentMethod === 'paypal' && (
-                    <PayPalPayment
-                      amount={total}
-                      currency="CAD"
-                      items={groupedItems.map(item => ({
-                        name: item.name,
-                        quantity: item.quantity,
-                        price: item.price
-                      }))}
-                      onSuccess={(details) =>
-                        handlePaymentSuccess({
-                          captureID: details.captureID,
-                          paymentMethod: 'paypal',
-                          amount: total,
-                          currency: 'CAD'
-                        })
-                      }
-                      onError={handlePaymentError}
-                      className="mb-6"
-                    />
+                    <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-6">
+                      <strong>PayPal Coming Soon:</strong> PayPal integration is being set up. Please use Credit Card for now.
+                    </div>
                   )}
 
                   <div className="flex gap-4">
@@ -404,21 +387,18 @@ export default function Checkout() {
                       </div>
                     </button>
 
-                    {/* PayPal */}
+                    {/* PayPal - Temporarily Disabled */}
                     <button
-                      onClick={() => {
-                        setSelectedPaymentMethod('paypal');
-                        setPaymentStep('payment');
-                      }}
-                      className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors text-left"
+                      disabled
+                      className="w-full p-4 border-2 border-gray-200 rounded-lg bg-gray-100 opacity-50 cursor-not-allowed text-left"
                     >
                       <div className="flex items-center gap-4">
-                        <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center">
+                        <div className="w-8 h-8 bg-gray-400 rounded flex items-center justify-center">
                           <span className="text-white font-bold text-sm">PP</span>
                         </div>
                         <div>
-                          <h3 className="font-semibold text-black">PayPal</h3>
-                          <p className="text-sm text-gray-600">Pay with your PayPal account or credit card</p>
+                          <h3 className="font-semibold text-gray-600">PayPal (Coming Soon)</h3>
+                          <p className="text-sm text-gray-500">PayPal integration in progress</p>
                         </div>
                       </div>
                     </button>
