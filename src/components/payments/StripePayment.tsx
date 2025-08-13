@@ -2,7 +2,9 @@
 import { useState, useEffect } from 'react';
 import {
   Elements,
-  CardElement,
+  CardNumberElement,
+  CardExpiryElement,
+  CardCvcElement,
   useStripe,
   useElements,
 } from '@stripe/react-stripe-js';
@@ -70,8 +72,8 @@ function PaymentForm({
 
     setLoading(true);
 
-    const cardElement = elements.getElement(CardElement);
-    if (!cardElement) {
+    const cardNumberElement = elements.getElement(CardNumberElement);
+    if (!cardNumberElement) {
       onError('Card element not found');
       setLoading(false);
       return;
@@ -79,7 +81,7 @@ function PaymentForm({
 
     const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
       payment_method: {
-        card: cardElement,
+        card: cardNumberElement,
       },
     });
 
@@ -116,7 +118,7 @@ function PaymentForm({
           Card Details
         </label>
         <div className="p-3 border border-gray-300 rounded bg-white">
-          <CardElement options={cardElementOptions} />
+          <CardNumberElement options={cardElementOptions} />
         </div>
       </div>
 
