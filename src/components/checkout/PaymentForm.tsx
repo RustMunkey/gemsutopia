@@ -167,6 +167,7 @@ function StripeForm({ amount, customerData, items, onSuccess, onError }: Omit<Pa
         fontSize: '16px',
         color: '#1f2937',
         fontFamily: 'system-ui, -apple-system, sans-serif',
+        lineHeight: '24px',
         '::placeholder': {
           color: '#9ca3af',
         },
@@ -174,6 +175,9 @@ function StripeForm({ amount, customerData, items, onSuccess, onError }: Omit<Pa
       invalid: {
         color: '#ef4444',
         iconColor: '#ef4444',
+      },
+      complete: {
+        color: '#059669',
       },
     },
   };
@@ -223,15 +227,19 @@ function StripeForm({ amount, customerData, items, onSuccess, onError }: Omit<Pa
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Card Number *
           </label>
-          <div className="p-4 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-black focus-within:border-black min-h-[50px] flex items-center">
-            <CardNumberElement 
-              options={{
-                ...cardElementOptions,
-                placeholder: '1234 1234 1234 1234'
-              }}
-              onChange={handleCardElementChange('cardNumber')}
-              onReady={() => console.log('CardNumberElement ready')}
-            />
+          <div className="border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-black focus-within:border-black min-h-[50px]">
+            <div className="p-4">
+              <CardNumberElement 
+                options={{
+                  ...cardElementOptions,
+                  placeholder: '1234 1234 1234 1234'
+                }}
+                onChange={handleCardElementChange('cardNumber')}
+                onReady={() => console.log('CardNumberElement ready')}
+                onFocus={() => console.log('CardNumber focused')}
+                onBlur={() => console.log('CardNumber blurred')}
+              />
+            </div>
           </div>
           {cardErrors.cardNumber && (
             <p className="mt-1 text-sm text-red-600">{cardErrors.cardNumber}</p>
@@ -243,15 +251,19 @@ function StripeForm({ amount, customerData, items, onSuccess, onError }: Omit<Pa
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Expiry Date *
             </label>
-            <div className="p-4 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-black focus-within:border-black min-h-[50px] flex items-center">
-              <CardExpiryElement 
-                options={{
-                  ...cardElementOptions,
-                  placeholder: 'MM/YY'
-                }}
-                onChange={handleCardElementChange('cardExpiry')}
-                onReady={() => console.log('CardExpiryElement ready')}
-              />
+            <div className="border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-black focus-within:border-black min-h-[50px]">
+              <div className="p-4">
+                <CardExpiryElement 
+                  options={{
+                    ...cardElementOptions,
+                    placeholder: 'MM/YY'
+                  }}
+                  onChange={handleCardElementChange('cardExpiry')}
+                  onReady={() => console.log('CardExpiryElement ready')}
+                  onFocus={() => console.log('CardExpiry focused')}
+                  onBlur={() => console.log('CardExpiry blurred')}
+                />
+              </div>
             </div>
             {cardErrors.cardExpiry && (
               <p className="mt-1 text-sm text-red-600">{cardErrors.cardExpiry}</p>
@@ -262,15 +274,19 @@ function StripeForm({ amount, customerData, items, onSuccess, onError }: Omit<Pa
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Security Code (CVC) *
             </label>
-            <div className="p-4 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-black focus-within:border-black min-h-[50px] flex items-center">
-              <CardCvcElement 
-                options={{
-                  ...cardElementOptions,
-                  placeholder: 'CVC'
-                }}
-                onChange={handleCardElementChange('cardCvc')}
-                onReady={() => console.log('CardCvcElement ready')}
-              />
+            <div className="border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-black focus-within:border-black min-h-[50px]">
+              <div className="p-4">
+                <CardCvcElement 
+                  options={{
+                    ...cardElementOptions,
+                    placeholder: 'CVC'
+                  }}
+                  onChange={handleCardElementChange('cardCvc')}
+                  onReady={() => console.log('CardCvcElement ready')}
+                  onFocus={() => console.log('CardCvc focused')}
+                  onBlur={() => console.log('CardCvc blurred')}
+                />
+              </div>
             </div>
             {cardErrors.cardCvc && (
               <p className="mt-1 text-sm text-red-600">{cardErrors.cardCvc}</p>
