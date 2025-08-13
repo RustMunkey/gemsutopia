@@ -6,11 +6,13 @@ import { useGemPouch } from '@/contexts/GemPouchContext';
 import Image from 'next/image';
 import { ArrowLeft, CheckCircle, XCircle, CreditCard, Bitcoin } from 'lucide-react';
 import Link from 'next/link';
-import PaymentSelector from '@/components/payments/PaymentSelector';
+import StripePayment from '@/components/payments/StripePayment';
+import PayPalPayment from '@/components/payments/PayPalPayment';
 
 export default function Checkout() {
   const { items, clearPouch } = useGemPouch();
   const [paymentStep, setPaymentStep] = useState<'form' | 'payment-method' | 'payment' | 'success' | 'error'>('form');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'stripe' | 'paypal'>('stripe');
   const [paymentError, setPaymentError] = useState<string>('');
   const [paymentSuccess, setPaymentSuccess] = useState<{id: string; amount?: number} | null>(null);
   const [formData, setFormData] = useState({
@@ -61,8 +63,8 @@ export default function Checkout() {
       return;
     }
 
-    // Move to payment step
-    setPaymentStep('payment');
+    // Move to payment method selection step
+    setPaymentStep('payment-method');
   };
 
   const handlePaymentSuccess = async (paymentDetails: {paymentIntentId?: string; captureID?: string; paymentMethod: string; amount: number; currency: string}) => {
@@ -323,37 +325,74 @@ export default function Checkout() {
                 <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-lg">
                   <h2 className="text-2xl font-bold text-black mb-8">Payment</h2>
                   
-                  <PaymentSelector
-                    amount={total}
-                    currency="CAD"
-                    items={groupedItems.map(item => ({
-                      name: item.name,
-                      quantity: item.quantity,
-                      price: item.price
-                    }))}
-                    onSuccess={handlePaymentSuccess}
-                    onError={handlePaymentError}
-                    className="mb-6"
-                  />
+                  {selectedPaymentMethod === 'stripe' && (
+                    <StripePayment
+                      amount={total}
+                      currency="cad"
+                      onSuccess={(paymentIntentId) =>
+                        handlePaymentSuccess({ 
+                          paymentIntentId, 
+                          paymentMethod: 'stripe',
+                          amount: total,
+                          currency: 'CAD'
+                        })
+                      }
+                      onError={handlePaymentError}
+                      className="mb-6"
+                    />
+                  )}
 
-                  <button
-                    onClick={() => setPaymentStep('form')}
-                    className="w-full border-2 border-black text-black py-3 px-6 rounded-full font-semibold hover:bg-black hover:text-white transition-colors"
-                  >
-                    ← Back to Details
-                  </button>
+                  {selectedPaymentMethod === 'paypal' && (
+                    <PayPalPayment
+                      amount={total}
+                      currency="CAD"
+                      items={groupedItems.map(item => ({
+                        name: item.name,
+                        quantity: item.quantity,
+                        price: item.price
+                      }))}
+                      onSuccess={(details) =>
+                        handlePaymentSuccess({
+                          captureID: details.captureID,
+                          paymentMethod: 'paypal',
+                          amount: total,
+                          currency: 'CAD'
+                        })
+                      }
+                      onError={handlePaymentError}
+                      className="mb-6"
+                    />
+                  )}
+
+                  <div className="flex gap-4">
+                    <button
+                      onClick={() => setPaymentStep('payment-method')}
+                      className="flex-1 border-2 border-gray-300 text-gray-600 py-3 px-6 rounded-full font-semibold hover:bg-gray-50 transition-colors"
+                    >
+                      ← Change Payment Method
+                    </button>
+                    <button
+                      onClick={() => setPaymentStep('form')}
+                      className="flex-1 border-2 border-black text-black py-3 px-6 rounded-full font-semibold hover:bg-black hover:text-white transition-colors"
+                    >
+                      ← Back to Details
+                    </button>
+                  </div>
                 </div>
               )}
 
-              {/* Payment Method Selection - Legacy */}
-              {false && paymentStep === 'payment-method' && (
+              {/* Payment Method Selection */}
+              {paymentStep === 'payment-method' && (
                 <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-lg">
                   <h2 className="text-2xl font-bold text-black mb-8">Choose Payment Method</h2>
                   
                   <div className="space-y-4">
                     {/* Credit Card / Stripe */}
                     <button
-                      onClick={() => {}}
+                      onClick={() => {
+                        setSelectedPaymentMethod('stripe');
+                        setPaymentStep('payment');
+                      }}
                       className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-black hover:bg-gray-50 transition-colors text-left"
                     >
                       <div className="flex items-center gap-4">
@@ -367,7 +406,10 @@ export default function Checkout() {
 
                     {/* PayPal */}
                     <button
-                      onClick={() => {}}
+                      onClick={() => {
+                        setSelectedPaymentMethod('paypal');
+                        setPaymentStep('payment');
+                      }}
                       className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors text-left"
                     >
                       <div className="flex items-center gap-4">
@@ -400,7 +442,7 @@ export default function Checkout() {
                     onClick={() => setPaymentStep('form')}
                     className="w-full mt-6 border-2 border-black text-black py-3 px-6 rounded-full font-semibold hover:bg-black hover:text-white transition-colors"
                   >
-                    Back to Details
+                    ← Back to Details
                   </button>
                 </div>
               )}
