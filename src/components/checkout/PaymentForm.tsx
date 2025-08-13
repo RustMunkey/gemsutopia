@@ -128,6 +128,11 @@ function StripeForm({ amount, customerData, items, onSuccess, onError }: Omit<Pa
     } else if (paymentIntent?.status === 'succeeded') {
       // Save order
       try {
+        // Calculate totals properly
+        const subtotal = items.reduce((sum, item) => sum + item.price, 0);
+        const tax = subtotal * 0.13; // 13% HST for Canada
+        const shipping = subtotal > 100 ? 0 : 15; // Free shipping over $100
+        
         const orderData = {
           items,
           customerInfo: customerData,
@@ -137,7 +142,12 @@ function StripeForm({ amount, customerData, items, onSuccess, onError }: Omit<Pa
             amount,
             currency: 'CAD'
           },
-          totals: { total: amount },
+          totals: { 
+            subtotal,
+            tax,
+            shipping,
+            total: amount 
+          },
           timestamp: new Date().toISOString()
         };
 
@@ -151,7 +161,9 @@ function StripeForm({ amount, customerData, items, onSuccess, onError }: Omit<Pa
           const orderResult = await response.json();
           onSuccess({ orderId: orderResult.order.id });
         } else {
-          onError('Payment processed but order save failed. Please contact support.');
+          const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+          console.error('Order save failed:', errorData);
+          onError(`Payment processed but order save failed: ${errorData.error || 'Unknown error'}. Please contact support.`);
         }
       } catch (error) {
         onError('Payment processed but order save failed. Please contact support.');

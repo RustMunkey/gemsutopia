@@ -9,6 +9,7 @@ const supabase = createClient(
 export async function POST(request: NextRequest) {
   try {
     const orderData = await request.json();
+    console.log('Received order data:', JSON.stringify(orderData, null, 2));
     
     // Save order to database
     const { data, error } = await supabase
