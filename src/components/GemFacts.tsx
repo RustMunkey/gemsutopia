@@ -14,13 +14,18 @@ export default function GemFacts() {
   const [gemFact, setGemFact] = useState<GemFact | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [lastFetchDate, setLastFetchDate] = useState<string>('');
 
-  const fetchRandomFact = async () => {
+  const fetchFactOfTheDay = async () => {
     try {
       const response = await fetch('/api/gem-facts');
       if (response.ok) {
         const data = await response.json();
         setGemFact(data);
+        setLastFetchDate(new Date().toDateString());
+        // Store in localStorage for persistence
+        localStorage.setItem('gemFactOfTheDay', JSON.stringify(data));
+        localStorage.setItem('gemFactDate', new Date().toDateString());
       }
     } catch (error) {
       console.error('Error fetching gem fact:', error);
@@ -39,12 +44,35 @@ export default function GemFacts() {
   };
 
   useEffect(() => {
-    fetchRandomFact();
-  }, []);
+    // Check if we have a cached fact for today
+    const cachedFact = localStorage.getItem('gemFactOfTheDay');
+    const cachedDate = localStorage.getItem('gemFactDate');
+    const today = new Date().toDateString();
+
+    if (cachedFact && cachedDate === today) {
+      // Use cached fact for today
+      setGemFact(JSON.parse(cachedFact));
+      setLastFetchDate(cachedDate);
+      setLoading(false);
+    } else {
+      // Fetch new fact for today
+      fetchFactOfTheDay();
+    }
+
+    // Set up interval to check for new day every hour
+    const interval = setInterval(() => {
+      const currentDate = new Date().toDateString();
+      if (currentDate !== lastFetchDate) {
+        fetchFactOfTheDay();
+      }
+    }, 3600000); // Check every hour
+
+    return () => clearInterval(interval);
+  }, [lastFetchDate]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await fetchRandomFact();
+    await fetchFactOfTheDay();
   };
 
   if (loading) {
@@ -68,7 +96,7 @@ export default function GemFacts() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <div className="mb-6">
-            <h2 className="text-3xl md:text-4xl font-bold text-white">Gem Facts</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-white">Gem Fact of the Day</h2>
           </div>
           
           <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-white/10">

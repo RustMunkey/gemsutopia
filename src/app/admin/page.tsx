@@ -18,27 +18,13 @@ export default function AdminLogin() {
     setError('');
   };
 
-  // Check if already authenticated and clear credentials on mount
+  // Clear credentials and remove any existing tokens on mount
   useEffect(() => {
     // Always clear credentials when component mounts
     clearCredentials();
     
-    const token = localStorage.getItem('admin-token');
-    if (token) {
-      // Verify token is still valid
-      fetch('/api/admin/verify', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.valid) {
-          window.location.href = '/admin/dashboard';
-        } else {
-          localStorage.removeItem('admin-token');
-        }
-      })
-      .catch(() => localStorage.removeItem('admin-token'));
-    }
+    // Remove any existing admin token to force login
+    localStorage.removeItem('admin-token');
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {

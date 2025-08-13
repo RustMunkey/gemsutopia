@@ -7,7 +7,6 @@ import FeaturedProductsManager from './FeaturedProductsManager';
 import StatsManager from './StatsManager';
 import GemFactsManager from './GemFactsManager';
 import FAQManager from './FAQManager';
-import QuotesManager from './QuotesManager';
 
 export default function SiteContentManager() {
   const [content, setContent] = useState<SiteContent[]>([]);
@@ -40,24 +39,28 @@ export default function SiteContentManager() {
   };
 
   const contentItems = [
+    // Front Page
+    { section: 'front-page', key: 'meta_title', label: 'Page Title', type: 'text' },
+    { section: 'front-page', key: 'meta_description', label: 'Page Description', type: 'text' },
+    
     // Featured Section
-    { section: 'featured', key: 'section_title', label: 'Featured Title', description: 'Featured products section title', type: 'text' },
-    { section: 'featured', key: 'section_subtitle', label: 'Featured Subtitle', description: 'Featured products description', type: 'text' },
+    { section: 'featured', key: 'section_title', label: 'Featured Title', type: 'text' },
+    { section: 'featured', key: 'section_subtitle', label: 'Featured Subtitle', type: 'text' },
     
     // About Section
-    { section: 'about', key: 'section_title', label: 'About Title', description: 'About section heading', type: 'text' },
-    { section: 'about', key: 'section_content', label: 'About Content', description: 'About section main text', type: 'html' },
+    { section: 'about', key: 'section_title', label: 'About Title', type: 'text' },
+    { section: 'about', key: 'section_content', label: 'About Content', type: 'html' },
     
     // Contact Info
-    { section: 'contact', key: 'email', label: 'Contact Email', description: 'Customer service email', type: 'text' },
-    { section: 'contact', key: 'phone', label: 'Phone Number', description: 'Customer service phone', type: 'text' },
-    { section: 'contact', key: 'address', label: 'Address', description: 'Business address', type: 'text' },
+    { section: 'contact', key: 'email', label: 'Contact Email', type: 'text' },
+    { section: 'contact', key: 'phone', label: 'Phone Number', type: 'text' },
+    { section: 'contact', key: 'address', label: 'Address', type: 'text' },
     
     // Marquee Settings
-    { section: 'marquee', key: 'enabled', label: 'Enable Marquee', description: 'Show/hide the scrolling announcement banner', type: 'checkbox' },
-    { section: 'marquee', key: 'text', label: 'Marquee Text', description: 'Text that scrolls in the banner', type: 'text' },
-    { section: 'marquee', key: 'gradient_from', label: 'Gradient Start Color', description: 'Starting color for the marquee background', type: 'color' },
-    { section: 'marquee', key: 'gradient_to', label: 'Gradient End Color', description: 'Ending color for the marquee background', type: 'color' }
+    { section: 'marquee', key: 'enabled', label: 'Enable Marquee', type: 'checkbox' },
+    { section: 'marquee', key: 'text', label: 'Marquee Text', type: 'text' },
+    { section: 'marquee', key: 'gradient_from', label: 'Gradient Start Color', type: 'color' },
+    { section: 'marquee', key: 'gradient_to', label: 'Gradient End Color', type: 'color' }
   ];
 
   const [uploading, setUploading] = useState(false);
@@ -530,9 +533,10 @@ export default function SiteContentManager() {
         </div>
 
         {/* Other Sections */}
-        {['about', 'featured', 'contact', 'marquee'].map((sectionId) => {
+        {['front-page', 'about', 'featured', 'contact', 'marquee'].map((sectionId) => {
           const sectionItems = contentItems.filter(item => item.section === sectionId);
           const sectionTitles = {
+            'front-page': 'Front Page Settings',
             featured: 'Featured Products Section', 
             about: 'About Section',
             contact: 'Contact Information',
@@ -557,7 +561,6 @@ export default function SiteContentManager() {
                             <ContentIcon className="h-4 w-4 text-slate-400" />
                             <div className="flex-1">
                               <p className="font-medium text-white text-sm">{item.label}</p>
-                              <p className="text-xs text-slate-400">{item.description}</p>
                             </div>
                             <button
                               onClick={() => setEditingItem({ 
@@ -603,7 +606,6 @@ export default function SiteContentManager() {
                             <ContentIcon className="h-4 w-4 text-slate-400" />
                             <div className="flex-1">
                               <p className="font-medium text-white text-sm">{item.label}</p>
-                              <p className="text-xs text-slate-400">{item.description}</p>
                             </div>
                             <button
                               onClick={() => setEditingItem({ 
@@ -640,9 +642,6 @@ export default function SiteContentManager() {
                   
                   {/* FAQ Management */}
                   <FAQManager />
-                  
-                  {/* Quotes Management */}
-                  <QuotesManager />
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -656,7 +655,6 @@ export default function SiteContentManager() {
                           <ContentIcon className="h-4 w-4 text-slate-400" />
                           <div className="flex-1">
                             <p className="font-medium text-white text-sm">{item.label}</p>
-                            <p className="text-xs text-slate-400">{item.description}</p>
                           </div>
                           <button
                             onClick={() => setEditingItem({ 

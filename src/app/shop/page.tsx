@@ -330,7 +330,7 @@ export default function Shop() {
               return (
                 <div 
                   key={product.id} 
-                  className="rounded-2xl p-3 shadow-lg drop-shadow-xl translate-x-1 translate-y-1 transition-transform duration-200 ease-out cursor-pointer product-card select-none h-full flex flex-col"
+                  className="rounded-2xl p-3 shadow-2xl shadow-white/20 border border-white/10 translate-x-1 translate-y-1 transition-all duration-200 ease-out cursor-pointer product-card select-none h-full flex flex-col"
                   style={{ backgroundColor: '#f0f0f0' }}
                   onClick={(e) => {
                     e.stopPropagation();

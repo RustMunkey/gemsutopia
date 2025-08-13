@@ -4,7 +4,9 @@ import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import Overview from '@/components/dashboard/Overview';
 import Products from '@/components/dashboard/Products';
+import OrdersManager from '@/components/dashboard/OrdersManager';
 import SiteContent from '@/components/dashboard/SiteContent';
+import Pages from '@/components/dashboard/Pages';
 import Reviews from '@/components/dashboard/Reviews';
 import Analytics from '@/components/dashboard/Analytics';
 
@@ -51,8 +53,8 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-400"></div>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
       </div>
     );
   }
@@ -67,8 +69,12 @@ export default function Dashboard() {
         return <Overview />;
       case 'products':
         return <Products />;
+      case 'orders':
+        return <OrdersManager />;
       case 'site-content':
         return <SiteContent />;
+      case 'pages':
+        return <Pages />;
       case 'reviews':
         return <Reviews />;
       case 'analytics':

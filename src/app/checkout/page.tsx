@@ -6,14 +6,12 @@ import { useGemPouch } from '@/contexts/GemPouchContext';
 import Image from 'next/image';
 import { ArrowLeft, CheckCircle, XCircle, CreditCard, Bitcoin } from 'lucide-react';
 import Link from 'next/link';
-
-// Payment methods temporarily disabled
+import PaymentSelector from '@/components/payments/PaymentSelector';
 
 export default function Checkout() {
   const { items, clearPouch } = useGemPouch();
   const [paymentStep, setPaymentStep] = useState<'form' | 'payment-method' | 'payment' | 'success' | 'error'>('form');
-  // const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('stripe');
-  // const [paymentError, setPaymentError] = useState<string>('');
+  const [paymentError, setPaymentError] = useState<string>('');
   const [paymentSuccess, setPaymentSuccess] = useState<{id: string; amount?: number} | null>(null);
   const [formData, setFormData] = useState({
     email: '',
@@ -63,30 +61,48 @@ export default function Checkout() {
       return;
     }
 
-    // Payment methods temporarily disabled - show success
-    setPaymentSuccess({ id: 'demo-order-' + Date.now(), amount: total * 100 });
-    setPaymentStep('success');
-    clearPouch();
+    // Move to payment step
+    setPaymentStep('payment');
   };
 
-  // const handlePaymentMethodSelect = (method: PaymentMethod) => {
-  //   setPaymentMethod(method);
-  //   setPaymentStep('payment');
-  // };
+  const handlePaymentSuccess = async (paymentDetails: {paymentIntentId?: string; captureID?: string; paymentMethod: string; amount: number; currency: string}) => {
+    try {
+      // Save order to database
+      const orderData = {
+        items: groupedItems,
+        customerInfo: formData,
+        payment: paymentDetails,
+        totals: { subtotal, shipping, tax, total },
+        timestamp: new Date().toISOString()
+      };
 
-  // const handlePaymentSuccess = (details: Record<string, unknown>) => {
-  //   setPaymentSuccess({
-  //     id: details.id as string,
-  //     amount: (details.amount as number) || (total * 100) // PayPal and Coinbase might not have amount in same format
-  //   });
-  //   setPaymentStep('success');
-  //   clearPouch();
-  // };
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderData)
+      });
 
-  // const handlePaymentError = (error: string) => {
-  //   setPaymentError(error);
-  //   setPaymentStep('error');
-  // };
+      if (response.ok) {
+        setPaymentSuccess({ 
+          id: paymentDetails.paymentIntentId || paymentDetails.captureID || 'order-' + Date.now(), 
+          amount: total * 100 
+        });
+        setPaymentStep('success');
+        clearPouch();
+      } else {
+        throw new Error('Failed to save order');
+      }
+    } catch (error) {
+      console.error('Order processing failed:', error);
+      setPaymentError('Failed to process order. Please contact support.');
+      setPaymentStep('error');
+    }
+  };
+
+  const handlePaymentError = (error: string) => {
+    setPaymentError(error);
+    setPaymentStep('error');
+  };
 
   if (items.length === 0 && paymentStep !== 'success') {
     return (
@@ -180,13 +196,13 @@ export default function Checkout() {
               <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-lg text-center">
                 <XCircle className="h-16 w-16 text-red-600 mx-auto mb-6" />
                 <h1 className="text-3xl font-bold text-black mb-4">Payment Failed</h1>
-                <p className="text-neutral-600 mb-6">Payment processing is temporarily unavailable.</p>
+                <p className="text-neutral-600 mb-6">{paymentError}</p>
                 <div className="flex gap-4 justify-center">
                   <button
-                    onClick={() => setPaymentStep('payment-method')}
+                    onClick={() => setPaymentStep('payment')}
                     className="bg-black text-white py-3 px-8 rounded-full font-semibold hover:bg-neutral-800 transition-colors"
                   >
-                    Try Different Payment
+                    Try Again
                   </button>
                   <button
                     onClick={() => setPaymentStep('form')}
@@ -296,13 +312,40 @@ export default function Checkout() {
                       type="submit"
                       className="w-full bg-black text-white py-4 px-6 rounded-full font-semibold text-lg hover:bg-neutral-800 transition-colors"
                     >
-                      Continue (Payment Coming Soon)
+                      Continue to Payment
                     </button>
                   </form>
                 </div>
               )}
 
-              {/* Payment Method Selection - Temporarily Disabled */}
+              {/* Payment Section */}
+              {paymentStep === 'payment' && (
+                <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-lg">
+                  <h2 className="text-2xl font-bold text-black mb-8">Payment</h2>
+                  
+                  <PaymentSelector
+                    amount={total}
+                    currency="CAD"
+                    items={groupedItems.map(item => ({
+                      name: item.name,
+                      quantity: item.quantity,
+                      price: item.price
+                    }))}
+                    onSuccess={handlePaymentSuccess}
+                    onError={handlePaymentError}
+                    className="mb-6"
+                  />
+
+                  <button
+                    onClick={() => setPaymentStep('form')}
+                    className="w-full border-2 border-black text-black py-3 px-6 rounded-full font-semibold hover:bg-black hover:text-white transition-colors"
+                  >
+                    ← Back to Details
+                  </button>
+                </div>
+              )}
+
+              {/* Payment Method Selection - Legacy */}
               {false && paymentStep === 'payment-method' && (
                 <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-lg">
                   <h2 className="text-2xl font-bold text-black mb-8">Choose Payment Method</h2>
@@ -362,12 +405,6 @@ export default function Checkout() {
                 </div>
               )}
 
-              {/* Payment Forms - Temporarily Disabled */}
-              {false && paymentStep === 'payment' && (
-                <>
-                  {/* Payment forms removed */}
-                </>
-              )}
 
               {/* Order Summary */}
               <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-lg">

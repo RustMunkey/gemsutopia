@@ -74,7 +74,7 @@ export default function Hero() {
   // Show loading state or empty state
   if (loading || images.length === 0) {
     return (
-      <section className="bg-black h-[60vh] sm:h-[50vh] md:h-[60vh] lg:h-[65vh] md:mt-2 flex-shrink-0">
+      <section className="bg-black h-[60vh] sm:h-[50vh] md:h-[60vh] lg:h-[65vh] flex-shrink-0 overflow-hidden">
         <div className="w-full h-full flex items-center justify-center">
           {loading ? (
             <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white"></div>
@@ -90,20 +90,20 @@ export default function Hero() {
   }
 
   return (
-    <section className="bg-black h-[60vh] sm:h-[50vh] md:h-[60vh] lg:h-[65vh] md:mt-2 flex-shrink-0">
+    <section className="bg-black h-[60vh] sm:h-[50vh] md:h-[60vh] lg:h-[65vh] flex-shrink-0 overflow-hidden">
         <div className="w-full h-full flex items-center justify-center">
           <div className="w-full h-full flex items-center justify-center relative">
-            {/* Left margin click area - only the margin space */}
+            {/* Left tap area - mobile only */}
             <button 
               onClick={prevSlide}
-              className="absolute left-0 top-0 w-6 sm:w-2 md:w-24 lg:w-40 h-full z-30 bg-transparent cursor-pointer"
+              className="absolute left-0 top-0 w-1/2 md:w-24 lg:w-40 h-full z-30 bg-transparent cursor-pointer md:cursor-default"
               aria-label="Previous slide"
             />
             
-            {/* Right margin click area - only the margin space */}
+            {/* Right tap area - mobile only */}
             <button 
               onClick={nextSlide}
-              className="absolute right-0 top-0 w-6 sm:w-2 md:w-24 lg:w-40 h-full z-30 bg-transparent cursor-pointer"
+              className="absolute right-0 top-0 w-1/2 md:w-24 lg:w-40 h-full z-30 bg-transparent cursor-pointer md:cursor-default"
               aria-label="Next slide"
             />
             

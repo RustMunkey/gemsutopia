@@ -31,6 +31,16 @@ export default function Featured() {
   const animationRef = useRef<number | undefined>(undefined);
   const startTimeRef = useRef<number>(0);
   
+  // Function to determine if a color is light or dark
+  const isLightColor = (hexColor: string): boolean => {
+    const hex = hexColor.replace('#', '');
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    return brightness > 128;
+  };
+  
   // Set client-side flag
   useEffect(() => {
     setIsClient(true);
@@ -76,7 +86,7 @@ export default function Featured() {
             colors[product.id] = color;
           }
         } catch {
-          colors[product.id] = '#1f2937'; // fallback
+          colors[product.id] = '#8B5CF6'; // fallback - purple
         }
       }
       
@@ -86,30 +96,7 @@ export default function Featured() {
     extractColors();
   }, [isClient, featuredProducts]);
 
-  // Simple automatic infinite scroll animation
-  useEffect(() => {
-    if (!isClient || featuredProducts.length === 0) return;
-    
-    startTimeRef.current = Date.now(); // Set start time only on client
-    
-    const animate = () => {
-      const now = Date.now();
-      const elapsed = (now - startTimeRef.current) / 1000; // Convert to seconds
-      const speed = 80; // pixels per second - faster speed
-      const newTranslateX = -(elapsed * speed);
-      
-      setTranslateX(newTranslateX);
-      animationRef.current = requestAnimationFrame(animate);
-    };
-
-    animationRef.current = requestAnimationFrame(animate);
-
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-    };
-  }, [isClient, featuredProducts]);
+  // No JavaScript animation needed - using pure CSS
 
   // Calculate normalized translate position for infinite loop
   const [cardWidth, setCardWidth] = useState(400);
@@ -142,7 +129,7 @@ export default function Featured() {
     return (
       <section className="bg-black py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
+          <div className="text-center mb-6 md:mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
               {getContent('featured', 'section_title') || 'Featured Gems'}
             </h2>
@@ -178,7 +165,7 @@ export default function Featured() {
   return (
     <section className="bg-black py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
+        <div className="text-center mb-6 md:mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
             {getContent('featured', 'section_title') || 'Featured Gems'}
           </h2>
@@ -198,13 +185,14 @@ export default function Featured() {
             return (
               <div className="flex justify-center items-stretch gap-4 flex-wrap max-w-6xl mx-auto px-4">
                 {featuredProducts.map((product) => {
-                  const cardColor = isClient ? (productColors[product.id] || '#1f2937') : '#1f2937';
-                  
                   return (
                     <div key={product.id} className="flex-shrink-0 w-[320px]">
                       <div 
-                        className="rounded-2xl p-3 shadow-lg drop-shadow-xl translate-x-1 translate-y-1 transition-transform duration-200 ease-out cursor-pointer product-card select-none h-[450px] flex flex-col"
-                        style={{ backgroundColor: '#f0f0f0' }}
+                        className="rounded-2xl p-3 transition-all duration-300 ease-out cursor-pointer product-card select-none h-[250px] md:h-[450px] flex flex-col bg-center bg-no-repeat mobile-card-bg"
+                        style={{ 
+                          backgroundImage: "url('/images/blackmarble.jpg?v=" + Date.now() + "')",
+                          backgroundColor: '#2a2a2a'
+                        }}
                         onClick={(e) => {
                           e.stopPropagation();
                           const targetId = product.product_id || product.id;
@@ -212,7 +200,7 @@ export default function Featured() {
                           window.scrollTo(0, 0);
                         }}
                       >
-                        <div className="aspect-square bg-neutral-100 rounded-lg mb-2 overflow-hidden relative">
+                        <div className="w-full h-[200px] md:h-[350px] rounded-lg mb-1 overflow-hidden relative bg-transparent">
                           <Image 
                             src={product.image_url} 
                             alt={product.name}
@@ -246,24 +234,16 @@ export default function Featured() {
           } else {
             // Scrolling layout for more than 4 items
             return (
-              <div className="overflow-hidden py-8">
+              <div className="overflow-hidden py-0 md:py-8">
                 <div 
-                  ref={scrollContainerRef}
-                  className="flex"
-                  style={{
-                    transform: `translateX(${normalizedTranslateX}px)`,
-                    willChange: 'transform',
-                    width: 'max-content'
-                  }}
+                  className="flex animate-scroll"
                 >
                   {/* Triple the products for seamless infinite scroll */}
                   {featuredProducts.concat(featuredProducts).concat(featuredProducts).map((product, index) => {
-                    const cardColor = isClient ? (productColors[product.id] || '#1f2937') : '#1f2937';
-                    
                     return (
                       <div key={`${product.id}-${index}`} className="inline-block flex-shrink-0 w-[calc(50vw-0.75rem)] md:w-[calc(33.33vw-1rem)] lg:w-[calc(25vw-1rem)] mx-2 md:mx-3">
                         <div 
-                          className="rounded-2xl p-3 shadow-lg drop-shadow-xl translate-x-1 translate-y-1 transition-transform duration-200 ease-out cursor-pointer product-card select-none h-[450px] flex flex-col"
+                          className="rounded-2xl p-3 border-2 border-white/30 transition-all duration-300 ease-out cursor-pointer product-card select-none h-[250px] md:h-[450px] flex flex-col"
                           style={{ backgroundColor: '#f0f0f0' }}
                           onClick={(e) => {
                             e.stopPropagation();
@@ -272,7 +252,7 @@ export default function Featured() {
                             window.scrollTo(0, 0);
                           }}
                         >
-                          <div className="aspect-square bg-neutral-100 rounded-lg mb-2 overflow-hidden relative">
+                          <div className="w-full h-[200px] md:h-[350px] rounded-lg mb-1 overflow-hidden relative bg-transparent">
                             <Image 
                               src={product.image_url} 
                               alt={product.name}
@@ -313,32 +293,49 @@ export default function Featured() {
             transform: translateX(0);
           }
           100% {
-            transform: translateX(-100%);
+            transform: translateX(-33.333%);
           }
         }
         
-        .scrollbar-hide {
-          scrollbar-width: none;
-          -ms-overflow-style: none;
-        }
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
+        .animate-scroll {
+          animation: scroll 8s linear infinite;
+          will-change: transform;
         }
         
-        @media (max-width: 768px) {
-          .animate-\[scroll_15s_linear_infinite\] {
-            animation: scroll 20s linear infinite;
-          }
+        .animate-scroll:hover {
+          animation-play-state: paused;
         }
         
         @media (hover: hover) and (pointer: fine) {
           .product-card:hover {
-            transform: translateY(-8px) !important;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6) !important;
+            transform: translateY(-8px) scale(1.02) !important;
+            border-color: rgba(255, 255, 255, 0.6) !important;
           }
         }
-        .product-card {
-          will-change: transform;
+        .mobile-card-bg {
+          background-image: url('/images/blackmarble.jpg') !important;
+          background-size: cover !important;
+          background-position: center !important;
+          background-repeat: no-repeat !important;
+          background-color: #2a2a2a !important;
+        }
+        
+        .mobile-card-bg * {
+          background-color: transparent !important;
+        }
+        
+        @media (min-width: 768px) {
+          .mobile-card-bg {
+            background-image: url('/images/blackmarble.jpg') !important;
+            background-size: cover !important;
+            background-position: center !important;
+            background-repeat: no-repeat !important;
+            background-color: #2a2a2a !important;
+          }
+          
+          .mobile-card-bg * {
+            background-color: transparent !important;
+          }
         }
         .product-card {
           -webkit-user-select: none;

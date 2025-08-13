@@ -10,9 +10,9 @@ import ScrollToTop from '@/components/ScrollToTop';
 export default function Home() {
   return (
     <div className="min-h-[200vh] flex flex-col relative">
-      {/* Mobile-only Fixed Background */}
+      {/* Fixed Background for all screen sizes */}
       <div 
-        className="md:hidden fixed inset-0 z-0"
+        className="fixed inset-0 z-0"
         style={{
           backgroundImage: "url('/images/whitemarble.jpg')",
           backgroundSize: "cover",
@@ -21,34 +21,25 @@ export default function Home() {
         }}
       />
       
-      <div className="relative z-10 md:z-auto">
+      <div className="relative z-10">
         <Header />
       </div>
-      <div className="relative z-10 md:z-auto">
+      <div className="relative z-10">
         <Hero />
       </div>
-      <div className="relative z-10 md:z-auto">
+      <div className="relative z-10">
         <Featured />
       </div>
-      <div
-        className="relative z-10 md:z-auto"
-        style={{
-          backgroundImage: "url('/images/whitemarble.jpg')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-          backgroundAttachment: "fixed"
-        }}
-      >
+      <div className="relative z-10">
         <About />
         <Reviews />
         <FAQ />
       </div>
-      <div className="flex-grow max-h-20 relative z-10 md:z-auto"></div>
-      <div className="relative z-10 md:z-auto">
+      <div className="flex-grow max-h-20 relative z-10"></div>
+      <div className="relative z-10">
         <Footer />
       </div>
-      <div className="relative z-10 md:z-auto">
+      <div className="relative z-10">
         <ScrollToTop />
       </div>
     </div>

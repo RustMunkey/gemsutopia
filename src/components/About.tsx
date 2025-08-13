@@ -2,7 +2,6 @@
 import { useCMSContent } from '@/hooks/useCMSContent';
 import Stats from './Stats';
 import GemFacts from './GemFacts';
-import Quote from './Quote';
 
 export default function About() {
   const { getContent, loading } = useCMSContent();
@@ -12,7 +11,7 @@ export default function About() {
 
   if (loading) {
     return (
-      <section className="bg-black text-white py-16">
+      <section className="bg-black text-white py-8 md:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto"></div>
@@ -23,10 +22,10 @@ export default function About() {
   }
 
   return (
-    <section className="relative z-10 bg-gradient-to-b from-black to-transparent text-white py-16">
+    <section className="relative z-10 bg-gradient-to-b from-black to-transparent text-white py-4 md:py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">
-          <h2 className="text-2xl md:text-4xl font-bold mb-8">{title}</h2>
+          <h2 className="text-2xl md:text-4xl font-bold mb-2 md:mb-8">{title}</h2>
           <div 
             className="text-base md:text-lg text-gray-300 max-w-3xl mx-auto"
             dangerouslySetInnerHTML={{ __html: content }}
@@ -41,8 +40,6 @@ export default function About() {
       {/* Gem Facts Section */}
       <GemFacts />
       
-      {/* Quote Section */}
-      <Quote />
     </section>
   );
 }

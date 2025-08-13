@@ -23,10 +23,10 @@ export default function ContactUs() {
       return;
     }
 
-    // Replace these with your actual EmailJS credentials
-    const SERVICE_ID = 'YOUR_SERVICE_ID';
-    const TEMPLATE_ID = 'YOUR_TEMPLATE_ID';
-    const PUBLIC_KEY = 'YOUR_PUBLIC_KEY';
+    // EmailJS configuration - you'll need to set these up at emailjs.com
+    const SERVICE_ID = 'service_gemsutopia';
+    const TEMPLATE_ID = 'template_contact';
+    const PUBLIC_KEY = 'your_public_key_here';
 
     emailjs
       .sendForm(SERVICE_ID, TEMPLATE_ID, form.current, PUBLIC_KEY)
@@ -37,7 +37,7 @@ export default function ContactUs() {
         },
         (error) => {
           console.log('FAILED...', error.text);
-          setMessage('Failed to send message. Please try again or email us directly.');
+          setMessage('Failed to send message. Please try again or email us directly at gemsutopia@gmail.ca');
         }
       )
       .finally(() => {
@@ -74,7 +74,12 @@ export default function ContactUs() {
               <div className="flex items-center justify-center gap-2 mb-6">
                 <IconMail className="h-5 w-5 text-black" />
                 <span className="font-semibold text-black">Email:</span>
-                <span className="text-neutral-600">{getContent('contact', 'email') || 'gemsutopia@gmail.com'}</span>
+                <a 
+                  href="mailto:gemsutopia@gmail.ca" 
+                  className="text-neutral-600 hover:text-black underline transition-colors"
+                >
+                  {getContent('contact', 'email') || 'gemsutopia@gmail.ca'}
+                </a>
               </div>
               {message && (
                 <div className={`p-4 rounded-lg mb-6 ${

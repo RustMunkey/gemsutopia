@@ -25,7 +25,7 @@ export default function Footer() {
             <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-white text-xl hover:text-gray-300 transition-colors">
               <FontAwesomeIcon icon={faXTwitter} />
             </a>
-            <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="text-white text-xl hover:text-gray-300 transition-colors">
+            <a href="/facebook" className="text-white text-xl hover:text-gray-300 transition-colors">
               <FontAwesomeIcon icon={faFacebook} />
             </a>
           </div>

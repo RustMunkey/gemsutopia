@@ -44,7 +44,7 @@ export default function CookieBanner() {
               )}
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 lg:flex-shrink-0">
+            <div className="flex flex-col sm:flex-row gap-3 lg:flex-shrink-0 w-full sm:w-auto justify-center sm:justify-start">
               <button
                 onClick={() => setShowDetails(!showDetails)}
                 className="text-sm text-gray-300 hover:text-white underline transition-colors"

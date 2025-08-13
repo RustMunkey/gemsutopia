@@ -10,9 +10,9 @@ import {
   X,
   FileText,
   Star,
-  HelpCircle,
   Globe,
-  ImageIcon
+  ImageIcon,
+  ShoppingBag
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -45,10 +45,15 @@ export default function DashboardLayout({
       description: 'Manage Inventory'
     },
     { 
+      id: 'orders', 
+      label: 'Orders', 
+      icon: ShoppingBag,
+      description: 'Customer Orders'
+    },
+    { 
       id: 'site-content', 
       label: 'Site Content', 
-      icon: Globe,
-      description: 'Hero, Featured, About, Marquee'
+      icon: Globe
     },
     { 
       id: 'pages', 
@@ -61,12 +66,6 @@ export default function DashboardLayout({
       label: 'Reviews', 
       icon: Star,
       description: 'Customer Feedback'
-    },
-    { 
-      id: 'faqs', 
-      label: 'FAQs', 
-      icon: HelpCircle,
-      description: 'Common Questions'
     },
     { 
       id: 'media', 
