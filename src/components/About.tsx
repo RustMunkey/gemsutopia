@@ -22,7 +22,7 @@ export default function About() {
   }
 
   return (
-    <section className="relative z-10 bg-gradient-to-b from-black to-transparent text-white py-4 md:py-16">
+    <section className="relative z-10 bg-gradient-to-b from-black to-transparent text-white py-0 md:py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <h2 className="text-2xl md:text-4xl font-bold mb-2 md:mb-8">{title}</h2>

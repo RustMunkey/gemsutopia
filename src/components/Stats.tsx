@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Users, Package, Calendar, Star, BarChart3, TrendingUp } from 'lucide-react';
 
 interface Stat {
@@ -26,10 +26,57 @@ const iconMap = {
 export default function Stats() {
   const [stats, setStats] = useState<Stat[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isClient, setIsClient] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Set client-side flag
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
     fetchStats();
   }, []);
+
+  // Animation logic for smooth infinite scroll (copied from Featured)
+  useEffect(() => {
+    if (!isClient || stats.length === 0 || !containerRef.current) return;
+    
+    let animationId: number;
+    const startTime = performance.now();
+    const container = containerRef.current;
+    
+    // Calculate dimensions for stat cards
+    const cardWidth = 200; // 180px card + 20px margins
+    const oneSetWidth = stats.length * cardWidth;
+    
+    const animate = () => {
+      const now = performance.now();
+      const elapsed = (now - startTime) / 1000;
+      const speed = 45; // pixels per second - same as featured and reviews
+      const translateX = -(elapsed * speed);
+      
+      // Better normalization to prevent glitches
+      let normalizedTranslateX = 0;
+      if (oneSetWidth > 0) {
+        const rawMod = translateX % oneSetWidth;
+        normalizedTranslateX = rawMod <= -oneSetWidth ? rawMod + oneSetWidth : rawMod;
+      }
+      
+      // Directly update the transform without causing React re-renders
+      container.style.transform = `translate3d(${normalizedTranslateX}px, 0, 0)`;
+      
+      animationId = requestAnimationFrame(animate);
+    };
+
+    animationId = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+      }
+    };
+  }, [isClient, stats]);
 
   const fetchStats = async () => {
     try {
@@ -66,79 +113,86 @@ export default function Stats() {
     return null;
   }
 
-  const shouldCenter = stats.length <= 4;
-
   return (
     <div className="mt-16">
-      {shouldCenter ? (
-        // Centered layout for 4 or fewer items
-        <div className="flex justify-center items-center gap-4 flex-wrap">
-          {stats.map((stat) => {
-            const IconComponent = iconMap[stat.icon as keyof typeof iconMap];
-            
+      {/* Stats Display */}
+      <div className="py-8">
+        {(() => {
+          const displayStats = stats;
+          const shouldCenter = displayStats.length <= (window.innerWidth >= 768 ? 7 : 2);
+          
+          if (shouldCenter) {
+            // Centered layout for pause limits
             return (
-              <div key={stat.id} className="flex-shrink-0">
-                <div className="bg-black rounded-2xl px-6 py-6 shadow-lg w-[180px] h-[140px] flex flex-col justify-center">
-                  <div className="text-center">
-                    {IconComponent && (
-                      <div className="flex justify-center mb-2">
-                        <IconComponent className="h-6 w-6 text-white opacity-70" />
+              <div className="flex justify-center items-stretch gap-4 flex-wrap max-w-6xl mx-auto px-4 py-8">
+                {displayStats.map((stat) => {
+                  const IconComponent = iconMap[stat.icon as keyof typeof iconMap];
+                  
+                  return (
+                    <div key={stat.id} className="flex-shrink-0 w-80">
+                      <div className="bg-black rounded-2xl px-6 py-6 shadow-lg w-[180px] h-[140px] flex flex-col justify-center">
+                        <div className="text-center">
+                          {IconComponent && (
+                            <div className="flex justify-center mb-2">
+                              <IconComponent className="h-6 w-6 text-white opacity-70" />
+                            </div>
+                          )}
+                          <div className="text-2xl md:text-3xl font-bold text-white mb-2">
+                            {stat.value}
+                          </div>
+                          <div className="text-sm md:text-base text-white font-medium">
+                            {stat.title}
+                          </div>
+                        </div>
                       </div>
-                    )}
-                    <div className="text-2xl md:text-3xl font-bold text-white mb-2">
-                      {stat.value}
                     </div>
-                    <div className="text-sm md:text-base text-white font-medium">
-                      {stat.title}
-                    </div>
-                  </div>
+                  );
+                })}
+              </div>
+            );
+          } else {
+            // Scrolling layout for more than pause limits
+            return (
+              <div className="overflow-hidden py-8">
+                <div 
+                  ref={containerRef}
+                  className="flex"
+                  style={{
+                    willChange: 'transform',
+                    backfaceVisibility: 'hidden',
+                    WebkitBackfaceVisibility: 'hidden',
+                    transform: 'translateZ(0)'
+                  }}
+                >
+                  {displayStats.concat(displayStats).concat(displayStats).map((stat, index) => {
+                    const IconComponent = iconMap[stat.icon as keyof typeof iconMap];
+                    
+                    return (
+                      <div key={index} className="inline-block flex-shrink-0 w-80 mx-4">
+                        <div className="bg-black rounded-2xl px-6 py-6 shadow-lg w-[180px] h-[140px] flex flex-col justify-center">
+                          <div className="text-center">
+                            {IconComponent && (
+                              <div className="flex justify-center mb-2">
+                                <IconComponent className="h-6 w-6 text-white opacity-70" />
+                              </div>
+                            )}
+                            <div className="text-2xl md:text-3xl font-bold text-white mb-2">
+                              {stat.value}
+                            </div>
+                            <div className="text-sm md:text-base text-white font-medium">
+                              {stat.title}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             );
-          })}
-        </div>
-      ) : (
-        // Scrolling layout for more than 4 items
-        <div className="overflow-hidden py-4">
-          <div className="flex animate-[scroll-right_20s_linear_infinite] hover:[animation-play-state:paused]">
-            {/* Triple the stats for seamless infinite scroll */}
-            {stats.concat(stats).concat(stats).map((stat, index) => {
-              const IconComponent = iconMap[stat.icon as keyof typeof iconMap];
-              
-              return (
-                <div key={`${stat.id}-${index}`} className="inline-block flex-shrink-0 mx-4">
-                  <div className="bg-black rounded-2xl px-6 py-6 shadow-lg w-[180px] h-[140px] flex flex-col justify-center">
-                    <div className="text-center">
-                      {IconComponent && (
-                        <div className="flex justify-center mb-2">
-                          <IconComponent className="h-6 w-6 text-white opacity-70" />
-                        </div>
-                      )}
-                      <div className="text-2xl md:text-3xl font-bold text-white mb-2">
-                        {stat.value}
-                      </div>
-                      <div className="text-sm md:text-base text-white font-medium">
-                        {stat.title}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-      
-      <style jsx global>{`
-        @keyframes scroll-right {
-          0% {
-            transform: translateX(0);
           }
-          100% {
-            transform: translateX(-33.333%);
-          }
-        }
-      `}</style>
+        })()}
+      </div>
     </div>
   );
 }

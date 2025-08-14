@@ -12,22 +12,38 @@ export default function Hero() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchOffset, setTouchOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const scrollToSlide = (index: number) => {
+    setCurrentIndex(index);
+    setTouchOffset(0);
+    setIsDragging(false);
+  };
 
   const nextSlide = () => {
-    setCurrentIndex((prev) => (prev + 1) % images.length);
+    const newIndex = (currentIndex + 1) % images.length;
+    scrollToSlide(newIndex);
   };
 
   const prevSlide = () => {
-    setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+    const newIndex = (currentIndex - 1 + images.length) % images.length;
+    scrollToSlide(newIndex);
   };
 
-  const goToSlide = (index: number) => {
-    setCurrentIndex(index);
-  };
-
-  // Touch handlers for swipe
+  // Touch handlers for swipe with drag follow
   const onTouchStart = (e: React.TouchEvent) => {
     setTouchStart(e.touches[0].clientX);
+    setIsDragging(true);
+    setTouchOffset(0);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (!touchStart || !isDragging) return;
+    
+    const currentTouch = e.touches[0].clientX;
+    const diff = currentTouch - touchStart;
+    setTouchOffset(diff);
   };
 
   const onTouchEnd = (e: React.TouchEvent) => {
@@ -35,7 +51,7 @@ export default function Hero() {
     
     const touchEnd = e.changedTouches[0].clientX;
     const distance = touchStart - touchEnd;
-    const minSwipeDistance = 50;
+    const minSwipeDistance = 10; // Very small threshold
 
     if (Math.abs(distance) > minSwipeDistance) {
       if (distance > 0) {
@@ -44,13 +60,39 @@ export default function Hero() {
         prevSlide();
       }
     }
+    
     setTouchStart(null);
+    setTouchOffset(0);
+    setIsDragging(false);
   };
 
+  useEffect(() => {
+    const handleScroll = () => {
+      if (scrollRef.current) {
+        const { scrollLeft, clientWidth } = scrollRef.current;
+        const index = Math.round(scrollLeft / clientWidth);
+        setCurrentIndex(index);
+      }
+    };
+
+    const scrollElement = scrollRef.current;
+    if (scrollElement) {
+      scrollElement.addEventListener('scroll', handleScroll);
+    }
+
+    return () => {
+      if (scrollElement) {
+        scrollElement.removeEventListener('scroll', handleScroll);
+      }
+    };
+  }, []);
 
   // Reset to first slide when images change
   useEffect(() => {
     setCurrentIndex(0);
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+    }
   }, [images.length]);
 
   // Auto-scroll effect
@@ -58,8 +100,9 @@ export default function Hero() {
     if (images.length === 0 || loading) return;
 
     const interval = setInterval(() => {
-      nextSlide();
-    }, 15000); // 15 seconds per slide
+      const newIndex = (currentIndex + 1) % images.length;
+      scrollToSlide(newIndex);
+    }, 5000); // 5 seconds per slide
 
     return () => clearInterval(interval);
   }, [currentIndex, images.length, loading]);
@@ -88,6 +131,7 @@ export default function Hero() {
           <div 
             className="w-full h-full flex items-center justify-center relative"
             onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
           >
             {/* Left tap area - mobile only */}
@@ -104,48 +148,50 @@ export default function Hero() {
               aria-label="Next slide"
             />
             
-            {/* Mobile: Sliding carousel */}
+            {/* Slider with 3-image preview */}
             <div 
               ref={scrollRef}
-              className="w-full h-full overflow-hidden relative md:hidden"
+              className="w-full h-full overflow-hidden relative"
             >
-              <div 
-                className="flex h-full transition-transform duration-500 ease-in-out"
-                style={{ 
-                  transform: `translateX(-${currentIndex * 100}vw)`,
-                  width: `${images.length * 100}vw`
-                }}
-              >
-                {images.map((image, index) => (
-                  <div 
-                    key={index}
-                    className="h-full flex-shrink-0 flex items-center justify-center"
-                    style={{ width: '100vw' }}
-                  >
-                    <div className="w-full h-full px-2 py-4 flex items-center justify-center">
-                      <div className="bg-neutral-700 rounded-2xl w-full h-full overflow-hidden relative">
-                        <Image 
-                          src={image}
-                          alt={`Hero image ${index + 1}`}
-                          fill
-                          className="object-cover"
-                          priority={index === 0}
-                          sizes="100vw"
-                          quality={85}
-                        />
+              {/* Mobile: Swipeable carousel */}
+              <div className="w-full h-full md:hidden relative overflow-hidden">
+                <div 
+                  className="flex h-full"
+                  style={{
+                    transform: `translateX(-${currentIndex * 100}vw) translateX(${touchOffset}px)`,
+                    width: `${images.length * 100}vw`,
+                    transition: isDragging ? 'none' : 'transform 0.5s ease-in-out'
+                  }}
+                >
+                  {images.map((image, index) => (
+                    <div 
+                      key={index}
+                      className="h-full flex-shrink-0 flex items-center justify-center"
+                      style={{ width: '100vw' }}
+                    >
+                      <div className="w-full h-full px-2 py-4 flex items-center justify-center">
+                        <div className="bg-neutral-700 rounded-2xl w-full h-full overflow-hidden relative">
+                          <Image 
+                            src={image}
+                            alt={`Hero image ${index + 1}`}
+                            fill
+                            className="object-cover"
+                            priority={index === 0}
+                            sizes="100vw"
+                            quality={85}
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-
-            {/* Desktop: 3-image preview */}
-            <div className="w-full h-full overflow-hidden relative hidden md:block">
-              <div className="flex h-full items-center absolute inset-0">
+              
+              {/* Desktop 3-image preview */}
+              <div className="hidden md:flex h-full items-center absolute inset-0">
                 {/* Previous Image - Left side, partially visible */}
                 <div 
-                  className="absolute left-0 top-0 h-full w-1/3 opacity-50 transition-all duration-300 z-10"
+                  className="absolute left-0 top-0 h-full w-1/4 md:w-1/3 opacity-50 transition-all duration-300 z-10"
                 >
                   <div className="bg-neutral-700 rounded-2xl w-full h-full overflow-hidden relative">
                     <Image 
@@ -163,7 +209,7 @@ export default function Hero() {
                 <div 
                   className="absolute inset-0 flex items-center justify-center z-20"
                 >
-                  <div className="w-full h-full px-24 lg:px-40">
+                  <div className="w-full h-full px-0 sm:px-0.5 md:px-24 lg:px-40">
                     <div className="bg-neutral-700 rounded-2xl w-full h-full overflow-hidden relative">
                       <Image 
                         src={images[currentIndex]} 
@@ -180,7 +226,7 @@ export default function Hero() {
                 
                 {/* Next Image - Right side, partially visible */}
                 <div 
-                  className="absolute right-0 top-0 h-full w-1/3 opacity-50 transition-all duration-300 z-10"
+                  className="absolute right-0 top-0 h-full w-1/4 md:w-1/3 opacity-50 transition-all duration-300 z-10"
                 >
                   <div className="bg-neutral-700 rounded-2xl w-full h-full overflow-hidden relative">
                     <Image 
@@ -202,7 +248,7 @@ export default function Hero() {
                 {images.map((_, index) => (
                   <button
                     key={index}
-                    onClick={() => goToSlide(index)}
+                    onClick={() => scrollToSlide(index)}
                     className={`w-2 h-2 rounded-full transition-colors ${
                       currentIndex === index ? 'bg-black' : 'bg-neutral-600'
                     }`}

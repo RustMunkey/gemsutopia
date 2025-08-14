@@ -2,7 +2,11 @@
 import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { IconStar, IconStarFilled } from '@tabler/icons-react';
+import { ShoppingBag, Check } from 'lucide-react';
 import { useCMSContent } from '@/hooks/useCMSContent';
+import { useGemPouch } from '@/contexts/GemPouchContext';
+import { useWishlist } from '@/contexts/WishlistContext';
 import { extractVibrantColor } from '@/utils/colorExtraction';
 
 interface FeaturedProduct {
@@ -22,29 +26,99 @@ interface FeaturedProduct {
 export default function Featured() {
   const router = useRouter();
   const { getContent } = useCMSContent();
+  const { addItem, removeItem, isInPouch } = useGemPouch();
+  const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist();
   const [featuredProducts, setFeaturedProducts] = useState<FeaturedProduct[]>([]);
-  const [productColors, setProductColors] = useState<{ [key: string]: string }>({});
   const [isClient, setIsClient] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [translateX, setTranslateX] = useState(0);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const animationRef = useRef<number | undefined>(undefined);
-  const startTimeRef = useRef<number>(0);
+  const containerRef = useRef<HTMLDivElement>(null);
   
-  // Function to determine if a color is light or dark
-  const isLightColor = (hexColor: string): boolean => {
-    const hex = hexColor.replace('#', '');
-    const r = parseInt(hex.substring(0, 2), 16);
-    const g = parseInt(hex.substring(2, 4), 16);
-    const b = parseInt(hex.substring(4, 6), 16);
-    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-    return brightness > 128;
+  const toggleWishlist = (productId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const product = featuredProducts.find(p => p.id === productId);
+    if (!product) return;
+    
+    const productData = {
+      id: parseInt(product.product_id?.toString() || product.id),
+      name: product.name,
+      price: product.price,
+      image: product.image_url
+    };
+    
+    if (isInWishlist(parseInt(product.product_id?.toString() || product.id))) {
+      removeFromWishlist(parseInt(product.product_id?.toString() || product.id));
+    } else {
+      addToWishlist(productData);
+    }
+  };
+  
+  const toggleGemPouch = (productId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const product = featuredProducts.find(p => p.id === productId);
+    if (!product) return;
+    
+    const productData = {
+      id: parseInt(product.product_id?.toString() || product.id),
+      name: product.name,
+      price: product.price,
+      image: product.image_url
+    };
+    
+    if (isInPouch(parseInt(product.product_id?.toString() || product.id))) {
+      removeItem(parseInt(product.product_id?.toString() || product.id));
+    } else {
+      addItem(productData);
+    }
   };
   
   // Set client-side flag
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // Animation logic for smooth infinite scroll (copied from Reviews)
+  useEffect(() => {
+    if (!isClient || featuredProducts.length <= 4 || !containerRef.current) return;
+    
+    let animationId: number;
+    const startTime = performance.now();
+    const container = containerRef.current;
+    
+    // Calculate dimensions for featured cards
+    const cardWidth = window.innerWidth < 768 ? 
+      (window.innerWidth * 0.5 + 16) : // Mobile: 50vw + margins
+      window.innerWidth < 1024 ? 
+        (window.innerWidth * 0.3333 + 24) : // Medium: 33.33vw + margins
+        (window.innerWidth * 0.25 + 24); // Large: 25vw + margins
+    const oneSetWidth = featuredProducts.length * cardWidth;
+    
+    const animate = () => {
+      const now = performance.now();
+      const elapsed = (now - startTime) / 1000;
+      const speed = 45; // pixels per second - same as reviews
+      const translateX = -(elapsed * speed);
+      
+      // Better normalization to prevent glitches
+      let normalizedTranslateX = 0;
+      if (oneSetWidth > 0) {
+        const rawMod = translateX % oneSetWidth;
+        normalizedTranslateX = rawMod <= -oneSetWidth ? rawMod + oneSetWidth : rawMod;
+      }
+      
+      // Directly update the transform without causing React re-renders
+      container.style.transform = `translate3d(${normalizedTranslateX}px, 0, 0)`;
+      
+      animationId = requestAnimationFrame(animate);
+    };
+
+    animationId = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+      }
+    };
+  }, [isClient, featuredProducts]);
 
   // Fetch featured products from database
   useEffect(() => {
@@ -68,62 +142,6 @@ export default function Featured() {
 
     fetchFeaturedProducts();
   }, []);
-
-  // Extract colors from product images (only on client side)
-  useEffect(() => {
-    if (!isClient || featuredProducts.length === 0) return;
-    
-    const extractColors = async () => {
-      const colors: { [key: string]: string } = {};
-      
-      for (const product of featuredProducts) {
-        try {
-          // Use custom card_color if set, otherwise extract from image
-          if (product.card_color) {
-            colors[product.id] = product.card_color;
-          } else {
-            const color = await extractVibrantColor(product.image_url);
-            colors[product.id] = color;
-          }
-        } catch {
-          colors[product.id] = '#8B5CF6'; // fallback - purple
-        }
-      }
-      
-      setProductColors(colors);
-    };
-    
-    extractColors();
-  }, [isClient, featuredProducts]);
-
-  // No JavaScript animation needed - using pure CSS
-
-  // Calculate normalized translate position for infinite loop
-  const [cardWidth, setCardWidth] = useState(400);
-  
-  useEffect(() => {
-    if (!isClient) return;
-    
-    const calculateCardWidth = () => {
-      const width = window.innerWidth < 768 ? 
-        (window.innerWidth * 0.5 - 12 + 16) : // Mobile: 50vw cards (same as shop)
-        window.innerWidth < 1024 ? 
-          (window.innerWidth * 0.3333 - 16 + 24) : // Medium: 33.33vw cards  
-          (window.innerWidth * 0.25 - 16 + 24); // Large: 25vw cards
-      setCardWidth(width);
-    };
-    
-    calculateCardWidth();
-    window.addEventListener('resize', calculateCardWidth);
-    
-    return () => {
-      window.removeEventListener('resize', calculateCardWidth);
-    };
-  }, [isClient]);
-
-  const oneSetWidth = featuredProducts.length * cardWidth;
-  const normalizedTranslateX = oneSetWidth > 0 ? 
-    ((translateX % oneSetWidth) + oneSetWidth) % oneSetWidth - oneSetWidth : 0;
 
   if (isLoading) {
     return (
@@ -186,13 +204,10 @@ export default function Featured() {
               <div className="flex justify-center items-stretch gap-4 flex-wrap max-w-6xl mx-auto px-4">
                 {featuredProducts.map((product) => {
                   return (
-                    <div key={product.id} className="flex-shrink-0 w-[320px]">
+                    <div key={product.id} className="flex-shrink-0 w-[280px]">
                       <div 
-                        className="rounded-2xl p-3 transition-all duration-300 ease-out cursor-pointer product-card select-none h-[250px] md:h-[450px] flex flex-col bg-center bg-no-repeat mobile-card-bg"
-                        style={{ 
-                          backgroundImage: "url('/images/blackmarble.jpg?v=" + Date.now() + "')",
-                          backgroundColor: '#2a2a2a'
-                        }}
+                        className="rounded-2xl p-2 shadow-2xl shadow-white/20 border border-white/10 translate-x-1 translate-y-1 transition-all duration-200 ease-out cursor-pointer product-card select-none h-full flex flex-col"
+                        style={{ backgroundColor: '#f0f0f0' }}
                         onClick={(e) => {
                           e.stopPropagation();
                           const targetId = product.product_id || product.id;
@@ -200,7 +215,10 @@ export default function Featured() {
                           window.scrollTo(0, 0);
                         }}
                       >
-                        <div className="w-full h-[200px] md:h-[350px] rounded-lg mb-1 overflow-hidden relative bg-transparent">
+                        <div className="aspect-square bg-neutral-100 rounded-lg mb-2 overflow-hidden relative">
+                          <div className="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded z-10">
+                            {Math.round(((product.original_price - product.price) / product.original_price) * 100)}% OFF
+                          </div>
                           <Image 
                             src={product.image_url} 
                             alt={product.name}
@@ -222,9 +240,53 @@ export default function Featured() {
                           </div>
                         </div>
                         <h3 className="text-lg font-semibold text-black mb-1 text-center min-h-[2.5rem] flex items-center justify-center leading-tight">{product.name}</h3>
-                        <p className="text-neutral-600 text-xs leading-relaxed flex-grow text-center overflow-hidden">
-                          {product.description}
-                        </p>
+                        <p className="text-neutral-600 text-xs leading-relaxed min-h-[2.5rem] md:block hidden flex-grow text-center">{product.description}</p>
+                        <div className="mt-auto pt-2 flex items-center md:justify-between justify-center">
+                          <button
+                            onClick={(e) => toggleWishlist(product.id, e)}
+                            className="text-black hover:text-yellow-400 transition-colors p-1 hidden md:block"
+                          >
+                            {isInWishlist(parseInt(product.product_id?.toString() || product.id)) ? (
+                              <IconStarFilled className="h-6 w-6 text-yellow-400" />
+                            ) : (
+                              <IconStar className="h-6 w-6" />
+                            )}
+                          </button>
+                          <div className="flex items-center gap-3 md:gap-2">
+                            <button
+                              onClick={(e) => toggleWishlist(product.id, e)}
+                              className="text-black hover:text-yellow-400 transition-colors p-1 md:hidden"
+                            >
+                              {isInWishlist(parseInt(product.product_id?.toString() || product.id)) ? (
+                                <IconStarFilled className="h-6 w-6 text-yellow-400" />
+                              ) : (
+                                <IconStar className="h-6 w-6" />
+                              )}
+                            </button>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-black line-through">${product.original_price}</span>
+                              <span className="text-lg font-bold text-black">${product.price}</span>
+                            </div>
+                            <button
+                              onClick={(e) => toggleGemPouch(product.id, e)}
+                              className="text-black hover:text-neutral-600 transition-colors p-1 relative md:hidden"
+                            >
+                              <ShoppingBag className="h-6 w-6" strokeWidth={2} />
+                              {isInPouch(parseInt(product.product_id?.toString() || product.id)) && (
+                                <Check className="absolute bottom-0 right-0 h-4 w-4 text-green-500" strokeWidth={4} />
+                              )}
+                            </button>
+                          </div>
+                          <button
+                            onClick={(e) => toggleGemPouch(product.id, e)}
+                            className="text-black hover:text-neutral-600 transition-colors p-1 relative hidden md:block"
+                          >
+                            <ShoppingBag className="h-6 w-6" strokeWidth={2} />
+                            {isInPouch(parseInt(product.product_id?.toString() || product.id)) && (
+                              <Check className="absolute bottom-0 right-0 h-4 w-4 text-green-500" strokeWidth={4} />
+                            )}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   );
@@ -234,16 +296,22 @@ export default function Featured() {
           } else {
             // Scrolling layout for more than 4 items
             return (
-              <div className="overflow-hidden py-0 md:py-8">
+              <div className="overflow-hidden py-8">
                 <div 
-                  className="flex animate-scroll"
+                  ref={containerRef}
+                  className="flex"
+                  style={{
+                    willChange: 'transform',
+                    backfaceVisibility: 'hidden',
+                    WebkitBackfaceVisibility: 'hidden',
+                    transform: 'translateZ(0)'
+                  }}
                 >
-                  {/* Triple the products for seamless infinite scroll */}
                   {featuredProducts.concat(featuredProducts).concat(featuredProducts).map((product, index) => {
                     return (
                       <div key={`${product.id}-${index}`} className="inline-block flex-shrink-0 w-[calc(50vw-0.75rem)] md:w-[calc(33.33vw-1rem)] lg:w-[calc(25vw-1rem)] mx-2 md:mx-3">
                         <div 
-                          className="rounded-2xl p-3 border-2 border-white/30 transition-all duration-300 ease-out cursor-pointer product-card select-none h-[250px] md:h-[450px] flex flex-col"
+                          className="rounded-2xl p-2 shadow-2xl shadow-white/20 border border-white/10 translate-x-1 translate-y-1 transition-all duration-200 ease-out cursor-pointer product-card select-none h-full flex flex-col"
                           style={{ backgroundColor: '#f0f0f0' }}
                           onClick={(e) => {
                             e.stopPropagation();
@@ -252,7 +320,10 @@ export default function Featured() {
                             window.scrollTo(0, 0);
                           }}
                         >
-                          <div className="w-full h-[200px] md:h-[350px] rounded-lg mb-1 overflow-hidden relative bg-transparent">
+                          <div className="aspect-square bg-neutral-100 rounded-lg mb-2 overflow-hidden relative">
+                            <div className="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded z-10">
+                              {Math.round(((product.original_price - product.price) / product.original_price) * 100)}% OFF
+                            </div>
                             <Image 
                               src={product.image_url} 
                               alt={product.name}
@@ -274,9 +345,53 @@ export default function Featured() {
                             </div>
                           </div>
                           <h3 className="text-lg font-semibold text-black mb-1 text-center min-h-[2.5rem] flex items-center justify-center leading-tight">{product.name}</h3>
-                          <p className="text-neutral-600 text-xs leading-relaxed flex-grow text-center overflow-hidden md:block hidden">
-                            {product.description}
-                          </p>
+                          <p className="text-neutral-600 text-xs leading-relaxed min-h-[2.5rem] md:block hidden flex-grow text-center">{product.description}</p>
+                          <div className="mt-auto pt-2 flex items-center md:justify-between justify-center">
+                            <button
+                              onClick={(e) => toggleWishlist(product.id, e)}
+                              className="text-black hover:text-yellow-400 transition-colors p-1 hidden md:block"
+                            >
+                              {isInWishlist(parseInt(product.product_id?.toString() || product.id)) ? (
+                                <IconStarFilled className="h-6 w-6 text-yellow-400" />
+                              ) : (
+                                <IconStar className="h-6 w-6" />
+                              )}
+                            </button>
+                            <div className="flex items-center gap-3 md:gap-2">
+                              <button
+                                onClick={(e) => toggleWishlist(product.id, e)}
+                                className="text-black hover:text-yellow-400 transition-colors p-1 md:hidden"
+                              >
+                                {isInWishlist(parseInt(product.product_id?.toString() || product.id)) ? (
+                                  <IconStarFilled className="h-6 w-6 text-yellow-400" />
+                                ) : (
+                                  <IconStar className="h-6 w-6" />
+                                )}
+                              </button>
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-black line-through">${product.original_price}</span>
+                                <span className="text-lg font-bold text-black">${product.price}</span>
+                              </div>
+                              <button
+                                onClick={(e) => toggleGemPouch(product.id, e)}
+                                className="text-black hover:text-neutral-600 transition-colors p-1 relative md:hidden"
+                              >
+                                <ShoppingBag className="h-6 w-6" strokeWidth={2} />
+                                {isInPouch(parseInt(product.product_id?.toString() || product.id)) && (
+                                  <Check className="absolute bottom-0 right-0 h-4 w-4 text-green-500" strokeWidth={4} />
+                                )}
+                              </button>
+                            </div>
+                            <button
+                              onClick={(e) => toggleGemPouch(product.id, e)}
+                              className="text-black hover:text-neutral-600 transition-colors p-1 relative hidden md:block"
+                            >
+                              <ShoppingBag className="h-6 w-6" strokeWidth={2} />
+                              {isInPouch(parseInt(product.product_id?.toString() || product.id)) && (
+                                <Check className="absolute bottom-0 right-0 h-4 w-4 text-green-500" strokeWidth={4} />
+                              )}
+                            </button>
+                          </div>
                         </div>
                       </div>
                     );
@@ -287,72 +402,6 @@ export default function Featured() {
           }
         })()}
       </div>
-      <style jsx global>{`
-        @keyframes scroll {
-          0% {
-            transform: translateX(0);
-          }
-          100% {
-            transform: translateX(-33.333%);
-          }
-        }
-        
-        .animate-scroll {
-          animation: scroll 8s linear infinite;
-          will-change: transform;
-        }
-        
-        .animate-scroll:hover {
-          animation-play-state: paused;
-        }
-        
-        @media (hover: hover) and (pointer: fine) {
-          .product-card:hover {
-            transform: translateY(-8px) scale(1.02) !important;
-            border-color: rgba(255, 255, 255, 0.6) !important;
-          }
-        }
-        .mobile-card-bg {
-          background-image: url('/images/blackmarble.jpg') !important;
-          background-size: cover !important;
-          background-position: center !important;
-          background-repeat: no-repeat !important;
-          background-color: #2a2a2a !important;
-        }
-        
-        .mobile-card-bg * {
-          background-color: transparent !important;
-        }
-        
-        @media (min-width: 768px) {
-          .mobile-card-bg {
-            background-image: url('/images/blackmarble.jpg') !important;
-            background-size: cover !important;
-            background-position: center !important;
-            background-repeat: no-repeat !important;
-            background-color: #2a2a2a !important;
-          }
-          
-          .mobile-card-bg * {
-            background-color: transparent !important;
-          }
-        }
-        .product-card {
-          -webkit-user-select: none;
-          -moz-user-select: none;
-          -ms-user-select: none;
-          user-select: none;
-          -webkit-touch-callout: none;
-          -webkit-tap-highlight-color: transparent;
-        }
-        .product-card img {
-          -webkit-user-drag: none;
-          -khtml-user-drag: none;
-          -moz-user-drag: none;
-          -o-user-drag: none;
-          user-drag: none;
-        }
-      `}</style>
     </section>
   );
 }
