@@ -3,7 +3,7 @@ import Footer from '@/components/Footer';
 
 export default function SignUp() {
   return (
-    <div className="bg-black min-h-screen flex flex-col">
+    <div className="bg-black min-h-[200vh] flex flex-col">
       <Header />
       
       <div className="flex-grow py-16 flex items-center justify-center" style={{backgroundImage: 'url(/images/whitemarble.jpg)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed'}}>

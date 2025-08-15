@@ -63,7 +63,7 @@ export default function PrivacyPolicy() {
   // Use CMS content if available, otherwise fall back to defaults
   const getContent = (key: string): string => content[key] || defaultContent[key] || '';
   return (
-    <div className="min-h-screen flex flex-col relative">
+    <div className="min-h-[200vh] flex flex-col relative">
       {/* Fixed Background */}
       <div 
         className="fixed inset-0 z-0"

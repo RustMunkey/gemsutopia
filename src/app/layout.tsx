@@ -34,11 +34,6 @@ export default function RootLayout({
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black`}
-        style={{ 
-          touchAction: 'pan-y pinch-zoom',
-          overscrollBehaviorX: 'none',
-          WebkitTouchCallout: 'none'
-        }}
       >
         <ClientLayout>
           {children}

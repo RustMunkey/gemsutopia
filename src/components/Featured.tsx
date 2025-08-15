@@ -216,9 +216,11 @@ export default function Featured() {
                         }}
                       >
                         <div className="aspect-square bg-neutral-100 rounded-lg mb-2 overflow-hidden relative">
-                          <div className="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded z-10">
-                            {Math.round(((product.original_price - product.price) / product.original_price) * 100)}% OFF
-                          </div>
+                          {product.price < product.original_price && (
+                            <div className="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded z-10">
+                              {Math.round(((product.original_price - product.price) / product.original_price) * 100)}% OFF
+                            </div>
+                          )}
                           <Image 
                             src={product.image_url} 
                             alt={product.name}
@@ -264,7 +266,9 @@ export default function Featured() {
                               )}
                             </button>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm text-black line-through">${product.original_price}</span>
+                              {product.price < product.original_price && (
+                                <span className="text-sm text-black line-through">${product.original_price}</span>
+                              )}
                               <span className="text-lg font-bold text-black">${product.price}</span>
                             </div>
                             <button
@@ -321,9 +325,11 @@ export default function Featured() {
                           }}
                         >
                           <div className="aspect-square bg-neutral-100 rounded-lg mb-2 overflow-hidden relative">
-                            <div className="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded z-10">
-                              {Math.round(((product.original_price - product.price) / product.original_price) * 100)}% OFF
-                            </div>
+                            {product.price < product.original_price && (
+                              <div className="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded z-10">
+                                {Math.round(((product.original_price - product.price) / product.original_price) * 100)}% OFF
+                              </div>
+                            )}
                             <Image 
                               src={product.image_url} 
                               alt={product.name}
@@ -369,7 +375,9 @@ export default function Featured() {
                                 )}
                               </button>
                               <div className="flex items-center gap-2">
-                                <span className="text-sm text-black line-through">${product.original_price}</span>
+                                {product.price < product.original_price && (
+                                  <span className="text-sm text-black line-through">${product.original_price}</span>
+                                )}
                                 <span className="text-lg font-bold text-black">${product.price}</span>
                               </div>
                               <button
@@ -402,6 +410,33 @@ export default function Featured() {
           }
         })()}
       </div>
+      
+      <style jsx>{`
+        @media (hover: hover) and (pointer: fine) {
+          .product-card:hover {
+            transform: translateY(-8px) !important;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6) !important;
+          }
+        }
+        .product-card {
+          will-change: transform;
+        }
+        .product-card {
+          -webkit-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+          user-select: none;
+          -webkit-touch-callout: none;
+          -webkit-tap-highlight-color: transparent;
+        }
+        .product-card img {
+          -webkit-user-drag: none;
+          -khtml-user-drag: none;
+          -moz-user-drag: none;
+          -o-user-drag: none;
+          user-drag: none;
+        }
+      `}</style>
     </section>
   );
 }

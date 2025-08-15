@@ -37,7 +37,7 @@ export default function About() {
   // Use CMS content if available, otherwise fall back to defaults
   const getContent = (key: string): string => content[key] || defaultContent[key] || '';
   return (
-    <div className="min-h-screen flex flex-col relative">
+    <div className="min-h-[200vh] flex flex-col relative">
       {/* Fixed Background */}
       <div 
         className="fixed inset-0 z-0"
@@ -49,7 +49,9 @@ export default function About() {
         }}
       />
       
-      <Header />
+      <div className="relative z-10">
+        <Header />
+      </div>
       
       <div className="flex-grow py-16 relative z-10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -102,7 +104,9 @@ export default function About() {
         </div>
       </div>
       
-      <Footer />
+      <div className="relative z-10">
+        <Footer />
+      </div>
     </div>
   );
 }

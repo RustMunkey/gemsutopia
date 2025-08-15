@@ -38,33 +38,27 @@ export default function Stats() {
     fetchStats();
   }, []);
 
-  // Animation logic for smooth infinite scroll (copied from Featured)
+  // Animation logic - EXACT copy of Featured.tsx but reversed direction
   useEffect(() => {
-    if (!isClient || stats.length === 0 || !containerRef.current) return;
+    if (!isClient || stats.length <= 5 || !containerRef.current) return;
     
     let animationId: number;
     const startTime = performance.now();
     const container = containerRef.current;
     
-    // Calculate dimensions for stat cards
-    const cardWidth = 200; // 180px card + 20px margins
+    // Calculate dimensions
+    const cardWidth = 220;
     const oneSetWidth = stats.length * cardWidth;
     
     const animate = () => {
       const now = performance.now();
       const elapsed = (now - startTime) / 1000;
-      const speed = 45; // pixels per second - same as featured and reviews
-      const translateX = -(elapsed * speed);
+      const speed = 45; // SAME speed as featured/reviews
       
-      // Better normalization to prevent glitches
-      let normalizedTranslateX = 0;
-      if (oneSetWidth > 0) {
-        const rawMod = translateX % oneSetWidth;
-        normalizedTranslateX = rawMod <= -oneSetWidth ? rawMod + oneSetWidth : rawMod;
-      }
+      // For seamless RIGHT scrolling: start negative, move positive, loop back
+      const translateX = -oneSetWidth + ((elapsed * speed) % oneSetWidth);
       
-      // Directly update the transform without causing React re-renders
-      container.style.transform = `translate3d(${normalizedTranslateX}px, 0, 0)`;
+      container.style.transform = `translate3d(${translateX}px, 0, 0)`;
       
       animationId = requestAnimationFrame(animate);
     };
@@ -115,21 +109,20 @@ export default function Stats() {
 
   return (
     <div className="mt-16">
-      {/* Stats Display */}
+      {/* Stats Display - EXACT copy of Featured.tsx layout logic */}
       <div className="py-8">
         {(() => {
-          const displayStats = stats;
-          const shouldCenter = displayStats.length <= (window.innerWidth >= 768 ? 7 : 2);
+          const shouldCenter = stats.length <= 5;
           
           if (shouldCenter) {
-            // Centered layout for pause limits
+            // Centered layout for 5 or fewer items
             return (
-              <div className="flex justify-center items-stretch gap-4 flex-wrap max-w-6xl mx-auto px-4 py-8">
-                {displayStats.map((stat) => {
+              <div className="flex justify-center items-stretch gap-4 flex-wrap max-w-6xl mx-auto px-4">
+                {stats.map((stat) => {
                   const IconComponent = iconMap[stat.icon as keyof typeof iconMap];
                   
                   return (
-                    <div key={stat.id} className="flex-shrink-0 w-80">
+                    <div key={stat.id} className="flex-shrink-0 w-[220px]">
                       <div className="bg-black rounded-2xl px-6 py-6 shadow-lg w-[180px] h-[140px] flex flex-col justify-center">
                         <div className="text-center">
                           {IconComponent && (
@@ -151,7 +144,7 @@ export default function Stats() {
               </div>
             );
           } else {
-            // Scrolling layout for more than pause limits
+            // Scrolling layout for more than 5 items
             return (
               <div className="overflow-hidden py-8">
                 <div 
@@ -164,11 +157,11 @@ export default function Stats() {
                     transform: 'translateZ(0)'
                   }}
                 >
-                  {displayStats.concat(displayStats).concat(displayStats).map((stat, index) => {
+                  {stats.concat(stats).concat(stats).map((stat, index) => {
                     const IconComponent = iconMap[stat.icon as keyof typeof iconMap];
                     
                     return (
-                      <div key={index} className="inline-block flex-shrink-0 w-80 mx-4">
+                      <div key={`${stat.id}-${index}`} className="inline-block flex-shrink-0 w-[220px] mx-2">
                         <div className="bg-black rounded-2xl px-6 py-6 shadow-lg w-[180px] h-[140px] flex flex-col justify-center">
                           <div className="text-center">
                             {IconComponent && (

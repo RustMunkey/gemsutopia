@@ -82,7 +82,7 @@ export default function CookieSettings() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col relative">
+    <div className="min-h-[200vh] flex flex-col relative">
       {/* Fixed Background */}
       <div 
         className="fixed inset-0 z-0"

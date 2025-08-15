@@ -123,20 +123,15 @@
     max-width: none;
   }
   html {
-    scroll-behavior: smooth;
     height: 100%;
-    touch-action: pan-y pinch-zoom;
-    overscroll-behavior-x: none;
     overflow-x: hidden;
   }
   body {
     @apply bg-background text-foreground;
     height: 100%;
     overflow-x: hidden;
-    overflow-y: auto;
+    overflow-y: scroll;
     -webkit-overflow-scrolling: touch;
-    touch-action: pan-y pinch-zoom;
-    overscroll-behavior-x: none;
     -webkit-touch-callout: none;
   }
   
@@ -158,15 +153,13 @@
     }
   }
   
-  /* Additional mobile viewport fixes */
+  /* Mobile fixes */
   @media screen and (max-width: 768px) {
-    html {
-      height: 100vh;
-      height: -webkit-fill-available;
-    }
-    body {
-      min-height: 100vh;
-      min-height: -webkit-fill-available;
+    html, body {
+      height: 100%;
+      overflow-x: hidden;
+      overflow-y: scroll;
+      -webkit-overflow-scrolling: touch;
     }
   }
 }

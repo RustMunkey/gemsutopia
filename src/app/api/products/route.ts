@@ -98,19 +98,45 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate numeric fields to prevent overflow
+    const price = parseFloat(data.price);
+    const salePrice = data.sale_price ? parseFloat(data.sale_price) : null;
+    const weight = data.weight ? parseFloat(data.weight) : null;
+
+    if (price > 99999.99) {
+      return NextResponse.json(
+        { success: false, message: 'Price must be less than $99,999.99' },
+        { status: 400 }
+      );
+    }
+
+    if (salePrice && salePrice > 99999.99) {
+      return NextResponse.json(
+        { success: false, message: 'Sale price must be less than $99,999.99' },
+        { status: 400 }
+      );
+    }
+
+    if (weight && weight > 99999.999) {
+      return NextResponse.json(
+        { success: false, message: 'Weight must be less than 99,999.999 grams' },
+        { status: 400 }
+      );
+    }
+
     // Prepare product data
     const productData = {
       name: data.name,
       description: data.description || '',
-      price: parseFloat(data.price),
-      sale_price: data.sale_price ? parseFloat(data.sale_price) : null,
+      price: price,
+      sale_price: salePrice,
       on_sale: data.on_sale || false,
       category: data.category,
       images: data.images || [],
       tags: data.tags || [],
       inventory: parseInt(data.inventory) || 0,
       sku: data.sku || `${data.category.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
-      weight: data.weight ? parseFloat(data.weight) : null,
+      weight: weight,
       dimensions: data.dimensions || null,
       is_active: data.is_active !== false,
       featured: data.featured || false,

@@ -59,32 +59,7 @@ export default function Shop() {
   };
   
 
-  // Add swipe detection
-  useEffect(() => {
-    let startY = 0;
-    
-    const handleTouchStart = (e: TouchEvent) => {
-      startY = e.touches[0].clientY;
-    };
-    
-    const handleTouchMove = (e: TouchEvent) => {
-      const currentY = e.touches[0].clientY;
-      const diffY = Math.abs(currentY - startY);
-      
-      // If significant vertical movement detected, clear hover
-      if (diffY > 10) {
-        // Clear hover effects if needed
-      }
-    };
-    
-    document.addEventListener('touchstart', handleTouchStart);
-    document.addEventListener('touchmove', handleTouchMove);
-    
-    return () => {
-      document.removeEventListener('touchstart', handleTouchStart);
-      document.removeEventListener('touchmove', handleTouchMove);
-    };
-  }, []);
+  // Remove problematic touch event listeners that interfere with scrolling
   
   // Fetch products from database
   useEffect(() => {
@@ -141,7 +116,7 @@ export default function Shop() {
     });
 
   return (
-    <div className="min-h-screen flex flex-col relative">
+    <div className="min-h-[200vh] flex flex-col relative">
       {/* Fixed Background */}
       <div 
         className="fixed inset-0 z-0"
@@ -153,7 +128,9 @@ export default function Shop() {
         }}
       />
       
-      <Header />
+      <div className="relative z-10">
+        <Header />
+      </div>
       
       {loading ? (
         <div className="flex-grow py-16 relative z-10 flex items-center justify-center">
@@ -338,9 +315,11 @@ export default function Shop() {
                 >
                   {/* Content */}
                   <div className="aspect-square bg-neutral-100 rounded-lg mb-2 overflow-hidden relative">
-                    <div className="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded z-10">
-                      {discountPercent}% OFF
-                    </div>
+                    {product.price < product.originalPrice && (
+                      <div className="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded z-10">
+                        {discountPercent}% OFF
+                      </div>
+                    )}
                     <Image 
                       src={product.image} 
                       alt={product.name}
@@ -386,7 +365,9 @@ export default function Shop() {
                         )}
                       </button>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm text-black line-through">${product.originalPrice}</span>
+                        {product.price < product.originalPrice && (
+                          <span className="text-sm text-black line-through">${product.originalPrice}</span>
+                        )}
                         <span className="text-lg font-bold text-black">${product.price}</span>
                       </div>
                       <button
@@ -417,7 +398,9 @@ export default function Shop() {
       </div>
       )}
       
-      <Footer />
+      <div className="relative z-10">
+        <Footer />
+      </div>
       
       <style jsx>{`
         @media (hover: hover) and (pointer: fine) {

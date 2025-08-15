@@ -27,7 +27,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const productImage = images[productId - 1] || images[0];
   
   return (
-    <div className="min-h-screen flex flex-col relative">
+    <div className="min-h-[200vh] flex flex-col relative">
       {/* Fixed Background */}
       <div 
         className="fixed inset-0 z-0"

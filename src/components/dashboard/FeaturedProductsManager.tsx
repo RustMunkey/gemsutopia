@@ -1,7 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Edit2, Plus, Trash2, Upload, Eye, EyeOff, Package } from 'lucide-react';
+import { Edit2, Plus, Trash2, Eye, EyeOff, Package } from 'lucide-react';
 import Image from 'next/image';
+import ImageUpload from './ImageUpload';
 
 interface FeaturedProduct {
   id: string;
@@ -24,7 +25,6 @@ export default function FeaturedProductsManager() {
   const [loading, setLoading] = useState(true);
   const [editingProduct, setEditingProduct] = useState<FeaturedProduct | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     fetchProducts();
@@ -109,7 +109,6 @@ export default function FeaturedProductsManager() {
     formData.append('file', file);
     formData.append('folder', 'featured-products');
 
-    setUploading(true);
     try {
       const token = localStorage.getItem('admin-token');
       const response = await fetch('/api/upload', {
@@ -126,8 +125,9 @@ export default function FeaturedProductsManager() {
 
       const data = await response.json();
       return data.url;
-    } finally {
-      setUploading(false);
+    } catch (error) {
+      console.error('Upload failed:', error);
+      throw error;
     }
   };
 
@@ -246,8 +246,6 @@ export default function FeaturedProductsManager() {
             setShowAddModal(false);
             setEditingProduct(null);
           }}
-          onUploadImage={uploadImage}
-          uploading={uploading}
         />
       )}
     </div>
@@ -258,11 +256,9 @@ interface ProductModalProps {
   product: FeaturedProduct | null;
   onSave: (data: Partial<FeaturedProduct>) => void;
   onCancel: () => void;
-  onUploadImage: (file: File) => Promise<string>;
-  uploading: boolean;
 }
 
-function ProductModal({ product, onSave, onCancel, onUploadImage, uploading }: ProductModalProps) {
+function ProductModal({ product, onSave, onCancel }: ProductModalProps) {
   const [formData, setFormData] = useState({
     name: product?.name || '',
     type: product?.type || '',
@@ -274,17 +270,6 @@ function ProductModal({ product, onSave, onCancel, onUploadImage, uploading }: P
     is_active: product?.is_active ?? true
   });
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      try {
-        const url = await onUploadImage(file);
-        setFormData(prev => ({ ...prev, image_url: url }));
-      } catch {
-        alert('Failed to upload image');
-      }
-    }
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -340,39 +325,14 @@ function ProductModal({ product, onSave, onCancel, onUploadImage, uploading }: P
           </div>
 
           <div>
-            <label className="block text-white text-sm font-medium mb-2">Image</label>
-            <div className="flex gap-4">
-              <input
-                type="url"
-                value={formData.image_url}
-                onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
-                placeholder="Image URL or upload file"
-                className="flex-1 px-3 py-2 bg-white/5 border border-white/20 rounded-lg text-white"
-                required
-              />
-              <label className="bg-white/10 hover:bg-white/20 border border-white/20 px-4 py-2 rounded-lg cursor-pointer flex items-center gap-2 text-white transition-colors">
-                <Upload className="h-4 w-4" />
-                {uploading ? 'Uploading...' : 'Upload'}
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                  disabled={uploading}
-                />
-              </label>
-            </div>
-            {formData.image_url && (
-              <div className="mt-2">
-                <Image
-                  src={formData.image_url}
-                  alt="Preview"
-                  width={100}
-                  height={100}
-                  className="rounded-lg object-cover"
-                />
-              </div>
-            )}
+            <ImageUpload
+              images={formData.image_url ? [formData.image_url] : []}
+              onImagesChange={(images) => setFormData(prev => ({ ...prev, image_url: images[0] || '' }))}
+              maxImages={1}
+              folder="featured"
+              label="Featured Product Image"
+              description="Upload image for featured product display"
+            />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

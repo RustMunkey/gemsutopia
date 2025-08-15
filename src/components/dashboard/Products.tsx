@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { Product } from '@/lib/types/database';
+import ImageUpload from './ImageUpload';
 
 export default function Products() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -381,7 +382,7 @@ function ProductModal({ product, onClose, onSave }: {
     price: product?.price?.toString() || '',
     sale_price: product?.sale_price?.toString() || '',
     on_sale: product?.on_sale || false,
-    category: product?.category || 'rings',
+    category: product?.category || '',
     inventory: product?.inventory?.toString() || '0',
     sku: product?.sku || '',
     weight: product?.weight?.toString() || '',
@@ -391,12 +392,45 @@ function ProductModal({ product, onClose, onSave }: {
     tags: product?.tags?.join(', ') || ''
   });
   const [loading, setLoading] = useState(false);
-  const [imageUrl, setImageUrl] = useState('');
+  const [customCategory, setCustomCategory] = useState('');
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
 
-  const categories = [
-    'rings', 'necklaces', 'earrings', 'bracelets', 'pendants', 
-    'gemstones', 'raw-minerals', 'jewelry-sets', 'accessories'
-  ];
+  // Fetch existing categories from products
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const token = localStorage.getItem('admin-token');
+        const response = await fetch('/api/products?includeInactive=true', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+          const uniqueCategories = [...new Set(data.products.map((p: any) => p.category))].filter(Boolean) as string[];
+          setAvailableCategories(uniqueCategories);
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  const handleCategoryChange = (value: string) => {
+    if (value === 'custom') {
+      setFormData(prev => ({ ...prev, category: customCategory }));
+    } else {
+      setFormData(prev => ({ ...prev, category: value }));
+      setCustomCategory('');
+    }
+  };
+
+  const handleCustomCategoryInput = (value: string) => {
+    setCustomCategory(value);
+    setFormData(prev => ({ ...prev, category: value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -445,22 +479,6 @@ function ProductModal({ product, onClose, onSave }: {
     }
   };
 
-  const addImage = () => {
-    if (imageUrl.trim()) {
-      setFormData(prev => ({
-        ...prev,
-        images: [...prev.images, imageUrl.trim()]
-      }));
-      setImageUrl('');
-    }
-  };
-
-  const removeImage = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index)
-    }));
-  };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -565,18 +583,33 @@ function ProductModal({ product, onClose, onSave }: {
               <label className="block text-sm font-medium text-slate-300 mb-2">
                 Category *
               </label>
-              <select
-                value={formData.category}
-                onChange={(e) => setFormData(prev => ({...prev, category: e.target.value}))}
-                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-white"
-                required
-              >
-                {categories.map(cat => (
-                  <option key={cat} value={cat} className="bg-slate-800">
-                    {cat.charAt(0).toUpperCase() + cat.slice(1).replace('-', ' ')}
-                  </option>
-                ))}
-              </select>
+              <div className="space-y-2">
+                <select
+                  value={availableCategories.includes(formData.category) ? formData.category : 'custom'}
+                  onChange={(e) => handleCategoryChange(e.target.value)}
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-white"
+                  required
+                >
+                  <option value="" className="bg-slate-800">Select a category</option>
+                  {availableCategories.map(cat => (
+                    <option key={cat} value={cat} className="bg-slate-800">
+                      {cat.charAt(0).toUpperCase() + cat.slice(1).replace('-', ' ')}
+                    </option>
+                  ))}
+                  <option value="custom" className="bg-slate-800">Create new category...</option>
+                </select>
+                
+                {(!availableCategories.includes(formData.category) || availableCategories.length === 0) && (
+                  <input
+                    type="text"
+                    value={formData.category}
+                    onChange={(e) => handleCustomCategoryInput(e.target.value)}
+                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-white"
+                    placeholder="Enter custom category name"
+                    required
+                  />
+                )}
+              </div>
             </div>
 
             <div>
@@ -609,50 +642,14 @@ function ProductModal({ product, onClose, onSave }: {
           </div>
 
           {/* Images */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Product Images
-            </label>
-            <div className="flex gap-2 mb-3">
-              <input
-                type="url"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-white"
-                placeholder="Enter image URL"
-              />
-              <button
-                type="button"
-                onClick={addImage}
-                className="px-4 py-2 bg-white hover:bg-white/80 text-black rounded-lg"
-              >
-                Add
-              </button>
-            </div>
-            
-            {formData.images.length > 0 && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {formData.images.map((img, index) => (
-                  <div key={index} className="relative group">
-                    <Image
-                      src={img}
-                      alt={`Product image ${index + 1}`}
-                      width={80}
-                      height={80}
-                      className="w-full h-20 object-cover rounded-lg bg-slate-700"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeImage(index)}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <ImageUpload
+            images={formData.images}
+            onImagesChange={(images) => setFormData(prev => ({...prev, images}))}
+            maxImages={5}
+            folder="products"
+            label="Product Images"
+            description="Upload product photos (drag & drop or click to browse)"
+          />
 
           {/* Status Options */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

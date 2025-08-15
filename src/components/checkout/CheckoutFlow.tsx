@@ -6,7 +6,7 @@ import CustomerInfo from './CustomerInfo';
 import PaymentMethods from './PaymentMethods';
 import PaymentForm from './PaymentForm';
 import OrderSuccess from './OrderSuccess';
-import { ArrowLeft, ShoppingBag } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 
 interface CheckoutData {
   customer: {
@@ -112,51 +112,30 @@ export default function CheckoutFlow() {
   };
 
   if (items.length === 0 && currentStep !== 'success') {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <ShoppingBag className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Your cart is empty</h1>
-          <p className="text-gray-600 mb-6">Add some items to get started</p>
-          <a
-            href="/shop"
-            className="inline-flex items-center px-6 py-3 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
-          >
-            Continue Shopping
-          </a>
-        </div>
-      </div>
-    );
+    // Redirect to gem-pouch page instead of showing empty cart screen
+    if (typeof window !== 'undefined') {
+      window.location.href = '/gem-pouch';
+    }
+    return null;
   }
 
   return (
-    <div className="min-h-screen relative">
-      {/* White Marble Background */}
-      <div 
-        className="fixed inset-0 z-0"
-        style={{
-          backgroundImage: "url('/images/whitemarble.jpg')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat"
-        }}
-      />
-      
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Progress Header */}
         <div className="mb-8">
           {currentStep !== 'success' && (
             <button
               onClick={goBack}
               disabled={currentStep === 'cart'}
-              className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-4 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-4 disabled:opacity-50 disabled:cursor-not-allowed relative z-20 bg-white/80 backdrop-blur-sm px-3 py-2 rounded-lg border border-gray-200"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
             </button>
           )}
           
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className={`text-3xl font-bold text-gray-900 ${currentStep === 'success' ? 'text-center' : ''}`}>
             {stepTitles[currentStep]}
           </h1>
           
@@ -169,7 +148,7 @@ export default function CheckoutFlow() {
                       currentStep === step
                         ? 'bg-black text-white'
                         : ['cart', 'customer', 'payment-method', 'payment'].indexOf(currentStep) > index
-                        ? 'bg-green-500 text-white'
+                        ? 'bg-black text-white'
                         : 'bg-gray-300 text-gray-600'
                     }`}
                   >
@@ -179,7 +158,7 @@ export default function CheckoutFlow() {
                     <div
                       className={`w-12 h-0.5 mx-2 ${
                         ['cart', 'customer', 'payment-method', 'payment'].indexOf(currentStep) > index
-                          ? 'bg-green-500'
+                          ? 'bg-black'
                           : 'bg-gray-300'
                       }`}
                     />
@@ -192,7 +171,7 @@ export default function CheckoutFlow() {
 
         {/* Step Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
+          <div className={`${currentStep === 'success' ? 'lg:col-span-3' : 'lg:col-span-2'}`}>
             {currentStep === 'cart' && (
               <CartReview
                 items={items}
@@ -225,11 +204,15 @@ export default function CheckoutFlow() {
             )}
             
             {currentStep === 'success' && (
-              <OrderSuccess
-                orderId={orderId}
-                customerEmail={checkoutData.customer.email}
-                amount={total}
-              />
+              <div className="flex justify-center">
+                <div className="max-w-2xl w-full">
+                  <OrderSuccess
+                    orderId={orderId}
+                    customerEmail={checkoutData.customer.email}
+                    amount={total}
+                  />
+                </div>
+              </div>
             )}
             
             {currentStep === 'error' && (

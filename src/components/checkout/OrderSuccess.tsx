@@ -1,6 +1,6 @@
 'use client';
 import { CheckCircle, Package, Mail, ArrowRight } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 interface OrderSuccessProps {
   orderId: string;
@@ -9,24 +9,64 @@ interface OrderSuccessProps {
 }
 
 export default function OrderSuccess({ orderId, customerEmail, amount }: OrderSuccessProps) {
-  const [confetti, setConfetti] = useState(true);
-
   useEffect(() => {
-    const timer = setTimeout(() => setConfetti(false), 3000);
-    return () => clearTimeout(timer);
+    // Simple CSS-based confetti animation instead of external script
+    const createConfetti = () => {
+      const colors = ['#f43f5e', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b'];
+      
+      for (let i = 0; i < 50; i++) {
+        const confetti = document.createElement('div');
+        confetti.style.position = 'fixed';
+        confetti.style.left = Math.random() * 100 + 'vw';
+        confetti.style.top = '-10px';
+        confetti.style.width = '10px';
+        confetti.style.height = '10px';
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.pointerEvents = 'none';
+        confetti.style.zIndex = '9999';
+        confetti.style.borderRadius = '50%';
+        confetti.style.animation = `confetti-fall ${Math.random() * 2 + 2}s linear forwards`;
+        
+        document.body.appendChild(confetti);
+        
+        setTimeout(() => {
+          if (document.body.contains(confetti)) {
+            document.body.removeChild(confetti);
+          }
+        }, 4000);
+      }
+    };
+
+    // Add CSS animation
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes confetti-fall {
+        0% {
+          transform: translateY(-10px) rotate(0deg);
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(100vh) rotate(360deg);
+          opacity: 0;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Trigger confetti
+    createConfetti();
+    setTimeout(createConfetti, 200);
+    setTimeout(createConfetti, 400);
+
+    return () => {
+      if (document.head.contains(style)) {
+        document.head.removeChild(style);
+      }
+    };
   }, []);
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center relative overflow-hidden">
-      {confetti && (
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="animate-bounce absolute top-10 left-10 text-2xl">🎉</div>
-          <div className="animate-bounce absolute top-20 right-16 text-2xl" style={{ animationDelay: '0.5s' }}>✨</div>
-          <div className="animate-bounce absolute top-32 left-20 text-2xl" style={{ animationDelay: '1s' }}>🎊</div>
-          <div className="animate-bounce absolute top-16 right-8 text-2xl" style={{ animationDelay: '1.5s' }}>🌟</div>
-        </div>
-      )}
-
       <div className="relative z-10">
         <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
           <CheckCircle className="h-12 w-12 text-green-600" />
@@ -101,12 +141,8 @@ export default function OrderSuccess({ orderId, customerEmail, amount }: OrderSu
         <div className="mt-8 pt-6 border-t border-gray-200">
           <p className="text-sm text-gray-500">
             Need help? Contact us at{' '}
-            <a href="mailto:support@gemsutopia.ca" className="text-black hover:underline">
-              support@gemsutopia.ca
-            </a>{' '}
-            or call{' '}
-            <a href="tel:+1-555-123-4567" className="text-black hover:underline">
-              +1 (555) 123-4567
+            <a href="mailto:gemsutopia@gmail.com" className="text-black hover:underline">
+              gemsutopia@gmail.com
             </a>
           </p>
         </div>
