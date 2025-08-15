@@ -49,6 +49,15 @@ export async function POST(request: NextRequest) {
 
     const accessToken = await getPayPalAccessToken();
 
+    // Calculate the correct item total from individual items
+    const itemTotal = items.reduce((sum: number, item: {price: number; quantity: number}) => 
+      sum + (item.price * item.quantity), 0
+    );
+
+    // Calculate tax and shipping (matching the frontend calculation)
+    const tax = itemTotal * 0.13; // 13% HST for Canada
+    const shipping = itemTotal > 100 ? 0 : 15; // Free shipping over $100
+    
     const orderData = {
       intent: 'CAPTURE',
       purchase_units: [
@@ -59,7 +68,15 @@ export async function POST(request: NextRequest) {
             breakdown: {
               item_total: {
                 currency_code: currency,
-                value: amount.toFixed(2),
+                value: itemTotal.toFixed(2),
+              },
+              tax_total: {
+                currency_code: currency,
+                value: tax.toFixed(2),
+              },
+              shipping: {
+                currency_code: currency,
+                value: shipping.toFixed(2),
               },
             },
           },
