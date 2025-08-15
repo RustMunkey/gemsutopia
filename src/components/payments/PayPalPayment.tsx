@@ -32,39 +32,56 @@ function PayPalButtonWrapper({
   const createOrder = async () => {
     // Prevent multiple simultaneous order creation attempts
     if (isCreatingOrder) {
+      console.warn('Order creation already in progress, skipping...');
       throw new Error('Order creation already in progress');
     }
 
     try {
       setIsCreatingOrder(true);
-      console.log('Creating PayPal order with:', { amount, currency, items });
+      console.log('=== PayPal Order Creation Started ===');
+      console.log('Request data:', { amount, currency, items });
+      console.log('Frontend URL:', window.location.origin);
       
-      const response = await fetch('/api/payments/paypal/create-order', {
+      const apiUrl = '/api/payments/paypal/create-order';
+      console.log('Calling API:', apiUrl);
+      
+      const response = await fetch(apiUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         body: JSON.stringify({ amount, currency, items }),
       });
 
+      console.log('API Response status:', response.status);
+      console.log('API Response headers:', Object.fromEntries(response.headers));
+
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Order creation failed:', errorText);
+        console.error('API Error Response:', errorText);
         throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
 
       const data = await response.json();
-      console.log('PayPal order created:', data);
+      console.log('API Success Response:', data);
       
       if (data.orderID) {
+        console.log('PayPal orderID received:', data.orderID);
         return data.orderID;
       } else {
+        console.error('No orderID in response:', data);
         throw new Error('No orderID returned from server');
       }
     } catch (error) {
-      console.error('createOrder error:', error);
-      onError('Failed to initialize PayPal payment');
+      console.error('=== PayPal Order Creation Failed ===');
+      console.error('Error details:', error);
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+      onError(`Failed to initialize PayPal payment: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     } finally {
       setIsCreatingOrder(false);
+      console.log('=== PayPal Order Creation Finished ===');
     }
   };
 
