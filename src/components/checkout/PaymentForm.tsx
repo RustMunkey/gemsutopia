@@ -432,7 +432,7 @@ function PayPalForm({ amount, customerData, items, onSuccess, onError }: Omit<Pa
         ) : (
           <PayPalPayment
             amount={amount}
-            currency="CAD"
+            currency="USD"
             items={items.map(item => ({
               name: item.name || 'Gemstone',
               quantity: 1,
