@@ -8,18 +8,34 @@ const supabase = createClient(
 
 export async function GET() {
   try {
-    const { data: featuredProducts, error } = await supabase
-      .from('featured_products')
+    const { data: products, error } = await supabase
+      .from('products')
       .select('*')
+      .eq('featured', true)
       .eq('is_active', true)
-      .order('sort_order', { ascending: true });
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error('Error fetching featured products:', error);
       return NextResponse.json({ error: 'Failed to fetch featured products' }, { status: 500 });
     }
 
-    return NextResponse.json(featuredProducts || []);
+    // Transform products to match the expected Featured component interface
+    const featuredProducts = (products || []).map(product => ({
+      id: product.id,
+      name: product.name,
+      type: product.category,
+      description: product.description || `Hand-mined ${product.category} from Alberta, Canada. Premium quality gemstone with exceptional clarity and natural beauty.`,
+      image_url: product.images?.[0] || '/images/placeholder.jpg',
+      card_color: product.metadata?.card_color || '#1f2937',
+      price: product.on_sale && product.sale_price ? product.sale_price : product.price,
+      original_price: product.price,
+      product_id: parseInt(product.id),
+      sort_order: 1,
+      is_active: product.is_active
+    }));
+
+    return NextResponse.json(featuredProducts);
   } catch (error) {
     console.error('Error in GET /api/featured-products:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

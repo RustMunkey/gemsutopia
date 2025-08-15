@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { IconStar, IconStarFilled, IconFilter } from '@tabler/icons-react';
@@ -8,7 +8,6 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useGemPouch } from '@/contexts/GemPouchContext';
 import { useWishlist } from '@/contexts/WishlistContext';
-import { extractVibrantColor } from '@/utils/colorExtraction';
 
 export default function Shop() {
   const router = useRouter();
@@ -18,8 +17,8 @@ export default function Shop() {
   const [sortBy, setSortBy] = useState('default');
   const [priceFilter, setPriceFilter] = useState('all');
   const [gemType, setGemType] = useState('all');
-  const [productColors, setProductColors] = useState<{ [key: number]: string }>({});
-  const [isClient, setIsClient] = useState(false);
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   
   const toggleWishlist = (productId: number, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -59,10 +58,6 @@ export default function Shop() {
     }
   };
   
-  // Set client-side flag
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   // Add swipe detection
   useEffect(() => {
@@ -91,46 +86,41 @@ export default function Shop() {
     };
   }, []);
   
-  const products = useMemo(() => [
-    { id: 1, name: 'Alberta Sapphire', type: 'sapphire', price: 299, originalPrice: 399, image: '/images/Review1.jpg' },
-    { id: 2, name: 'Canadian Peridot', type: 'peridot', price: 199, originalPrice: 249, image: '/images/Review2.jpg' },
-    { id: 3, name: 'Ammolite Gem', type: 'ammolite', price: 459, originalPrice: 599, image: '/images/Review3.jpg' },
-    { id: 4, name: 'Blue Jay Sapphire', type: 'sapphire', price: 349, originalPrice: 449, image: '/images/Review4.jpg' },
-    { id: 5, name: 'Alberta Garnet', type: 'garnet', price: 179, originalPrice: 229, image: '/images/Review5.jpg' },
-    { id: 6, name: 'Canadian Quartz', type: 'quartz', price: 129, originalPrice: 169, image: '/images/Review6.jpg' },
-    { id: 7, name: 'Prairie Agate', type: 'agate', price: 89, originalPrice: 119, image: '/images/Review7.jpg' },
-    { id: 8, name: 'Rocky Mountain Jasper', type: 'jasper', price: 99, originalPrice: 129, image: '/images/Review8.jpg' },
-    { id: 9, name: 'Alberta Amethyst', type: 'amethyst', price: 219, originalPrice: 289, image: '/images/Review9.jpg' },
-    { id: 10, name: 'Canadian Topaz', type: 'topaz', price: 259, originalPrice: 329, image: '/images/Review10.jpg' },
-    { id: 11, name: 'Northern Opal', type: 'opal', price: 389, originalPrice: 519, image: '/images/Review12.jpg' },
-    { id: 12, name: 'Foothills Tourmaline', type: 'tourmaline', price: 299, originalPrice: 399, image: '/images/Review13.jpg' },
-    { id: 13, name: 'Prairie Moonstone', type: 'moonstone', price: 169, originalPrice: 219, image: '/images/Review14.jpg' },
-    { id: 14, name: 'Canadian Labradorite', type: 'labradorite', price: 149, originalPrice: 199, image: '/images/8680a65c-0c82-4529-a8f2-a051344e565a.webp' },
-    { id: 15, name: 'Alberta Citrine', type: 'citrine', price: 139, originalPrice: 179, image: '/images/c07009ff-cd86-45d0-858e-441993683280.webp' },
-    { id: 16, name: 'Mountain Jade', type: 'jade', price: 229, originalPrice: 299, image: '/images/Review-5.jpg' }
-  ], []);
-
-  // Extract colors from product images (only on client side)
+  // Fetch products from database
   useEffect(() => {
-    if (!isClient) return;
-    
-    const extractColors = async () => {
-      const colors: { [key: number]: string } = {};
-      
-      for (const product of products) {
-        try {
-          const color = await extractVibrantColor(product.image);
-          colors[product.id] = color;
-        } catch {
-          colors[product.id] = '#1f2937'; // fallback
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/products');
+        if (!response.ok) {
+          throw new Error('Failed to fetch products');
         }
+        const data = await response.json();
+        
+        if (data.success) {
+          // Transform database products to match current interface
+          const transformedProducts = data.products.map((product: any) => ({
+            id: parseInt(product.id) || Math.random(),
+            name: product.name,
+            type: product.category,
+            price: product.on_sale && product.sale_price ? product.sale_price : product.price,
+            originalPrice: product.price,
+            image: product.images?.[0] || '/images/placeholder.jpg'
+          }));
+          setProducts(transformedProducts);
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        // Fallback to empty array if database fails
+        setProducts([]);
+      } finally {
+        setLoading(false);
       }
-      
-      setProductColors(colors);
     };
-    
-    extractColors();
-  }, [isClient, products]);
+
+    fetchProducts();
+  }, []);
+
 
   // Filter and sort products
   const filteredProducts = products
@@ -165,7 +155,15 @@ export default function Shop() {
       
       <Header />
       
-      <div className="flex-grow py-16 relative z-10">
+      {loading ? (
+        <div className="flex-grow py-16 relative z-10 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading products...</p>
+          </div>
+        </div>
+      ) : (
+        <div className="flex-grow py-16 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h1 className="text-3xl md:text-4xl font-bold text-black mb-4">Gem Collection</h1>
@@ -326,7 +324,6 @@ export default function Shop() {
           <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {filteredProducts.map((product) => {
               const discountPercent = Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
-              const cardColor = isClient ? (productColors[product.id] || '#1f2937') : '#1f2937';
               return (
                 <div 
                   key={product.id} 
@@ -418,6 +415,7 @@ export default function Shop() {
           </div>
         </div>
       </div>
+      )}
       
       <Footer />
       
