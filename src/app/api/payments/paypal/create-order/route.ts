@@ -5,8 +5,15 @@ const PAYPAL_API_BASE = process.env.NODE_ENV === 'production'
   : 'https://api.sandbox.paypal.com';
 
 async function getPayPalAccessToken(): Promise<string> {
-  const clientId = process.env.PAYPAL_CLIENT_ID!;
-  const clientSecret = process.env.PAYPAL_CLIENT_SECRET!;
+  const clientId = process.env.PAYPAL_CLIENT_ID;
+  const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
+  
+  console.log('PayPal ClientID exists:', !!clientId);
+  console.log('PayPal ClientSecret exists:', !!clientSecret);
+  
+  if (!clientId || !clientSecret) {
+    throw new Error('PayPal credentials not configured');
+  }
   
   const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
   
@@ -29,7 +36,9 @@ async function getPayPalAccessToken(): Promise<string> {
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('PayPal create-order endpoint called');
     const { amount, currency = 'USD', items = [] } = await request.json();
+    console.log('Request data:', { amount, currency, items });
 
     if (!amount || amount <= 0) {
       return NextResponse.json(
