@@ -9,7 +9,8 @@ import {
   useElements,
 } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
-import { Lock, CreditCard } from 'lucide-react';
+import { Lock, CreditCard, Wallet } from 'lucide-react';
+import PayPalPayment from '../payments/PayPalPayment';
 
 const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 
@@ -341,6 +342,115 @@ function StripeForm({ amount, customerData, items, onSuccess, onError }: Omit<Pa
   );
 }
 
+function PayPalForm({ amount, customerData, items, onSuccess, onError }: Omit<PaymentFormProps, 'paymentMethod'>) {
+  const [loading, setLoading] = useState(false);
+
+  const handlePayPalSuccess = async (details: {captureID: string; status: string}) => {
+    try {
+      setLoading(true);
+      
+      // Calculate totals properly
+      const subtotal = items.reduce((sum, item) => sum + item.price, 0);
+      const tax = subtotal * 0.13; // 13% HST for Canada
+      const shipping = subtotal > 100 ? 0 : 15; // Free shipping over $100
+      
+      const orderData = {
+        items,
+        customerInfo: customerData,
+        payment: {
+          captureID: details.captureID,
+          paymentMethod: 'paypal',
+          amount,
+          currency: 'CAD',
+          status: details.status
+        },
+        totals: { 
+          subtotal,
+          tax,
+          shipping,
+          total: amount 
+        },
+        timestamp: new Date().toISOString()
+      };
+
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderData)
+      });
+
+      if (response.ok) {
+        const orderResult = await response.json();
+        onSuccess({ orderId: orderResult.order.id });
+      } else {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('Order save failed:', errorData);
+        onError(`Payment processed but order save failed: ${errorData.error || 'Unknown error'}. Please contact support.`);
+      }
+    } catch (error) {
+      onError('Payment processed but order save failed. Please contact support.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePayPalError = (error: string) => {
+    setLoading(false);
+    onError(error);
+  };
+
+  return (
+    <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 p-6">
+      <div className="flex items-center mb-6">
+        <Wallet className="h-6 w-6 text-yellow-600 mr-3" />
+        <h2 className="text-xl font-semibold text-gray-900">PayPal Payment</h2>
+      </div>
+
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <div className="flex items-start">
+          <Wallet className="h-5 w-5 text-blue-500 mt-0.5 mr-3 flex-shrink-0" />
+          <div>
+            <h4 className="text-sm font-semibold text-blue-900">Pay with PayPal</h4>
+            <p className="text-sm text-blue-800">
+              You can pay with your PayPal account or use a credit/debit card through PayPal.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="mb-6">
+        <div className="flex justify-between items-center text-lg font-semibold text-gray-900 mb-4">
+          <span>Total Amount:</span>
+          <span>${amount.toFixed(2)} CAD</span>
+        </div>
+        
+        {loading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-600 mr-3"></div>
+            <p className="text-gray-600">Processing payment...</p>
+          </div>
+        ) : (
+          <PayPalPayment
+            amount={amount}
+            currency="CAD"
+            items={items.map(item => ({
+              name: item.name || 'Gemstone',
+              quantity: 1,
+              price: item.price
+            }))}
+            onSuccess={handlePayPalSuccess}
+            onError={handlePayPalError}
+          />
+        )}
+      </div>
+
+      <p className="text-xs text-gray-500 text-center">
+        By completing your order, you agree to our Terms of Service and Privacy Policy.
+      </p>
+    </div>
+  );
+}
+
 export default function PaymentForm(props: PaymentFormProps) {
   if (props.paymentMethod === 'stripe') {
     return (
@@ -350,9 +460,8 @@ export default function PaymentForm(props: PaymentFormProps) {
     );
   }
 
+  // PayPal payment form
   return (
-    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-      <p className="text-yellow-800">PayPal integration coming soon. Please use credit card payment.</p>
-    </div>
+    <PayPalForm {...props} />
   );
 }

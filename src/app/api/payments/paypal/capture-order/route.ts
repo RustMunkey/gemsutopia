@@ -59,15 +59,18 @@ export async function POST(request: NextRequest) {
 
     const captureData = await response.json();
     
-    // TODO: Handle successful payment capture
-    // - Update order status in database
-    // - Send confirmation email
-    // - Update inventory
+    // Extract relevant payment information
+    const capture = captureData.purchase_units?.[0]?.payments?.captures?.[0];
+    const amount = parseFloat(capture?.amount?.value || '0');
+    const currency = capture?.amount?.currency_code || 'USD';
     
     return NextResponse.json({
       success: true,
       captureID: captureData.id,
       status: captureData.status,
+      amount,
+      currency,
+      paymentDetails: captureData,
     });
   } catch (error) {
     console.error('PayPal capture failed:', error);

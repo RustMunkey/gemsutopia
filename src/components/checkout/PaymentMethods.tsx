@@ -21,9 +21,9 @@ export default function PaymentMethods({ onSelect }: PaymentMethodsProps) {
     {
       id: 'paypal' as const,
       name: 'PayPal',
-      description: 'Pay with your PayPal account (Coming Soon)',
+      description: 'Pay with your PayPal account or credit card',
       icon: Wallet,
-      available: false,
+      available: true,
       logos: ['🟡']
     }
   ];
