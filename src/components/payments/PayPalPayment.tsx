@@ -144,6 +144,7 @@ function PayPalButtonWrapper({
       onError={onErrorHandler}
       onCancel={() => onError('Payment was cancelled')}
       disabled={isCreatingOrder}
+      forceReRender={[currency, amount]}
     />
   );
 }
