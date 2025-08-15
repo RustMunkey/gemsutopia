@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
       images: data.images || [],
       tags: data.tags || [],
       inventory: parseInt(data.inventory) || 0,
-      sku: data.sku || `SKU_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      sku: data.sku || `${data.category.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
       weight: data.weight ? parseFloat(data.weight) : null,
       dimensions: data.dimensions || null,
       is_active: data.is_active !== false,
