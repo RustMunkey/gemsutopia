@@ -40,7 +40,7 @@ export default function Stats() {
 
   // Animation logic - EXACT copy of Reviews/Featured but reversed direction (right scroll)
   useEffect(() => {
-    if (!isClient || stats.length <= 5 || !containerRef.current) return;
+    if (!isClient || stats.length <= 3 || !containerRef.current) return;
     
     let animationId: number;
     const startTime = performance.now();
@@ -118,10 +118,10 @@ export default function Stats() {
       {/* Stats Display - EXACT copy of Featured.tsx layout logic */}
       <div className="py-8">
         {(() => {
-          const shouldCenter = stats.length <= 5;
+          const shouldCenter = stats.length <= 3;
           
           if (shouldCenter) {
-            // Centered layout for 5 or fewer items
+            // Centered layout for 3 or fewer items
             return (
               <div className="flex justify-center items-stretch gap-4 flex-wrap max-w-6xl mx-auto px-4">
                 {stats.map((stat) => {
@@ -150,7 +150,7 @@ export default function Stats() {
               </div>
             );
           } else {
-            // Scrolling layout for more than 5 items
+            // Scrolling layout for more than 3 items
             return (
               <div className="overflow-hidden py-8">
                 <div 
