@@ -38,7 +38,7 @@ export default function Stats() {
     fetchStats();
   }, []);
 
-  // Animation logic - EXACT copy of Featured.tsx but reversed direction
+  // Animation logic - EXACT copy of Reviews/Featured but reversed direction (right scroll)
   useEffect(() => {
     if (!isClient || stats.length <= 5 || !containerRef.current) return;
     
@@ -47,18 +47,24 @@ export default function Stats() {
     const container = containerRef.current;
     
     // Calculate dimensions
-    const cardWidth = 220;
+    const cardWidth = 220; // w-[220px] + margins
     const oneSetWidth = stats.length * cardWidth;
     
     const animate = () => {
       const now = performance.now();
       const elapsed = (now - startTime) / 1000;
-      const speed = 45; // SAME speed as featured/reviews
+      const speed = 45; // pixels per second - same as reviews/featured
+      const translateX = (elapsed * speed); // POSITIVE for rightward movement
       
-      // For seamless RIGHT scrolling: start negative, move positive, loop back
-      const translateX = -oneSetWidth + ((elapsed * speed) % oneSetWidth);
+      // Better normalization to prevent glitches - same as reviews/featured
+      let normalizedTranslateX = 0;
+      if (oneSetWidth > 0) {
+        const rawMod = translateX % oneSetWidth;
+        normalizedTranslateX = rawMod;
+      }
       
-      container.style.transform = `translate3d(${translateX}px, 0, 0)`;
+      // Directly update the transform without causing React re-renders
+      container.style.transform = `translate3d(${normalizedTranslateX}px, 0, 0)`;
       
       animationId = requestAnimationFrame(animate);
     };
@@ -154,7 +160,7 @@ export default function Stats() {
                     willChange: 'transform',
                     backfaceVisibility: 'hidden',
                     WebkitBackfaceVisibility: 'hidden',
-                    transform: 'translateZ(0)'
+                    transform: `translate3d(-${stats.length * 220}px, 0, 0)` // Start offset to create smooth reverse loop
                   }}
                 >
                   {stats.concat(stats).concat(stats).map((stat, index) => {
