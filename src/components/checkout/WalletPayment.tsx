@@ -94,30 +94,44 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
           console.log('window.ethereum.isMetaMask:', (window as any).ethereum?.isMetaMask);
           console.log('window.ethereum.isPhantom:', (window as any).ethereum?.isPhantom);
           console.log('window.ethereum.isCoinbaseWallet:', (window as any).ethereum?.isCoinbaseWallet);
+          console.log('window.ethereum.providers exists:', !!(window as any).ethereum?.providers);
+          console.log('window.ethereum.providers:', (window as any).ethereum?.providers);
           
-          // Look for MetaMask in multiple possible locations
-          if ((window as any).ethereum?.isMetaMask && !(window as any).ethereum?.isPhantom) {
-            ethereumProvider = (window as any).ethereum;
-            console.log('✅ Using MetaMask for Ethereum');
-          }
-          // Check if MetaMask is available via ethereum.providers array (when multiple wallets exist)
-          else if ((window as any).ethereum?.providers) {
-            const metaMaskProvider = (window as any).ethereum.providers.find((provider: any) => provider.isMetaMask && !provider.isPhantom);
+          // More aggressive MetaMask detection to avoid Phantom conflicts
+          
+          // First, check if MetaMask is available in providers array (best method)
+          if ((window as any).ethereum?.providers) {
+            console.log('Multiple providers detected, searching for MetaMask...');
+            const metaMaskProvider = (window as any).ethereum.providers.find((provider: any) => 
+              provider.isMetaMask && !provider.isPhantom
+            );
             if (metaMaskProvider) {
               ethereumProvider = metaMaskProvider;
-              console.log('✅ Using MetaMask from providers array');
+              console.log('✅ Using MetaMask from providers array (avoiding Phantom)');
             }
           }
-          // Direct MetaMask check
-          else if ((window as any).web3?.currentProvider?.isMetaMask) {
+          // Fallback: direct MetaMask check if no providers array
+          else if ((window as any).ethereum?.isMetaMask && !(window as any).ethereum?.isPhantom) {
+            ethereumProvider = (window as any).ethereum;
+            console.log('✅ Using MetaMask directly');
+          }
+          // Last resort: check for MetaMask extension directly
+          else if (typeof (window as any).web3 !== 'undefined' && (window as any).web3.currentProvider?.isMetaMask) {
             ethereumProvider = (window as any).web3.currentProvider;
-            console.log('✅ Using MetaMask from web3');
+            console.log('✅ Using MetaMask from web3 provider');
           }
           
           console.log('Selected Ethereum provider:', ethereumProvider);
           
           if (ethereumProvider) {
             try {
+              // Force MetaMask to be the active provider
+              if (ethereumProvider.isMetaMask) {
+                // Make sure we're using the real MetaMask, not Phantom pretending
+                console.log('Forcing MetaMask as active provider');
+                (window as any).ethereum = ethereumProvider;
+              }
+              
               // Switch to Sepolia testnet
               try {
                 await ethereumProvider.request({
