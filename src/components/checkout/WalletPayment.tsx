@@ -84,25 +84,37 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
       let address = '';
       
       if (cryptoType === 'ETH') {
-        // Ethereum - prioritize MetaMask if available, otherwise use any EIP-1193 compatible wallet
+        // Ethereum - Force MetaMask detection and exclude all Phantom interference
         if (typeof window !== 'undefined') {
           let ethereumProvider = null;
           
-          // Check for MetaMask specifically first
-          if ((window as any).ethereum?.isMetaMask) {
+          // Debug what's available
+          console.log('=== ETHEREUM WALLET DEBUG ===');
+          console.log('window.ethereum exists:', !!(window as any).ethereum);
+          console.log('window.ethereum.isMetaMask:', (window as any).ethereum?.isMetaMask);
+          console.log('window.ethereum.isPhantom:', (window as any).ethereum?.isPhantom);
+          console.log('window.ethereum.isCoinbaseWallet:', (window as any).ethereum?.isCoinbaseWallet);
+          
+          // Look for MetaMask in multiple possible locations
+          if ((window as any).ethereum?.isMetaMask && !(window as any).ethereum?.isPhantom) {
             ethereumProvider = (window as any).ethereum;
-            console.log('Using MetaMask for Ethereum');
+            console.log('✅ Using MetaMask for Ethereum');
           }
-          // Check for Coinbase Wallet
-          else if ((window as any).ethereum?.isCoinbaseWallet) {
-            ethereumProvider = (window as any).ethereum;
-            console.log('Using Coinbase Wallet for Ethereum');
+          // Check if MetaMask is available via ethereum.providers array (when multiple wallets exist)
+          else if ((window as any).ethereum?.providers) {
+            const metaMaskProvider = (window as any).ethereum.providers.find((provider: any) => provider.isMetaMask && !provider.isPhantom);
+            if (metaMaskProvider) {
+              ethereumProvider = metaMaskProvider;
+              console.log('✅ Using MetaMask from providers array');
+            }
           }
-          // Check for other Ethereum providers, but exclude Phantom
-          else if ((window as any).ethereum && !(window as any).ethereum.isPhantom) {
-            ethereumProvider = (window as any).ethereum;
-            console.log('Using other Ethereum wallet');
+          // Direct MetaMask check
+          else if ((window as any).web3?.currentProvider?.isMetaMask) {
+            ethereumProvider = (window as any).web3.currentProvider;
+            console.log('✅ Using MetaMask from web3');
           }
+          
+          console.log('Selected Ethereum provider:', ethereumProvider);
           
           if (ethereumProvider) {
             try {
@@ -153,7 +165,12 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
               return;
             }
           } else {
-            onError('No Ethereum wallet detected. Please install MetaMask, Coinbase Wallet, or another Ethereum wallet.');
+            console.log('❌ No compatible Ethereum wallet found');
+            if ((window as any).ethereum?.isPhantom) {
+              onError('Phantom detected but not compatible for Ethereum testnets. Please install MetaMask for Ethereum payments.');
+            } else {
+              onError('No MetaMask detected. Please install MetaMask for Ethereum payments.');
+            }
             return;
           }
         }
