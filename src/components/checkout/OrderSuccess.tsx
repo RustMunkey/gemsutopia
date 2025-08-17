@@ -13,9 +13,12 @@ interface OrderSuccessProps {
   currency?: string;
   cryptoCurrency?: string;
   items?: Array<{ name: string; price: number; quantity: number }>;
+  subtotal?: number;
+  tax?: number;
+  shipping?: number;
 }
 
-export default function OrderSuccess({ orderId, customerEmail, customerName, amount, cryptoAmount, currency = 'CAD', cryptoCurrency, items = [] }: OrderSuccessProps) {
+export default function OrderSuccess({ orderId, customerEmail, customerName, amount, cryptoAmount, currency = 'CAD', cryptoCurrency, items = [], subtotal, tax, shipping }: OrderSuccessProps) {
   const [emailSent, setEmailSent] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
 
@@ -129,16 +132,69 @@ export default function OrderSuccess({ orderId, customerEmail, customerName, amo
               <span className="text-gray-600">Email:</span>
               <span className="text-sm">{customerEmail}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Total Amount:</span>
-              <span className="font-semibold">
+            
+            {/* Order Breakdown */}
+            {(subtotal !== undefined || items.length > 0) && (
+              <>
+                <div className="border-t border-gray-200 pt-3 mt-4">
+                  <div className="text-sm font-medium text-gray-700 mb-2">Order Breakdown:</div>
+                  
+                  {/* Items */}
+                  {items.length > 0 && (
+                    <div className="space-y-1 mb-3">
+                      {items.map((item, index) => (
+                        <div key={index} className="flex justify-between text-sm">
+                          <span className="text-gray-600">
+                            {item.name} {item.quantity > 1 && `(×${item.quantity})`}
+                          </span>
+                          <span>${(item.price * item.quantity).toFixed(2)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Financial breakdown */}
+                  {subtotal !== undefined && (
+                    <div className="space-y-1 text-sm border-t border-gray-200 pt-2">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Subtotal:</span>
+                        <span>${subtotal.toFixed(2)}</span>
+                      </div>
+                      {shipping !== undefined && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Shipping:</span>
+                          <span>{shipping === 0 ? 'Free' : `$${shipping.toFixed(2)}`}</span>
+                        </div>
+                      )}
+                      {tax !== undefined && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Tax (HST):</span>
+                          <span>${tax.toFixed(2)}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+            
+            {/* Total amount with proper formatting */}
+            <div className="flex justify-between border-t border-gray-300 pt-3 mt-3">
+              <span className="text-gray-900 font-semibold">Total Paid:</span>
+              <span className="font-bold text-lg">
                 {cryptoCurrency && cryptoAmount ? (
-                  `${cryptoAmount.toFixed(6)} ${cryptoCurrency}`
+                  <div className="text-right">
+                    <div>{cryptoAmount.toFixed(6)} {cryptoCurrency}</div>
+                    <div className="text-sm text-gray-500 font-normal">
+                      (${amount.toFixed(2)} {currency})
+                    </div>
+                  </div>
                 ) : (
                   `$${amount.toFixed(2)} ${currency}`
                 )}
               </span>
             </div>
+            
             <div className="flex justify-between">
               <span className="text-gray-600">Payment Status:</span>
               <span className="text-green-600 font-medium">✓ Paid</span>

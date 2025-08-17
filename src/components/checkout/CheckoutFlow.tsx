@@ -237,6 +237,10 @@ export default function CheckoutFlow() {
                     cryptoAmount={paymentInfo?.cryptoAmount}
                     currency={paymentInfo?.currency || 'CAD'}
                     cryptoCurrency={paymentInfo?.cryptoCurrency}
+                    items={items.map(item => ({ ...item, quantity: 1 }))}
+                    subtotal={subtotal}
+                    tax={tax}
+                    shipping={shipping}
                   />
                 </div>
               </div>
