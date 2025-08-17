@@ -11,7 +11,9 @@ type CryptoType = 'BTC' | 'SOL' | 'ETH';
 
 interface WalletPaymentProps {
   amount: number;
-  onSuccess: (transactionId: string) => void;
+  customerData: any;
+  items: any[];
+  onSuccess: (data: { orderId: string }) => void;
   onError: (error: string) => void;
 }
 
@@ -28,7 +30,7 @@ interface CryptoPrices {
   solana: { usd: number; cad: number };
 }
 
-export default function WalletPayment({ amount, onSuccess, onError }: WalletPaymentProps) {
+export default function WalletPayment({ amount, customerData, items, onSuccess, onError }: WalletPaymentProps) {
   const { currency } = useCurrency();
   const { isConnected, walletAddress, selectedCrypto, connectWallet, disconnectWallet } = useWallet();
   const [isConnecting, setIsConnecting] = useState(false);
@@ -228,10 +230,61 @@ export default function WalletPayment({ amount, onSuccess, onError }: WalletPaym
         to: merchantAddress.toString()
       });
 
-      onSuccess(signature);
+      // Save order to database
+      await saveCryptoOrder(signature, selectedCrypto!, cryptoAmount);
     } catch (error: any) {
       console.error('Solana payment error:', error);
       throw new Error(`Solana payment failed: ${error.message}`);
+    }
+  };
+
+  const saveCryptoOrder = async (transactionId: string, cryptoType: CryptoType, cryptoAmount: number) => {
+    try {
+      // Calculate totals properly
+      const subtotal = items.reduce((sum, item) => sum + item.price, 0);
+      const tax = subtotal * 0.13; // 13% HST for Canada
+      const shipping = subtotal > 100 ? 0 : 15; // Free shipping over $100
+      
+      const orderData = {
+        items,
+        customerInfo: customerData,
+        payment: {
+          transactionId,
+          paymentMethod: 'crypto',
+          cryptoType,
+          cryptoAmount,
+          cryptoCurrency: cryptoType,
+          walletAddress,
+          amount,
+          currency: currency,
+          network: cryptoOptions.find(c => c.symbol === cryptoType)?.network
+        },
+        totals: { 
+          subtotal,
+          tax,
+          shipping,
+          total: amount 
+        },
+        timestamp: new Date().toISOString()
+      };
+
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderData)
+      });
+
+      if (response.ok) {
+        const orderResult = await response.json();
+        onSuccess({ orderId: orderResult.order.id });
+      } else {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('Order save failed:', errorData);
+        onError(`Payment processed but order save failed: ${errorData.error || 'Unknown error'}. Please contact support with transaction ID: ${transactionId}`);
+      }
+    } catch (error) {
+      console.error('Order save error:', error);
+      onError(`Payment processed but order save failed. Please contact support with transaction ID: ${transactionId}`);
     }
   };
 
@@ -248,7 +301,9 @@ export default function WalletPayment({ amount, onSuccess, onError }: WalletPaym
     await new Promise(resolve => setTimeout(resolve, 3000));
     
     const mockTransactionId = `${cryptoType.toLowerCase()}_testnet_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-    onSuccess(mockTransactionId);
+    
+    // Save order to database
+    await saveCryptoOrder(mockTransactionId, cryptoType, cryptoAmount);
   };
 
   const formatAddress = (address: string) => {

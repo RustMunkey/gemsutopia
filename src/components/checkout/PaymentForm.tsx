@@ -465,7 +465,9 @@ export default function PaymentForm(props: PaymentFormProps) {
     return (
       <WalletPayment
         amount={props.amount}
-        onSuccess={(transactionId) => props.onSuccess({ orderId: transactionId })}
+        customerData={props.customerData}
+        items={props.items}
+        onSuccess={props.onSuccess}
         onError={props.onError}
       />
     );

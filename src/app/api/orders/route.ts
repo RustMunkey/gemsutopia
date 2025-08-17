@@ -28,8 +28,16 @@ export async function POST(request: NextRequest) {
         items: orderData.items,
         payment_details: {
           method: orderData.payment.paymentMethod,
-          payment_id: orderData.payment.paymentIntentId || orderData.payment.captureID,
-          amount: orderData.totals.total
+          payment_id: orderData.payment.paymentIntentId || orderData.payment.captureID || orderData.payment.transactionId,
+          amount: orderData.totals.total,
+          currency: orderData.payment.currency || 'CAD',
+          ...(orderData.payment.paymentMethod === 'crypto' && {
+            crypto_type: orderData.payment.cryptoType,
+            crypto_amount: orderData.payment.cryptoAmount,
+            crypto_currency: orderData.payment.cryptoCurrency,
+            wallet_address: orderData.payment.walletAddress,
+            network: orderData.payment.network
+          })
         },
         subtotal: orderData.totals.subtotal,
         shipping: orderData.totals.shipping,
