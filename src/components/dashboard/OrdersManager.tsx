@@ -7,6 +7,9 @@ interface Order {
   customer_email: string;
   customer_name: string;
   total: number;
+  subtotal?: number;
+  shipping?: number;
+  tax?: number;
   status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
   created_at: string;
   items: Array<{
@@ -250,84 +253,158 @@ export default function OrdersManager() {
       {/* Order Details Modal */}
       {selectedOrder && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-black border border-white/20 rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-white">Order #{selectedOrder.id.slice(-8)}</h2>
-              <button
-                onClick={() => setSelectedOrder(null)}
-                className="text-slate-400 hover:text-white"
-              >
-                ×
-              </button>
+          <div className="bg-black border border-white/20 rounded-lg p-8 max-w-4xl w-full max-h-[95vh] overflow-y-auto">
+            {/* Receipt Header */}
+            <div className="text-center mb-8">
+              <div className="flex justify-between items-start mb-4">
+                <div></div>
+                <div>
+                  <h2 className="text-2xl font-bold text-white mb-2">Order Receipt</h2>
+                  <p className="text-slate-400">Gemsutopia Admin Dashboard</p>
+                </div>
+                <button
+                  onClick={() => setSelectedOrder(null)}
+                  className="text-slate-400 hover:text-white text-xl"
+                >
+                  ×
+                </button>
+              </div>
             </div>
 
-            <div className="space-y-6">
-              {/* Customer Info */}
-              <div>
-                <h3 className="text-lg font-semibold text-white mb-3">Customer Information</h3>
-                <div className="bg-white/5 rounded-lg p-4 space-y-2">
-                  <p className="text-white"><strong>Name:</strong> {selectedOrder.customer_name}</p>
-                  <p className="text-white"><strong>Email:</strong> {selectedOrder.customer_email}</p>
-                  <p className="text-white"><strong>Date:</strong> {formatDate(selectedOrder.created_at)}</p>
-                </div>
-              </div>
-
-              {/* Payment Info */}
-              <div>
-                <h3 className="text-lg font-semibold text-white mb-3">Payment Information</h3>
-                <div className="bg-white/5 rounded-lg p-4 space-y-2">
-                  <p className="text-white"><strong>Method:</strong> {selectedOrder.payment_details.method}</p>
-                  <p className="text-white"><strong>Payment ID:</strong> {selectedOrder.payment_details.payment_id}</p>
-                  <p className="text-white"><strong>Amount:</strong> ${selectedOrder.payment_details.amount.toFixed(2)} {selectedOrder.payment_details.currency || 'CAD'}</p>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Left Column - Order Details */}
+              <div className="bg-white/5 rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-white mb-4">Order Details</h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Order Number:</span>
+                    <span className="font-mono text-sm text-white">{selectedOrder.id.slice(-8).toUpperCase()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Date:</span>
+                    <span className="text-white">{formatDate(selectedOrder.created_at)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Status:</span>
+                    <span className={`px-2 py-1 rounded text-xs font-medium border ${getStatusColor(selectedOrder.status)}`}>
+                      {selectedOrder.status.toUpperCase()}
+                    </span>
+                  </div>
                   
-                  {selectedOrder.payment_details.method === 'crypto' && (
-                    <>
-                      <p className="text-white"><strong>Crypto Type:</strong> {selectedOrder.payment_details.crypto_currency}</p>
-                      <p className="text-white"><strong>Crypto Amount:</strong> {selectedOrder.payment_details.crypto_amount?.toFixed(6)} {selectedOrder.payment_details.crypto_currency}</p>
-                      <p className="text-white"><strong>Network:</strong> {selectedOrder.payment_details.network}</p>
-                      {selectedOrder.payment_details.wallet_address && (
-                        <p className="text-white">
-                          <strong>Wallet:</strong> 
-                          <span className="font-mono text-sm ml-2">
-                            {selectedOrder.payment_details.wallet_address.slice(0, 6)}...{selectedOrder.payment_details.wallet_address.slice(-4)}
-                          </span>
-                        </p>
+                  {/* Customer Info */}
+                  <div className="border-t border-white/20 pt-3 mt-4">
+                    <h4 className="text-white font-medium mb-2">Customer Information</h4>
+                    <div className="space-y-1 text-sm">
+                      <p className="text-white"><strong>Name:</strong> {selectedOrder.customer_name}</p>
+                      <p className="text-white"><strong>Email:</strong> {selectedOrder.customer_email}</p>
+                    </div>
+                  </div>
+
+                  {/* Payment Info */}
+                  <div className="border-t border-white/20 pt-3 mt-4">
+                    <h4 className="text-white font-medium mb-2">Payment Information</h4>
+                    <div className="space-y-1 text-sm">
+                      <p className="text-white"><strong>Method:</strong> {selectedOrder.payment_details.method}</p>
+                      <p className="text-white"><strong>Payment ID:</strong> 
+                        <span className="font-mono text-xs ml-2 break-all">
+                          {selectedOrder.payment_details.payment_id}
+                        </span>
+                      </p>
+                      
+                      {selectedOrder.payment_details.method === 'crypto' && (
+                        <>
+                          <p className="text-white"><strong>Crypto Type:</strong> {selectedOrder.payment_details.crypto_currency}</p>
+                          <p className="text-white"><strong>Network:</strong> {selectedOrder.payment_details.network}</p>
+                          {selectedOrder.payment_details.wallet_address && (
+                            <p className="text-white">
+                              <strong>Wallet:</strong> 
+                              <span className="font-mono text-xs ml-2">
+                                {selectedOrder.payment_details.wallet_address.slice(0, 8)}...{selectedOrder.payment_details.wallet_address.slice(-6)}
+                              </span>
+                            </p>
+                          )}
+                          {selectedOrder.payment_details.crypto_currency === 'SOL' && (
+                            <p className="text-white">
+                              <strong>Explorer:</strong> 
+                              <a 
+                                href={`https://explorer.solana.com/tx/${selectedOrder.payment_details.payment_id}?cluster=devnet`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-400 hover:text-blue-300 underline ml-2 text-xs"
+                              >
+                                View Transaction
+                              </a>
+                            </p>
+                          )}
+                        </>
                       )}
-                      {selectedOrder.payment_details.crypto_currency === 'SOL' && (
-                        <p className="text-white">
-                          <strong>Explorer:</strong> 
-                          <a 
-                            href={`https://explorer.solana.com/tx/${selectedOrder.payment_details.payment_id}?cluster=devnet`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-400 hover:text-blue-300 underline ml-2"
-                          >
-                            View on Solana Explorer
-                          </a>
-                        </p>
-                      )}
-                    </>
-                  )}
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Items */}
-              <div>
-                <h3 className="text-lg font-semibold text-white mb-3">Items</h3>
-                <div className="space-y-2">
+              {/* Right Column - Order Breakdown */}
+              <div className="bg-white/5 rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-white mb-4">Order Breakdown</h3>
+                
+                {/* Items */}
+                <div className="space-y-2 mb-4">
                   {selectedOrder.items.map((item, index) => (
-                    <div key={index} className="bg-white/5 rounded-lg p-4 flex justify-between items-center">
-                      <div>
-                        <p className="text-white font-medium">{item.name}</p>
-                        <p className="text-slate-400 text-sm">Quantity: {item.quantity}</p>
-                      </div>
-                      <p className="text-white font-semibold">${(item.price * item.quantity).toFixed(2)}</p>
+                    <div key={index} className="flex justify-between text-sm">
+                      <span className="text-slate-400">
+                        {item.name} {item.quantity > 1 && `(×${item.quantity})`}
+                      </span>
+                      <span className="text-white">${(item.price * item.quantity).toFixed(2)}</span>
                     </div>
                   ))}
                 </div>
-                <div className="mt-4 pt-4 border-t border-white/20">
-                  <div className="flex justify-between text-white font-bold">
-                    <span>Total: ${selectedOrder.total.toFixed(2)}</span>
+
+                {/* Financial breakdown */}
+                <div className="space-y-2 text-sm border-t border-white/20 pt-4">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Subtotal:</span>
+                    <span className="text-white">${selectedOrder.subtotal?.toFixed(2) || '0.00'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Shipping:</span>
+                    <span className="text-white">
+                      {selectedOrder.shipping === 0 ? 'Free' : `$${selectedOrder.shipping?.toFixed(2) || '0.00'}`}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Tax (HST):</span>
+                    <span className="text-white">${selectedOrder.tax?.toFixed(2) || '0.00'}</span>
+                  </div>
+                </div>
+
+                {/* Total amount */}
+                <div className="border-t border-white/30 pt-4 mt-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-white font-semibold text-lg">Total Paid:</span>
+                    <div className="text-right">
+                      {selectedOrder.payment_details.method === 'crypto' && selectedOrder.payment_details.crypto_amount ? (
+                        <div>
+                          <div className="text-white font-bold text-lg">
+                            {selectedOrder.payment_details.crypto_amount.toFixed(6)} {selectedOrder.payment_details.crypto_currency}
+                          </div>
+                          <div className="text-slate-400 text-sm">
+                            (${selectedOrder.total.toFixed(2)} {selectedOrder.payment_details.currency || 'CAD'})
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-white font-bold text-lg">
+                          ${selectedOrder.total.toFixed(2)} {selectedOrder.payment_details.currency || 'CAD'}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Payment Status */}
+                <div className="mt-6 p-3 bg-green-500/20 border border-green-500/30 rounded-lg">
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 bg-green-400 rounded-full mr-3"></div>
+                    <span className="text-green-400 font-medium">Payment Confirmed</span>
                   </div>
                 </div>
               </div>
