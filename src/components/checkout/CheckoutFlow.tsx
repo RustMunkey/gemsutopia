@@ -54,6 +54,12 @@ export default function CheckoutFlow() {
   });
   const [orderId, setOrderId] = useState<string>('');
   const [error, setError] = useState<string>('');
+  const [paymentInfo, setPaymentInfo] = useState<{
+    actualAmount: number;
+    cryptoAmount?: number;
+    currency: string;
+    cryptoCurrency?: string;
+  } | null>(null);
 
   // Calculate totals
   const subtotal = items.reduce((sum, item) => sum + item.price, 0);
@@ -80,6 +86,12 @@ export default function CheckoutFlow() {
         break;
       case 'payment':
         setOrderId(data.orderId);
+        setPaymentInfo({
+          actualAmount: data.actualAmount || total,
+          cryptoAmount: data.cryptoAmount,
+          currency: data.currency || 'CAD',
+          cryptoCurrency: data.cryptoCurrency
+        });
         setCurrentStep('success');
         clearPouch();
         break;
@@ -221,7 +233,10 @@ export default function CheckoutFlow() {
                   <OrderSuccess
                     orderId={orderId}
                     customerEmail={checkoutData.customer.email}
-                    amount={total}
+                    amount={paymentInfo?.actualAmount || total}
+                    cryptoAmount={paymentInfo?.cryptoAmount}
+                    currency={paymentInfo?.currency || 'CAD'}
+                    cryptoCurrency={paymentInfo?.cryptoCurrency}
                   />
                 </div>
               </div>

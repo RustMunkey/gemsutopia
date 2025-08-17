@@ -13,7 +13,7 @@ interface WalletPaymentProps {
   amount: number;
   customerData: any;
   items: any[];
-  onSuccess: (data: { orderId: string }) => void;
+  onSuccess: (data: { orderId: string; actualAmount: number; cryptoAmount?: number; currency: string; cryptoCurrency?: string }) => void;
   onError: (error: string) => void;
 }
 
@@ -279,7 +279,13 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
       if (response.ok) {
         const orderResult = await response.json();
         console.log('Order saved successfully:', orderResult);
-        onSuccess({ orderId: orderResult.order.id });
+        onSuccess({ 
+          orderId: orderResult.order.id, 
+          actualAmount: amount,
+          cryptoAmount: cryptoAmount,
+          currency: currency as string,
+          cryptoCurrency: cryptoType
+        });
       } else {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
         console.error('Order save failed. Status:', response.status, 'Error:', errorData);

@@ -9,10 +9,13 @@ interface OrderSuccessProps {
   customerEmail: string;
   customerName?: string;
   amount: number;
+  cryptoAmount?: number;
+  currency?: string;
+  cryptoCurrency?: string;
   items?: Array<{ name: string; price: number; quantity: number }>;
 }
 
-export default function OrderSuccess({ orderId, customerEmail, customerName, amount, items = [] }: OrderSuccessProps) {
+export default function OrderSuccess({ orderId, customerEmail, customerName, amount, cryptoAmount, currency = 'CAD', cryptoCurrency, items = [] }: OrderSuccessProps) {
   const [emailSent, setEmailSent] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
 
@@ -128,7 +131,13 @@ export default function OrderSuccess({ orderId, customerEmail, customerName, amo
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Total Amount:</span>
-              <span className="font-semibold">${amount.toFixed(2)} CAD</span>
+              <span className="font-semibold">
+                {cryptoCurrency && cryptoAmount ? (
+                  `${cryptoAmount.toFixed(6)} ${cryptoCurrency}`
+                ) : (
+                  `$${amount.toFixed(2)} ${currency}`
+                )}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Payment Status:</span>

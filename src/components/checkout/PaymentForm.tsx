@@ -24,7 +24,7 @@ interface PaymentFormProps {
   amount: number;
   customerData: any;
   items: any[];
-  onSuccess: (data: { orderId: string }) => void;
+  onSuccess: (data: { orderId: string; actualAmount?: number; cryptoAmount?: number; currency?: string; cryptoCurrency?: string }) => void;
   onError: (error: string) => void;
 }
 
@@ -161,7 +161,7 @@ function StripeForm({ amount, customerData, items, onSuccess, onError }: Omit<Pa
 
         if (response.ok) {
           const orderResult = await response.json();
-          onSuccess({ orderId: orderResult.order.id });
+          onSuccess({ orderId: orderResult.order.id, actualAmount: amount, currency: 'CAD' });
         } else {
           const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
           console.error('Order save failed:', errorData);
@@ -382,7 +382,7 @@ function PayPalForm({ amount, customerData, items, onSuccess, onError }: Omit<Pa
 
       if (response.ok) {
         const orderResult = await response.json();
-        onSuccess({ orderId: orderResult.order.id });
+        onSuccess({ orderId: orderResult.order.id, actualAmount: amount, currency: 'CAD' });
       } else {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
         console.error('Order save failed:', errorData);
