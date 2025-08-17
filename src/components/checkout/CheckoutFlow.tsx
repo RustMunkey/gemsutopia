@@ -235,6 +235,7 @@ export default function CheckoutFlow() {
                   <OrderSuccess
                     orderId={orderId}
                     customerEmail={checkoutData.customer.email}
+                    customerName={`${checkoutData.customer.firstName} ${checkoutData.customer.lastName}`}
                     amount={paymentInfo?.actualAmount || total}
                     cryptoAmount={paymentInfo?.cryptoAmount}
                     currency={paymentInfo?.currency || 'CAD'}

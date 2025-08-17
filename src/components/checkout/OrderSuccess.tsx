@@ -20,6 +20,8 @@ interface OrderSuccessProps {
 }
 
 export default function OrderSuccess({ orderId, customerEmail, customerName, amount, cryptoAmount, currency = 'CAD', cryptoCurrency, items = [], subtotal, tax, shipping, cryptoPrices }: OrderSuccessProps) {
+  const [transactionId, setTransactionId] = useState<string>('');
+  const [walletAddress, setWalletAddress] = useState<string>('');
   const [emailSent, setEmailSent] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
 
@@ -39,6 +41,7 @@ export default function OrderSuccess({ orderId, customerEmail, customerName, amo
   // Helper function to format dual currency display
   const formatDualCurrency = (fiatAmount: number, label: string) => {
     const cryptoEquivalent = convertToCrypto(fiatAmount);
+    const isShipping = label.toLowerCase().includes('shipping');
     
     if (cryptoCurrency && cryptoEquivalent) {
       return (
@@ -46,7 +49,7 @@ export default function OrderSuccess({ orderId, customerEmail, customerName, amo
           <span className="text-gray-600">{label}:</span>
           <div className="text-right">
             <div className="text-sm font-medium">
-              {fiatAmount === 0 ? 'Free' : `$${fiatAmount.toFixed(2)} ${currency}`}
+              {(fiatAmount === 0 && isShipping) ? 'Free' : `$${fiatAmount.toFixed(2)} ${currency}`}
             </div>
             <div className="text-xs text-gray-500">
               {cryptoEquivalent.toFixed(8)} {cryptoCurrency}
@@ -59,19 +62,43 @@ export default function OrderSuccess({ orderId, customerEmail, customerName, amo
     return (
       <div className="flex justify-between">
         <span className="text-gray-600">{label}:</span>
-        <span>{fiatAmount === 0 ? 'Free' : `$${fiatAmount.toFixed(2)}`}</span>
+        <span>{(fiatAmount === 0 && isShipping) ? 'Free' : `$${fiatAmount.toFixed(2)}`}</span>
       </div>
     );
   };
 
   useEffect(() => {
+    // Fetch order details to get transaction ID
+    const fetchOrderDetails = async () => {
+      try {
+        const response = await fetch(`/api/orders/${orderId}`);
+        if (response.ok) {
+          const orderData = await response.json();
+          const paymentDetails = orderData.order?.payment_details;
+          if (paymentDetails?.payment_id) {
+            setTransactionId(paymentDetails.payment_id);
+          }
+          if (paymentDetails?.wallet_address) {
+            setWalletAddress(paymentDetails.wallet_address);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch order details:', error);
+      }
+    };
+
+    fetchOrderDetails();
+  }, [orderId]);
+
+  useEffect(() => {
     // Initialize EmailJS
     initEmailJS();
 
-    // Send order receipt email
-    const sendReceiptEmail = async () => {
+    // Send order receipt emails (both EmailJS and Resend)
+    const sendReceiptEmails = async () => {
       try {
-        const orderData = {
+        // Send via EmailJS (existing implementation)
+        const emailJSData = {
           customerEmail,
           customerName: customerName || 'Customer',
           orderId,
@@ -79,21 +106,63 @@ export default function OrderSuccess({ orderId, customerEmail, customerName, amo
           items,
         };
 
-        const result = await sendOrderReceiptEmail(orderData);
+        const emailJSResult = await sendOrderReceiptEmail(emailJSData);
         
-        if (result.success) {
+        // Send via Resend (new professional receipts)
+        const resendData = {
+          orderId,
+          customerEmail,
+          customerName: customerName || 'Customer',
+          items: items.map(item => ({
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity
+          })),
+          subtotal: subtotal || 0,
+          tax: tax || 0,
+          shipping: shipping || 0,
+          total: amount,
+          paymentMethod: cryptoCurrency ? 'crypto' : 'standard',
+          cryptoAmount,
+          cryptoCurrency,
+          currency: currency || 'CAD',
+          // Add additional crypto details if available
+          transactionId: transactionId || orderId,
+          network: cryptoCurrency ? getNetworkName(cryptoCurrency) : undefined,
+          walletAddress: walletAddress,
+        };
+
+        const resendResponse = await fetch('/api/send-receipt', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(resendData)
+        });
+
+        const resendResult = await resendResponse.json();
+        
+        if (emailJSResult.success || resendResult.success) {
           setEmailSent(true);
         } else {
           setEmailError('Failed to send receipt email');
         }
       } catch (error) {
-        console.error('Error sending receipt email:', error);
+        console.error('Error sending receipt emails:', error);
         setEmailError('Failed to send receipt email');
       }
     };
 
-    sendReceiptEmail();
-  }, [orderId, customerEmail, customerName, amount, items]);
+    sendReceiptEmails();
+  }, [orderId, customerEmail, customerName, amount, items, subtotal, tax, shipping, cryptoAmount, cryptoCurrency, currency]);
+
+  // Helper function to get network name for crypto currencies
+  const getNetworkName = (crypto: string) => {
+    switch (crypto) {
+      case 'BTC': return 'Bitcoin Testnet';
+      case 'ETH': return 'Ethereum Sepolia';
+      case 'SOL': return 'Solana Devnet';
+      default: return 'Testnet';
+    }
+  };
 
   useEffect(() => {
     // Simple CSS-based confetti animation instead of external script
