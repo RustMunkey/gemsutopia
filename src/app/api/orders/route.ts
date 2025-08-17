@@ -74,6 +74,46 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('Order saved successfully to database:', data[0]);
+    
+    // Update product inventory after successful order
+    if (orderData.items && Array.isArray(orderData.items)) {
+      console.log('Updating inventory for items:', orderData.items);
+      
+      for (const item of orderData.items) {
+        if (item.id && item.quantity) {
+          try {
+            // First get current inventory
+            const { data: productData, error: fetchError } = await supabase
+              .from('products')
+              .select('inventory')
+              .eq('id', item.id)
+              .single();
+
+            if (fetchError) {
+              console.error(`Error fetching product ${item.id}:`, fetchError);
+              continue;
+            }
+
+            const newInventory = Math.max(0, (productData?.inventory || 0) - item.quantity);
+            
+            // Update inventory
+            const { error: updateError } = await supabase
+              .from('products')
+              .update({ inventory: newInventory })
+              .eq('id', item.id);
+
+            if (updateError) {
+              console.error(`Error updating inventory for product ${item.id}:`, updateError);
+            } else {
+              console.log(`Updated inventory for product ${item.id}: ${productData?.inventory} -> ${newInventory}`);
+            }
+          } catch (inventoryError) {
+            console.error(`Error processing inventory for item ${item.id}:`, inventoryError);
+          }
+        }
+      }
+    }
+    
     return NextResponse.json({ success: true, order: data[0] });
   } catch (error) {
     console.error('Error saving order:', error);

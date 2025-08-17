@@ -2,7 +2,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 interface GemPouchItem {
-  id: number;
+  id: string;
   name: string;
   price: number;
   image: string;
@@ -11,9 +11,9 @@ interface GemPouchItem {
 interface GemPouchContextType {
   items: GemPouchItem[];
   addItem: (item: GemPouchItem) => void;
-  removeItem: (id: number) => void;
+  removeItem: (id: string) => void;
   clearPouch: () => void;
-  isInPouch: (id: number) => boolean;
+  isInPouch: (id: string) => boolean;
   itemCount: number;
 }
 
@@ -48,7 +48,7 @@ export function GemPouchProvider({ children }: { children: ReactNode }) {
     setItems(prev => [...prev, item]); // Allow multiple copies of same item
   };
 
-  const removeItem = (id: number) => {
+  const removeItem = (id: string) => {
     setItems(prev => {
       const index = prev.findIndex(item => item.id === id);
       if (index > -1) {
@@ -62,7 +62,7 @@ export function GemPouchProvider({ children }: { children: ReactNode }) {
     setItems([]);
   };
 
-  const isInPouch = (id: number) => {
+  const isInPouch = (id: string) => {
     return items.some(item => item.id === id);
   };
 

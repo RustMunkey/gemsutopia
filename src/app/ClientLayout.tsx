@@ -6,6 +6,7 @@ import { CurrencyProvider } from '../contexts/CurrencyContext';
 import { AuthProvider } from '../contexts/AuthContext';
 import { NotificationProvider } from '../contexts/NotificationContext';
 import { WalletProvider } from '../contexts/WalletContext';
+import { InventoryProvider } from '../contexts/InventoryContext';
 import CookieBanner from '../components/CookieBanner';
 
 export default function ClientLayout({
@@ -17,16 +18,18 @@ export default function ClientLayout({
     <CookieProvider>
       <AuthProvider>
         <CurrencyProvider>
-          <WishlistProvider>
-            <GemPouchProvider>
-              <WalletProvider>
-                <NotificationProvider>
-                  {children}
-                  <CookieBanner />
-                </NotificationProvider>
-              </WalletProvider>
-            </GemPouchProvider>
-          </WishlistProvider>
+          <InventoryProvider>
+            <WishlistProvider>
+              <GemPouchProvider>
+                <WalletProvider>
+                  <NotificationProvider>
+                    {children}
+                    <CookieBanner />
+                  </NotificationProvider>
+                </WalletProvider>
+              </GemPouchProvider>
+            </WishlistProvider>
+          </InventoryProvider>
         </CurrencyProvider>
       </AuthProvider>
     </CookieProvider>

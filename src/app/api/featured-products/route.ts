@@ -30,7 +30,7 @@ export async function GET() {
       card_color: product.metadata?.card_color || '#1f2937',
       price: product.on_sale && product.sale_price ? product.sale_price : product.price,
       original_price: product.price,
-      product_id: parseInt(product.id),
+      product_id: product.id, // Keep UUID as string
       sort_order: 1,
       is_active: product.is_active
     }));

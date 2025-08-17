@@ -9,12 +9,14 @@ import Footer from '@/components/Footer';
 import { useGemPouch } from '@/contexts/GemPouchContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { useInventory } from '@/contexts/InventoryContext';
 
 export default function Shop() {
   const router = useRouter();
   const { addItem, removeItem, isInPouch } = useGemPouch();
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist();
   const { formatPrice } = useCurrency();
+  const { shopRefreshTrigger } = useInventory();
   
   const [sortBy, setSortBy] = useState('default');
   const [priceFilter, setPriceFilter] = useState('all');
@@ -77,12 +79,13 @@ export default function Shop() {
         if (data.success) {
           // Transform database products to match current interface
           const transformedProducts = data.products.map((product: any) => ({
-            id: parseInt(product.id) || Math.random(),
+            id: product.id, // Keep UUID as string
             name: product.name,
             type: product.category,
             price: product.on_sale && product.sale_price ? product.sale_price : product.price,
             originalPrice: product.price,
-            image: product.images?.[0] || '/images/placeholder.jpg'
+            image: product.images?.[0] || '/images/placeholder.jpg',
+            stock: product.inventory
           }));
           setProducts(transformedProducts);
         }
@@ -96,7 +99,7 @@ export default function Shop() {
     };
 
     fetchProducts();
-  }, []);
+  }, [shopRefreshTrigger]);
 
 
   // Filter and sort products

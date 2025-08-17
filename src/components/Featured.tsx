@@ -19,7 +19,7 @@ interface FeaturedProduct {
   card_color?: string;
   price: number;
   original_price: number;
-  product_id?: number;
+  product_id?: string;
   sort_order: number;
   is_active: boolean;
 }

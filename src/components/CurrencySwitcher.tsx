@@ -2,7 +2,7 @@
 import { useCurrency } from '@/contexts/CurrencyContext';
 
 interface CurrencySwitcherProps {
-  variant?: 'header' | 'mobile';
+  variant?: 'header' | 'mobile' | 'product';
 }
 
 export default function CurrencySwitcher({ variant = 'header' }: CurrencySwitcherProps) {
@@ -28,6 +28,18 @@ export default function CurrencySwitcher({ variant = 'header' }: CurrencySwitche
           <span>{currency}</span>
         </button>
       </div>
+    );
+  }
+
+  if (variant === 'product') {
+    return (
+      <button
+        onClick={toggleCurrency}
+        className="text-black hover:text-gray-600 transition-colors"
+        title={`Switch to ${currency === 'USD' ? 'CAD' : 'USD'}`}
+      >
+        <span className="text-lg">{getCurrentFlag()}</span>
+      </button>
     );
   }
 

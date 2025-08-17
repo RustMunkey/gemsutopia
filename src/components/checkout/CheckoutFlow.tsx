@@ -4,6 +4,7 @@ import { useGemPouch } from '@/contexts/GemPouchContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useWallet } from '@/contexts/WalletContext';
 import { useNotification } from '@/contexts/NotificationContext';
+import { useInventory } from '@/contexts/InventoryContext';
 import CartReview from './CartReview';
 import CustomerInfo from './CustomerInfo';
 import PaymentMethods from './PaymentMethods';
@@ -35,6 +36,7 @@ export default function CheckoutFlow() {
   const { formatPrice } = useCurrency();
   const { isConnected, disconnectWallet } = useWallet();
   const { showNotification } = useNotification();
+  const { refreshShopProducts, refreshProduct } = useInventory();
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('cart');
   const [checkoutData, setCheckoutData] = useState<CheckoutData>({
     customer: {
@@ -96,6 +98,12 @@ export default function CheckoutFlow() {
         });
         setCurrentStep('success');
         clearPouch();
+        refreshShopProducts(); // Trigger real-time inventory update
+        
+        // Also refresh individual product pages for items that were purchased
+        items.forEach(item => {
+          refreshProduct(item.id);
+        });
         break;
     }
   };

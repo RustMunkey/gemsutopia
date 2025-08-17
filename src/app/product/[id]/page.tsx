@@ -1,30 +1,33 @@
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProductContent from './ProductContent';
+import { notFound } from 'next/navigation';
 
-const images = [
-  '/images/Review1.jpg',
-  '/images/Review2.jpg', 
-  '/images/Review3.jpg',
-  '/images/Review4.jpg',
-  '/images/Review5.jpg',
-  '/images/Review6.jpg',
-  '/images/Review7.jpg',
-  '/images/Review8.jpg',
-  '/images/Review9.jpg',
-  '/images/Review10.jpg',
-  '/images/Review12.jpg',
-  '/images/Review13.jpg',
-  '/images/Review14.jpg',
-  '/images/8680a65c-0c82-4529-a8f2-a051344e565a.webp',
-  '/images/c07009ff-cd86-45d0-858e-441993683280.webp',
-  '/images/Review-5.jpg'
-];
+async function getProduct(id: string) {
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/products/${id}`, {
+      cache: 'no-store'
+    });
+    
+    if (!res.ok) {
+      return null;
+    }
+    
+    const data = await res.json();
+    return data.success ? data.product : null;
+  } catch (error) {
+    console.error('Error fetching product:', error);
+    return null;
+  }
+}
 
 export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const productId = parseInt(id);
-  const productImage = images[productId - 1] || images[0];
+  const product = await getProduct(id);
+  
+  if (!product) {
+    notFound();
+  }
   
   return (
     <div className="min-h-[200vh] flex flex-col relative">
@@ -41,7 +44,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       
       <Header />
       <div className="relative z-10">
-        <ProductContent productId={productId} productImage={productImage} />
+        <ProductContent product={product} />
       </div>
       <Footer />
     </div>
