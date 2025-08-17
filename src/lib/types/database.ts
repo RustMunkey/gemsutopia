@@ -31,6 +31,8 @@ export interface Product {
     card_gradient_from?: string;
     card_gradient_to?: string;
     use_gradient?: boolean;
+    details?: string[];
+    shipping_info?: string;
   } | null;
 }
 
