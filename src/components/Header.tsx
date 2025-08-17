@@ -9,12 +9,14 @@ import Dropdown from './Dropdown';
 import { useGemPouch } from '../contexts/GemPouchContext';
 import { useWishlist } from '../contexts/WishlistContext';
 import { useCMSContent } from '@/hooks/useCMSContent';
+import { useAuth } from '../contexts/AuthContext';
 import CurrencySwitcher from './CurrencySwitcher';
 
 export default function Header() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const { itemCount } = useGemPouch();
   const { itemCount: wishlistCount } = useWishlist();
+  const { user, signOut } = useAuth();
   const { getContent } = useCMSContent();
   const pathname = usePathname();
   
@@ -152,9 +154,28 @@ export default function Header() {
                   </span>
                 )}
               </a>
-              <a href="/sign-up" className="border border-white text-white hover:bg-white hover:text-black active:bg-white active:text-black text-sm font-bold px-10 py-2 rounded-full transition-all">
-                Sign Up
-              </a>
+              {user ? (
+                <div className="flex items-center gap-3">
+                  <span className="text-white text-sm">
+                    Hi, {user.user_metadata?.first_name || user.email?.split('@')[0]}
+                  </span>
+                  <button
+                    onClick={() => signOut()}
+                    className="border border-white text-white hover:bg-white hover:text-black text-sm font-bold px-6 py-2 rounded-full transition-all"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <a href="/sign-in" className="text-white hover:text-gray-300 text-sm font-medium">
+                    Sign In
+                  </a>
+                  <a href="/sign-up" className="border border-white text-white hover:bg-white hover:text-black text-sm font-bold px-6 py-2 rounded-full transition-all">
+                    Sign Up
+                  </a>
+                </div>
+              )}
             </div>
           </div>
         </div>
