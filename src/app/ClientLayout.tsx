@@ -3,6 +3,7 @@ import { GemPouchProvider } from '../contexts/GemPouchContext';
 import { WishlistProvider } from '../contexts/WishlistContext';
 import { CookieProvider } from '../contexts/CookieContext';
 import { CurrencyProvider } from '../contexts/CurrencyContext';
+import { AuthProvider } from '../contexts/AuthContext';
 import CookieBanner from '../components/CookieBanner';
 
 export default function ClientLayout({
@@ -12,14 +13,16 @@ export default function ClientLayout({
 }) {
   return (
     <CookieProvider>
-      <CurrencyProvider>
-        <WishlistProvider>
-          <GemPouchProvider>
-            {children}
-            <CookieBanner />
-          </GemPouchProvider>
-        </WishlistProvider>
-      </CurrencyProvider>
+      <AuthProvider>
+        <CurrencyProvider>
+          <WishlistProvider>
+            <GemPouchProvider>
+              {children}
+              <CookieBanner />
+            </GemPouchProvider>
+          </WishlistProvider>
+        </CurrencyProvider>
+      </AuthProvider>
     </CookieProvider>
   );
 }

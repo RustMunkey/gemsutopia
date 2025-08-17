@@ -101,12 +101,12 @@ export const sendSignUpConfirmationEmail = async (userData: {
 
     console.log('EmailJS success:', result);
     return { success: true, result };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to send sign up confirmation email:', error);
     console.error('Error details:', {
-      message: error.message,
-      status: error.status,
-      text: error.text
+      message: error?.message,
+      status: error?.status,
+      text: error?.text
     });
     return { success: false, error };
   }

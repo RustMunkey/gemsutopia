@@ -1,5 +1,9 @@
+'use client';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 
 export default function SignIn() {
   return (
