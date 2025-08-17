@@ -100,22 +100,45 @@ function generateReceiptHTML(order: OrderData): string {
       </table>
 
       <div class="totals">
-        <div class="total-row">
-          <span>Subtotal:</span>
-          <span>$${order.subtotal.toFixed(2)} ${order.currency}</span>
-        </div>
-        <div class="total-row">
-          <span>Shipping:</span>
-          <span>${order.shipping === 0 ? 'Free' : `$${order.shipping.toFixed(2)} ${order.currency}`}</span>
-        </div>
-        <div class="total-row">
-          <span>Tax (HST):</span>
-          <span>$${order.tax.toFixed(2)} ${order.currency}</span>
-        </div>
-        <div class="total-row total-final">
-          <span>Total Paid:</span>
-          <span>$${order.total.toFixed(2)} ${order.currency}</span>
-        </div>
+        ${order.paymentMethod === 'crypto' && order.cryptoCurrency && order.cryptoAmount ? `
+          <div class="total-row">
+            <span>Subtotal:</span>
+            <span>${(order.cryptoAmount * (order.subtotal / order.total)).toFixed(8)} ${order.cryptoCurrency}</span>
+          </div>
+          <div class="total-row">
+            <span>Shipping:</span>
+            <span>${order.shipping === 0 ? 'Free' : `${(order.cryptoAmount * (order.shipping / order.total)).toFixed(8)} ${order.cryptoCurrency}`}</span>
+          </div>
+          <div class="total-row">
+            <span>Tax (HST):</span>
+            <span>${(order.cryptoAmount * (order.tax / order.total)).toFixed(8)} ${order.cryptoCurrency}</span>
+          </div>
+          <div class="total-row total-final">
+            <span>Total Paid:</span>
+            <span>${order.cryptoAmount.toFixed(8)} ${order.cryptoCurrency}</span>
+          </div>
+          <div class="total-row" style="font-size: 14px; color: #666; margin-top: 10px;">
+            <span>USD Equivalent:</span>
+            <span>$${order.total.toFixed(2)} USD</span>
+          </div>
+        ` : `
+          <div class="total-row">
+            <span>Subtotal:</span>
+            <span>$${order.subtotal.toFixed(2)} ${order.currency}</span>
+          </div>
+          <div class="total-row">
+            <span>Shipping:</span>
+            <span>${order.shipping === 0 ? 'Free' : `$${order.shipping.toFixed(2)} ${order.currency}`}</span>
+          </div>
+          <div class="total-row">
+            <span>Tax (HST):</span>
+            <span>$${order.tax.toFixed(2)} ${order.currency}</span>
+          </div>
+          <div class="total-row total-final">
+            <span>Total Paid:</span>
+            <span>$${order.total.toFixed(2)} ${order.currency}</span>
+          </div>
+        `}
       </div>
 
       ${order.paymentMethod === 'crypto' && order.cryptoCurrency && order.cryptoAmount ? `
