@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Wallet, CheckCircle, AlertCircle } from 'lucide-react';
 import { TokenIcon } from '@web3icons/react';
 import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { ethers } from 'ethers';
 import { fetchCryptoPrices, calculateCryptoAmount } from '@/lib/cryptoPrices';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useWallet } from '@/contexts/WalletContext';
@@ -85,6 +86,42 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
       if (cryptoType === 'ETH') {
         // MetaMask for Ethereum
         if (typeof window !== 'undefined' && (window as any).ethereum) {
+          // Switch to Sepolia testnet
+          try {
+            await (window as any).ethereum.request({
+              method: 'wallet_switchEthereumChain',
+              params: [{ chainId: '0xaa36a7' }], // Sepolia testnet chain ID
+            });
+          } catch (switchError: any) {
+            // This error code indicates that the chain has not been added to MetaMask
+            if (switchError.code === 4902) {
+              try {
+                await (window as any).ethereum.request({
+                  method: 'wallet_addEthereumChain',
+                  params: [
+                    {
+                      chainId: '0xaa36a7',
+                      chainName: 'Sepolia Test Network',
+                      rpcUrls: ['https://rpc.sepolia.org'],
+                      nativeCurrency: {
+                        name: 'SepoliaETH',
+                        symbol: 'ETH',
+                        decimals: 18,
+                      },
+                      blockExplorerUrls: ['https://sepolia.etherscan.io/'],
+                    },
+                  ],
+                });
+              } catch (addError) {
+                onError('Failed to add Sepolia network to MetaMask.');
+                return;
+              }
+            } else {
+              onError('Failed to switch to Sepolia network.');
+              return;
+            }
+          }
+
           const accounts = await (window as any).ethereum.request({
             method: 'eth_requestAccounts',
           });
@@ -139,8 +176,11 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
       if (selectedCrypto === 'SOL') {
         // Process actual Solana devnet transaction
         await processSolanaPayment(cryptoAmount);
+      } else if (selectedCrypto === 'ETH') {
+        // Process actual Ethereum Sepolia testnet transaction
+        await processEthereumPayment(cryptoAmount);
       } else {
-        // For BTC and ETH, use simulation for now
+        // For BTC, use simulation for now
         await processSimulatedPayment(selectedCrypto, cryptoAmount);
       }
     } catch (error: any) {
@@ -148,6 +188,85 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
       onError(`Payment failed: ${error.message || 'Please try again.'}`);
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const processEthereumPayment = async (cryptoAmount: number) => {
+    try {
+      if (typeof window === 'undefined' || !(window as any).ethereum) {
+        throw new Error('MetaMask not found');
+      }
+
+      // Create provider and signer
+      const provider = new ethers.BrowserProvider((window as any).ethereum);
+      const signer = await provider.getSigner();
+      
+      // Merchant address (replace with your actual merchant ETH address)
+      const merchantAddress = '0x742d35cc6bF8fF9F27D3D3F5a2d0fF91aF9c0B6a'; // Example address - replace with yours
+      
+      // Convert ETH amount to wei
+      const amountInWei = ethers.parseEther(cryptoAmount.toString());
+      
+      // Get current gas price
+      const gasPrice = (await provider.getFeeData()).gasPrice;
+      
+      // Estimate gas limit
+      const estimatedGas = await provider.estimateGas({
+        to: merchantAddress,
+        value: amountInWei,
+        from: walletAddress,
+      });
+      
+      // Create transaction
+      const transaction = {
+        to: merchantAddress,
+        value: amountInWei,
+        gasLimit: estimatedGas,
+        gasPrice: gasPrice,
+      };
+      
+      console.log('Ethereum transaction details:', {
+        to: merchantAddress,
+        amount: `${cryptoAmount} ETH`,
+        amountInWei: amountInWei.toString(),
+        gasLimit: estimatedGas.toString(),
+        gasPrice: gasPrice?.toString(),
+        from: walletAddress
+      });
+      
+      // Send transaction
+      const txResponse = await signer.sendTransaction(transaction);
+      
+      console.log('Ethereum transaction sent:', {
+        hash: txResponse.hash,
+        amount: cryptoAmount,
+        from: walletAddress,
+        to: merchantAddress
+      });
+      
+      // Wait for confirmation
+      const receipt = await txResponse.wait();
+      
+      if (receipt?.status !== 1) {
+        throw new Error('Transaction failed');
+      }
+      
+      console.log('Ethereum transaction confirmed:', {
+        hash: txResponse.hash,
+        blockNumber: receipt.blockNumber,
+        gasUsed: receipt.gasUsed.toString()
+      });
+
+      // Save order to database
+      await saveCryptoOrder(txResponse.hash, selectedCrypto!, cryptoAmount);
+    } catch (error: any) {
+      console.error('Ethereum payment error:', error);
+      if (error.code === 'INSUFFICIENT_FUNDS') {
+        throw new Error('Insufficient ETH balance. Please add more test ETH to your wallet.');
+      } else if (error.code === 'ACTION_REJECTED') {
+        throw new Error('Transaction rejected by user.');
+      }
+      throw new Error(`Ethereum payment failed: ${error.message}`);
     }
   };
 
@@ -360,7 +479,7 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
                           <div>
                             <h4 className="font-semibold text-gray-900">{crypto.name} ({crypto.symbol})</h4>
                             <p className="text-sm text-gray-600">{crypto.network}</p>
-                            {crypto.symbol === 'SOL' && (
+                            {(crypto.symbol === 'SOL' || crypto.symbol === 'ETH') && (
                               <p className="text-xs text-green-600 font-medium">✓ Real transactions</p>
                             )}
                           </div>
@@ -394,7 +513,8 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
               <div>
                 <h4 className="text-sm font-semibold text-orange-900">Testnet Payment</h4>
                 <p className="text-sm text-orange-800">
-                  This uses test networks with real blockchain transactions. For Solana, make sure you have devnet SOL in your Phantom wallet. You can get free devnet SOL from the{' '}
+                  This uses test networks with real blockchain transactions. Get free test tokens:
+                  <br />• <strong>Solana:</strong> Get devnet SOL from the{' '}
                   <a 
                     href="https://faucet.solana.com/" 
                     target="_blank" 
@@ -402,7 +522,16 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
                     className="underline hover:text-orange-700"
                   >
                     Solana faucet
-                  </a>.
+                  </a>
+                  <br />• <strong>Ethereum:</strong> Get Sepolia ETH from{' '}
+                  <a 
+                    href="https://sepoliafaucet.com/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="underline hover:text-orange-700"
+                  >
+                    Sepolia faucet
+                  </a>
                 </p>
               </div>
             </div>

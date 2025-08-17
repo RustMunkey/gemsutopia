@@ -336,6 +336,19 @@ export default function OrdersManager() {
                               </a>
                             </p>
                           )}
+                          {selectedOrder.payment_details.crypto_currency === 'ETH' && (
+                            <p className="text-white">
+                              <strong>Explorer:</strong> 
+                              <a 
+                                href={`https://sepolia.etherscan.io/tx/${selectedOrder.payment_details.payment_id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-400 hover:text-blue-300 underline ml-2 text-xs"
+                              >
+                                View Transaction
+                              </a>
+                            </p>
+                          )}
                         </>
                       )}
                     </div>

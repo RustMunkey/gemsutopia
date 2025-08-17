@@ -32,6 +32,7 @@
     "clsx": "^2.1.1",
     "coinbase-commerce-node": "^1.0.4",
     "dotenv": "^17.2.1",
+    "ethers": "^6.15.0",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.536.0",
     "next": "15.4.5",
