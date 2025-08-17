@@ -2,9 +2,13 @@
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 import { initEmailJS, sendSignUpConfirmationEmail } from '@/lib/emailjs';
 
 export default function SignUp() {
+  const { signUp } = useAuth();
+  const router = useRouter();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -61,9 +65,44 @@ export default function SignUp() {
     setSubmitStatus('idle');
 
     try {
-      // Here you would normally register the user with your backend
-      // For now, we'll just send the confirmation email
-      
+      // Create account with Supabase Auth
+      const { error: authError } = await signUp(formData.email, formData.password, {
+        data: {
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          full_name: `${formData.firstName} ${formData.lastName}`,
+        }
+      });
+
+      if (authError) {
+        console.error('Supabase auth error:', authError);
+        
+        // Handle specific error cases
+        if (authError.message?.includes('already registered') || 
+            authError.message?.includes('User already registered')) {
+          setSubmitStatus('error');
+          setStatusMessage('An account with this email already exists. Please sign in instead.');
+          return;
+        }
+        
+        if (authError.message?.includes('Password should be at least')) {
+          setSubmitStatus('error');
+          setStatusMessage('Password should be at least 6 characters long.');
+          return;
+        }
+
+        if (authError.message?.includes('Invalid email')) {
+          setSubmitStatus('error');
+          setStatusMessage('Please enter a valid email address.');
+          return;
+        }
+        
+        setSubmitStatus('error');
+        setStatusMessage(authError.message || 'Failed to create account. Please try again.');
+        return;
+      }
+
+      // Send confirmation email
       const emailResult = await sendSignUpConfirmationEmail({
         email: formData.email,
         firstName: formData.firstName,
@@ -72,25 +111,26 @@ export default function SignUp() {
 
       if (emailResult.success) {
         setSubmitStatus('success');
-        setStatusMessage('Account created successfully! Please check your email for confirmation.');
-        
-        // Reset form
-        setFormData({
-          firstName: '',
-          lastName: '',
-          email: '',
-          password: '',
-          confirmPassword: '',
-          agreeToTerms: false,
-        });
+        setStatusMessage('Account created successfully! Please check your email to confirm your account.');
       } else {
-        setSubmitStatus('error');
-        setStatusMessage('Account created but failed to send confirmation email. Please contact support.');
+        setSubmitStatus('success');
+        setStatusMessage('Account created successfully! Please check your email to confirm your account.');
       }
+      
+      // Reset form
+      setFormData({
+        firstName: '',
+        lastName: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        agreeToTerms: false,
+      });
+
     } catch (error) {
       console.error('Sign up error:', error);
       setSubmitStatus('error');
-      setStatusMessage('An error occurred during sign up. Please try again.');
+      setStatusMessage('An unexpected error occurred. Please try again.');
     } finally {
       setIsSubmitting(false);
       
