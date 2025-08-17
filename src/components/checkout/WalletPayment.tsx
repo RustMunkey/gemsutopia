@@ -125,11 +125,16 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
           
           if (ethereumProvider) {
             try {
-              // Force MetaMask to be the active provider
+              // Force MetaMask to be the active provider and disable Phantom completely
               if (ethereumProvider.isMetaMask) {
-                // Make sure we're using the real MetaMask, not Phantom pretending
-                console.log('Forcing MetaMask as active provider');
+                console.log('Forcing MetaMask as active provider and disabling Phantom');
                 (window as any).ethereum = ethereumProvider;
+                
+                // Temporarily disable Phantom to prevent interference
+                if ((window as any).solana) {
+                  (window as any).solana._disabled = true;
+                  console.log('Temporarily disabled Phantom for ETH transaction');
+                }
               }
               
               // Switch to Sepolia testnet
@@ -318,8 +323,26 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
         throw new Error('Ethereum wallet not found');
       }
 
-      // Create provider and signer
-      const provider = new ethers.BrowserProvider((window as any).ethereum);
+      // Force use of MetaMask provider specifically
+      let ethereumProvider = null;
+      
+      // Get the MetaMask provider we detected earlier
+      if ((window as any).ethereum?.providers) {
+        ethereumProvider = (window as any).ethereum.providers.find((provider: any) => 
+          provider.isMetaMask && !provider.isPhantom
+        );
+      } else if ((window as any).ethereum?.isMetaMask && !(window as any).ethereum?.isPhantom) {
+        ethereumProvider = (window as any).ethereum;
+      }
+      
+      if (!ethereumProvider) {
+        throw new Error('MetaMask provider not found for transaction');
+      }
+      
+      console.log('Using MetaMask provider for transaction:', ethereumProvider);
+
+      // Create provider and signer using the specific MetaMask provider
+      const provider = new ethers.BrowserProvider(ethereumProvider);
       const signer = await provider.getSigner();
       
       // Merchant address (replace with your actual merchant ETH address)
