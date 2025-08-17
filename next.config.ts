@@ -24,7 +24,7 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: 'Content-Security-Policy',
-            value: "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.hcaptcha.com https://hcaptcha.com https://js.stripe.com https://www.googletagmanager.com https://www.paypal.com https://*.paypal.com 'wasm-unsafe-eval'; frame-src https://hcaptcha.com https://newassets.hcaptcha.com https://js.stripe.com https://hooks.stripe.com https://www.paypal.com https://*.paypal.com; style-src 'self' 'unsafe-inline' https://hcaptcha.com https://newassets.hcaptcha.com; connect-src 'self' https://hcaptcha.com https://api.hcaptcha.com https://*.supabase.co https://api.stripe.com https://www.google-analytics.com https://www.paypal.com https://*.paypal.com https://api.sandbox.paypal.com https://api.emailjs.com;",
+            value: "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.hcaptcha.com https://hcaptcha.com https://js.stripe.com https://www.googletagmanager.com https://www.paypal.com https://*.paypal.com 'wasm-unsafe-eval'; frame-src https://hcaptcha.com https://newassets.hcaptcha.com https://js.stripe.com https://hooks.stripe.com https://www.paypal.com https://*.paypal.com; style-src 'self' 'unsafe-inline' https://hcaptcha.com https://newassets.hcaptcha.com; connect-src 'self' https://hcaptcha.com https://api.hcaptcha.com https://*.supabase.co https://api.stripe.com https://www.google-analytics.com https://www.paypal.com https://*.paypal.com https://api.sandbox.paypal.com https://api.emailjs.com https://api.devnet.solana.com https://devnet.helius-rpc.com https://api.coingecko.com;",
           },
         ],
       },
