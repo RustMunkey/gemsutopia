@@ -84,58 +84,78 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
       let address = '';
       
       if (cryptoType === 'ETH') {
-        // Ethereum - works with any EIP-1193 compatible wallet (MetaMask, Coinbase, Trust, etc.)
-        if (typeof window !== 'undefined' && (window as any).ethereum) {
-          try {
-            // Switch to Sepolia testnet
+        // Ethereum - prioritize MetaMask if available, otherwise use any EIP-1193 compatible wallet
+        if (typeof window !== 'undefined') {
+          let ethereumProvider = null;
+          
+          // Check for MetaMask specifically first
+          if ((window as any).ethereum?.isMetaMask) {
+            ethereumProvider = (window as any).ethereum;
+            console.log('Using MetaMask for Ethereum');
+          }
+          // Check for Coinbase Wallet
+          else if ((window as any).ethereum?.isCoinbaseWallet) {
+            ethereumProvider = (window as any).ethereum;
+            console.log('Using Coinbase Wallet for Ethereum');
+          }
+          // Check for other Ethereum providers, but exclude Phantom
+          else if ((window as any).ethereum && !(window as any).ethereum.isPhantom) {
+            ethereumProvider = (window as any).ethereum;
+            console.log('Using other Ethereum wallet');
+          }
+          
+          if (ethereumProvider) {
             try {
-              await (window as any).ethereum.request({
-                method: 'wallet_switchEthereumChain',
-                params: [{ chainId: '0xaa36a7' }], // Sepolia testnet chain ID
-              });
-            } catch (switchError: any) {
-              // This error code indicates that the chain has not been added to the wallet
-              if (switchError.code === 4902) {
-                try {
-                  await (window as any).ethereum.request({
-                    method: 'wallet_addEthereumChain',
-                    params: [
-                      {
-                        chainId: '0xaa36a7',
-                        chainName: 'Sepolia Test Network',
-                        rpcUrls: ['https://rpc.sepolia.org'],
-                        nativeCurrency: {
-                          name: 'SepoliaETH',
-                          symbol: 'ETH',
-                          decimals: 18,
+              // Switch to Sepolia testnet
+              try {
+                await ethereumProvider.request({
+                  method: 'wallet_switchEthereumChain',
+                  params: [{ chainId: '0xaa36a7' }], // Sepolia testnet chain ID
+                });
+              } catch (switchError: any) {
+                // This error code indicates that the chain has not been added to the wallet
+                if (switchError.code === 4902) {
+                  try {
+                    await ethereumProvider.request({
+                      method: 'wallet_addEthereumChain',
+                      params: [
+                        {
+                          chainId: '0xaa36a7',
+                          chainName: 'Sepolia Test Network',
+                          rpcUrls: ['https://rpc.sepolia.org'],
+                          nativeCurrency: {
+                            name: 'SepoliaETH',
+                            symbol: 'ETH',
+                            decimals: 18,
+                          },
+                          blockExplorerUrls: ['https://sepolia.etherscan.io/'],
                         },
-                        blockExplorerUrls: ['https://sepolia.etherscan.io/'],
-                      },
-                    ],
-                  });
-                } catch (addError) {
-                  onError('Failed to add Sepolia network to your Ethereum wallet.');
+                      ],
+                    });
+                  } catch (addError) {
+                    onError('Failed to add Sepolia network to your Ethereum wallet.');
+                    return;
+                  }
+                } else {
+                  onError('Failed to switch to Sepolia network. Please manually switch to Sepolia testnet in your wallet.');
                   return;
                 }
-              } else {
-                onError('Failed to switch to Sepolia network. Please manually switch to Sepolia testnet in your wallet.');
-                return;
               }
-            }
 
-            const accounts = await (window as any).ethereum.request({
-              method: 'eth_requestAccounts',
-            });
-            if (accounts.length > 0) {
-              address = accounts[0];
+              const accounts = await ethereumProvider.request({
+                method: 'eth_requestAccounts',
+              });
+              if (accounts.length > 0) {
+                address = accounts[0];
+              }
+            } catch (error: any) {
+              onError(`Failed to connect Ethereum wallet: ${error.message}`);
+              return;
             }
-          } catch (error: any) {
-            onError(`Failed to connect Ethereum wallet: ${error.message}`);
+          } else {
+            onError('No Ethereum wallet detected. Please install MetaMask, Coinbase Wallet, or another Ethereum wallet.');
             return;
           }
-        } else {
-          onError('No Ethereum wallet detected. Please install MetaMask, Coinbase Wallet, or another Ethereum wallet.');
-          return;
         }
       } else if (cryptoType === 'SOL') {
         // Solana - works with multiple wallets (Phantom, Solflare, Backpack, etc.)
