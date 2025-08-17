@@ -59,6 +59,7 @@ export default function CheckoutFlow() {
     cryptoAmount?: number;
     currency: string;
     cryptoCurrency?: string;
+    cryptoPrices?: any;
   } | null>(null);
 
   // Calculate totals
@@ -90,7 +91,8 @@ export default function CheckoutFlow() {
           actualAmount: data.actualAmount || total,
           cryptoAmount: data.cryptoAmount,
           currency: data.currency || 'CAD',
-          cryptoCurrency: data.cryptoCurrency
+          cryptoCurrency: data.cryptoCurrency,
+          cryptoPrices: data.cryptoPrices
         });
         setCurrentStep('success');
         clearPouch();
@@ -237,6 +239,7 @@ export default function CheckoutFlow() {
                     cryptoAmount={paymentInfo?.cryptoAmount}
                     currency={paymentInfo?.currency || 'CAD'}
                     cryptoCurrency={paymentInfo?.cryptoCurrency}
+                    cryptoPrices={paymentInfo?.cryptoPrices}
                     items={items.map(item => ({ ...item, quantity: 1 }))}
                     subtotal={subtotal}
                     tax={tax}

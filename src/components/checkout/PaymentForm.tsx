@@ -24,7 +24,7 @@ interface PaymentFormProps {
   amount: number;
   customerData: any;
   items: any[];
-  onSuccess: (data: { orderId: string; actualAmount?: number; cryptoAmount?: number; currency?: string; cryptoCurrency?: string }) => void;
+  onSuccess: (data: { orderId: string; actualAmount?: number; cryptoAmount?: number; currency?: string; cryptoCurrency?: string; cryptoPrices?: any }) => void;
   onError: (error: string) => void;
 }
 

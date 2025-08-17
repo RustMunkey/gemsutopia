@@ -4,7 +4,7 @@ import { Wallet, CheckCircle, AlertCircle } from 'lucide-react';
 import { TokenIcon } from '@web3icons/react';
 import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { ethers } from 'ethers';
-import * as bitcoin from 'bitcoinjs-lib';
+// import * as bitcoin from 'bitcoinjs-lib'; // Available for future Bitcoin utilities
 import { fetchCryptoPrices, calculateCryptoAmount } from '@/lib/cryptoPrices';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useWallet } from '@/contexts/WalletContext';
@@ -15,7 +15,7 @@ interface WalletPaymentProps {
   amount: number;
   customerData: any;
   items: any[];
-  onSuccess: (data: { orderId: string; actualAmount: number; cryptoAmount?: number; currency: string; cryptoCurrency?: string }) => void;
+  onSuccess: (data: { orderId: string; actualAmount: number; cryptoAmount?: number; currency: string; cryptoCurrency?: string; cryptoPrices?: any }) => void;
   onError: (error: string) => void;
 }
 
@@ -728,7 +728,8 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
           actualAmount: amount,
           cryptoAmount: cryptoAmount,
           currency: currency as string,
-          cryptoCurrency: cryptoType
+          cryptoCurrency: cryptoType,
+          cryptoPrices: cryptoPrices
         });
       } else {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
@@ -891,7 +892,7 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
           <button
             onClick={processPayment}
             disabled={isProcessing}
-            className="w-full bg-black text-white py-3 px-6 rounded-lg font-medium hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center mb-3"
+            className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white py-4 px-6 rounded-lg font-bold text-lg hover:from-green-700 hover:to-green-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all flex items-center justify-center mb-3 shadow-lg"
           >
             {isProcessing ? (
               <>
@@ -899,7 +900,9 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
                 Processing {selectedCrypto} Payment...
               </>
             ) : (
-              `Pay ${getCryptoAmount(selectedCrypto!).toFixed(6)} ${selectedCrypto}`
+              <>
+                🚀 Confirm Transaction: {getCryptoAmount(selectedCrypto!).toFixed(6)} {selectedCrypto}
+              </>
             )}
           </button>
 

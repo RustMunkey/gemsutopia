@@ -16,11 +16,53 @@ interface OrderSuccessProps {
   subtotal?: number;
   tax?: number;
   shipping?: number;
+  cryptoPrices?: any; // For converting individual amounts to crypto
 }
 
-export default function OrderSuccess({ orderId, customerEmail, customerName, amount, cryptoAmount, currency = 'CAD', cryptoCurrency, items = [], subtotal, tax, shipping }: OrderSuccessProps) {
+export default function OrderSuccess({ orderId, customerEmail, customerName, amount, cryptoAmount, currency = 'CAD', cryptoCurrency, items = [], subtotal, tax, shipping, cryptoPrices }: OrderSuccessProps) {
   const [emailSent, setEmailSent] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
+
+  // Helper function to convert fiat amount to crypto equivalent
+  const convertToCrypto = (fiatAmount: number) => {
+    if (!cryptoCurrency || !cryptoPrices) return null;
+    
+    const cryptoKey = cryptoCurrency.toLowerCase() as 'bitcoin' | 'ethereum' | 'solana';
+    const currencyKey = currency.toLowerCase() as 'usd' | 'cad';
+    const cryptoPrice = cryptoPrices[cryptoKey]?.[currencyKey];
+    
+    if (!cryptoPrice) return null;
+    
+    return fiatAmount / cryptoPrice;
+  };
+
+  // Helper function to format dual currency display
+  const formatDualCurrency = (fiatAmount: number, label: string) => {
+    const cryptoEquivalent = convertToCrypto(fiatAmount);
+    
+    if (cryptoCurrency && cryptoEquivalent) {
+      return (
+        <div className="flex justify-between">
+          <span className="text-gray-600">{label}:</span>
+          <div className="text-right">
+            <div className="text-sm font-medium">
+              {fiatAmount === 0 ? 'Free' : `$${fiatAmount.toFixed(2)} ${currency}`}
+            </div>
+            <div className="text-xs text-gray-500">
+              {cryptoEquivalent.toFixed(8)} {cryptoCurrency}
+            </div>
+          </div>
+        </div>
+      );
+    }
+    
+    return (
+      <div className="flex justify-between">
+        <span className="text-gray-600">{label}:</span>
+        <span>{fiatAmount === 0 ? 'Free' : `$${fiatAmount.toFixed(2)}`}</span>
+      </div>
+    );
+  };
 
   useEffect(() => {
     // Initialize EmailJS
@@ -153,25 +195,12 @@ export default function OrderSuccess({ orderId, customerEmail, customerName, amo
                     </div>
                   )}
                   
-                  {/* Financial breakdown */}
+                  {/* Financial breakdown with dual currency support */}
                   {subtotal !== undefined && (
-                    <div className="space-y-1 text-sm border-t border-gray-200 pt-2">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Subtotal:</span>
-                        <span>${subtotal.toFixed(2)}</span>
-                      </div>
-                      {shipping !== undefined && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Shipping:</span>
-                          <span>{shipping === 0 ? 'Free' : `$${shipping.toFixed(2)}`}</span>
-                        </div>
-                      )}
-                      {tax !== undefined && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Tax (HST):</span>
-                          <span>${tax.toFixed(2)}</span>
-                        </div>
-                      )}
+                    <div className="space-y-2 text-sm border-t border-gray-200 pt-2">
+                      {formatDualCurrency(subtotal, 'Subtotal')}
+                      {shipping !== undefined && formatDualCurrency(shipping, 'Shipping')}
+                      {tax !== undefined && formatDualCurrency(tax, 'Tax (HST)')}
                     </div>
                   )}
                 </div>
