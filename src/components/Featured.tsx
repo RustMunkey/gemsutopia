@@ -250,7 +250,7 @@ export default function Featured() {
                             onClick={(e) => toggleWishlist(product.id, e)}
                             className="text-black hover:text-yellow-400 transition-colors p-1 hidden md:block"
                           >
-                            {isInWishlist(parseInt(product.product_id?.toString() || product.id)) ? (
+                            {isInWishlist(product.product_id || product.id) ? (
                               <IconStarFilled className="h-6 w-6 text-yellow-400" />
                             ) : (
                               <IconStar className="h-6 w-6" />
@@ -261,7 +261,7 @@ export default function Featured() {
                               onClick={(e) => toggleWishlist(product.id, e)}
                               className="text-black hover:text-yellow-400 transition-colors p-1 md:hidden"
                             >
-                              {isInWishlist(parseInt(product.product_id?.toString() || product.id)) ? (
+                              {isInWishlist(product.product_id || product.id) ? (
                                 <IconStarFilled className="h-6 w-6 text-yellow-400" />
                               ) : (
                                 <IconStar className="h-6 w-6" />
@@ -282,7 +282,7 @@ export default function Featured() {
                               className="text-black hover:text-neutral-600 transition-colors p-1 relative md:hidden"
                             >
                               <ShoppingBag className="h-6 w-6" strokeWidth={2} />
-                              {isInPouch(parseInt(product.product_id?.toString() || product.id)) && (
+                              {isInPouch(product.product_id || product.id) && (
                                 <Check className="absolute bottom-0 right-0 h-4 w-4 text-green-500" strokeWidth={4} />
                               )}
                             </button>
@@ -292,7 +292,7 @@ export default function Featured() {
                             className="text-black hover:text-neutral-600 transition-colors p-1 relative hidden md:block"
                           >
                             <ShoppingBag className="h-6 w-6" strokeWidth={2} />
-                            {isInPouch(parseInt(product.product_id?.toString() || product.id)) && (
+                            {isInPouch(product.product_id || product.id) && (
                               <Check className="absolute bottom-0 right-0 h-4 w-4 text-green-500" strokeWidth={4} />
                             )}
                           </button>
@@ -363,7 +363,7 @@ export default function Featured() {
                               onClick={(e) => toggleWishlist(product.id, e)}
                               className="text-black hover:text-yellow-400 transition-colors p-1 hidden md:block"
                             >
-                              {isInWishlist(parseInt(product.product_id?.toString() || product.id)) ? (
+                              {isInWishlist(product.product_id || product.id) ? (
                                 <IconStarFilled className="h-6 w-6 text-yellow-400" />
                               ) : (
                                 <IconStar className="h-6 w-6" />
@@ -374,7 +374,7 @@ export default function Featured() {
                                 onClick={(e) => toggleWishlist(product.id, e)}
                                 className="text-black hover:text-yellow-400 transition-colors p-1 md:hidden"
                               >
-                                {isInWishlist(parseInt(product.product_id?.toString() || product.id)) ? (
+                                {isInWishlist(product.product_id || product.id) ? (
                                   <IconStarFilled className="h-6 w-6 text-yellow-400" />
                                 ) : (
                                   <IconStar className="h-6 w-6" />
@@ -395,7 +395,7 @@ export default function Featured() {
                                 className="text-black hover:text-neutral-600 transition-colors p-1 relative md:hidden"
                               >
                                 <ShoppingBag className="h-6 w-6" strokeWidth={2} />
-                                {isInPouch(parseInt(product.product_id?.toString() || product.id)) && (
+                                {isInPouch(product.product_id || product.id) && (
                                   <Check className="absolute bottom-0 right-0 h-4 w-4 text-green-500" strokeWidth={4} />
                                 )}
                               </button>
@@ -405,7 +405,7 @@ export default function Featured() {
                               className="text-black hover:text-neutral-600 transition-colors p-1 relative hidden md:block"
                             >
                               <ShoppingBag className="h-6 w-6" strokeWidth={2} />
-                              {isInPouch(parseInt(product.product_id?.toString() || product.id)) && (
+                              {isInPouch(product.product_id || product.id) && (
                                 <Check className="absolute bottom-0 right-0 h-4 w-4 text-green-500" strokeWidth={4} />
                               )}
                             </button>
