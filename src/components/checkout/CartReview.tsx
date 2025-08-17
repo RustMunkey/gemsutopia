@@ -5,7 +5,7 @@ import Image from 'next/image';
 
 interface CartReviewProps {
   items: Array<{
-    id: number;
+    id: string;
     name: string;
     price: number;
     image: string;
@@ -25,7 +25,7 @@ export default function CartReview({ items, onContinue }: CartReviewProps) {
       acc.push({ ...item, quantity: 1 });
     }
     return acc;
-  }, [] as Array<{ id: number; name: string; price: number; image: string; quantity: number }>);
+  }, [] as Array<{ id: string; name: string; price: number; image: string; quantity: number }>);
 
   const subtotal = items.reduce((sum, item) => sum + item.price, 0);
 
