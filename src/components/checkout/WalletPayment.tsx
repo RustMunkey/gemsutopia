@@ -511,10 +511,49 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
 
   const saveCryptoOrder = async (transactionId: string, cryptoType: CryptoType, cryptoAmount: number) => {
     try {
-      // Calculate totals properly
+      // Debug what's in the cart
+      console.log('=== CART DEBUG FOR RECEIPT ===');
+      console.log('Items in cart:', items);
+      console.log('Items length:', items.length);
+      items.forEach((item, index) => {
+        console.log(`Item ${index}:`, { name: item.name, price: item.price, id: item.id });
+      });
+      
+      // Calculate totals properly - ensure we're using the right amount
       const subtotal = items.reduce((sum, item) => sum + item.price, 0);
-      const tax = subtotal * 0.13; // 13% HST for Canada
-      const shipping = subtotal > 100 ? 0 : 15; // Free shipping over $100
+      
+      // For business records, ensure accurate breakdown
+      let actualSubtotal, tax, shipping;
+      
+      if (subtotal > 0) {
+        // Use cart calculation if items are present
+        actualSubtotal = subtotal;
+        tax = actualSubtotal * 0.13;
+        shipping = actualSubtotal >= 100 ? 0 : 15;
+      } else {
+        // Back-calculate from payment amount if cart is empty/corrupted
+        // For $128 total: if shipping is $15, then taxable amount is $113
+        // Subtotal = $113 / 1.13 = $100, Tax = $13, Shipping = $15
+        const totalMinusShipping = amount - 15; // Assume $15 shipping first
+        actualSubtotal = totalMinusShipping / 1.13; // Remove tax
+        tax = actualSubtotal * 0.13;
+        shipping = actualSubtotal >= 100 ? 0 : 15;
+        
+        // Recalculate if we hit free shipping threshold
+        if (actualSubtotal >= 100) {
+          actualSubtotal = amount / 1.13; // No shipping
+          tax = actualSubtotal * 0.13;
+          shipping = 0;
+        }
+      }
+      
+      console.log('Calculated breakdown:', {
+        subtotal: actualSubtotal,
+        tax: tax,
+        shipping: shipping,
+        total: actualSubtotal + tax + shipping,
+        paymentAmount: amount
+      });
       
       const orderData = {
         items,
@@ -531,7 +570,7 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
           network: cryptoOptions.find(c => c.symbol === cryptoType)?.network
         },
         totals: { 
-          subtotal,
+          subtotal: actualSubtotal,
           tax,
           shipping,
           total: amount 
