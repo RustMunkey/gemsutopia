@@ -19,6 +19,12 @@ interface Order {
     method: string;
     payment_id: string;
     amount: number;
+    currency?: string;
+    crypto_type?: string;
+    crypto_amount?: number;
+    crypto_currency?: string;
+    wallet_address?: string;
+    network?: string;
   };
 }
 
@@ -64,6 +70,29 @@ export default function OrdersManager() {
       case 'cancelled': return 'bg-red-500/20 text-red-400 border-red-500/30';
       default: return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
     }
+  };
+
+  const formatPaymentAmount = (order: Order) => {
+    const { payment_details } = order;
+    
+    if (payment_details.method === 'crypto' && payment_details.crypto_amount && payment_details.crypto_currency) {
+      return (
+        <div>
+          <div className="text-white font-semibold">
+            {payment_details.crypto_amount.toFixed(6)} {payment_details.crypto_currency}
+          </div>
+          <div className="text-slate-400 text-xs">
+            ${order.total.toFixed(2)} {payment_details.currency || 'CAD'}
+          </div>
+        </div>
+      );
+    }
+    
+    return (
+      <div className="text-white font-semibold">
+        ${order.total.toFixed(2)} {payment_details.currency || 'CAD'}
+      </div>
+    );
   };
 
   const exportOrders = () => {
@@ -191,8 +220,8 @@ export default function OrdersManager() {
                       <p className="text-slate-400 text-sm">{order.customer_email}</p>
                     </div>
                   </td>
-                  <td className="py-4 px-6 text-white font-semibold">
-                    ${order.total.toFixed(2)}
+                  <td className="py-4 px-6">
+                    {formatPaymentAmount(order)}
                   </td>
                   <td className="py-4 px-6">
                     <span className={`px-2 py-1 rounded text-xs font-medium border ${getStatusColor(order.status)}`}>
@@ -249,7 +278,36 @@ export default function OrdersManager() {
                 <div className="bg-white/5 rounded-lg p-4 space-y-2">
                   <p className="text-white"><strong>Method:</strong> {selectedOrder.payment_details.method}</p>
                   <p className="text-white"><strong>Payment ID:</strong> {selectedOrder.payment_details.payment_id}</p>
-                  <p className="text-white"><strong>Amount:</strong> ${selectedOrder.payment_details.amount.toFixed(2)}</p>
+                  <p className="text-white"><strong>Amount:</strong> ${selectedOrder.payment_details.amount.toFixed(2)} {selectedOrder.payment_details.currency || 'CAD'}</p>
+                  
+                  {selectedOrder.payment_details.method === 'crypto' && (
+                    <>
+                      <p className="text-white"><strong>Crypto Type:</strong> {selectedOrder.payment_details.crypto_currency}</p>
+                      <p className="text-white"><strong>Crypto Amount:</strong> {selectedOrder.payment_details.crypto_amount?.toFixed(6)} {selectedOrder.payment_details.crypto_currency}</p>
+                      <p className="text-white"><strong>Network:</strong> {selectedOrder.payment_details.network}</p>
+                      {selectedOrder.payment_details.wallet_address && (
+                        <p className="text-white">
+                          <strong>Wallet:</strong> 
+                          <span className="font-mono text-sm ml-2">
+                            {selectedOrder.payment_details.wallet_address.slice(0, 6)}...{selectedOrder.payment_details.wallet_address.slice(-4)}
+                          </span>
+                        </p>
+                      )}
+                      {selectedOrder.payment_details.crypto_currency === 'SOL' && (
+                        <p className="text-white">
+                          <strong>Explorer:</strong> 
+                          <a 
+                            href={`https://explorer.solana.com/tx/${selectedOrder.payment_details.payment_id}?cluster=devnet`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-400 hover:text-blue-300 underline ml-2"
+                          >
+                            View on Solana Explorer
+                          </a>
+                        </p>
+                      )}
+                    </>
+                  )}
                 </div>
               </div>
 

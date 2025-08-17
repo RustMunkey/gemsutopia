@@ -72,7 +72,7 @@ export default function AdminLogin() {
   // If authenticated, this will be handled by redirect in useEffect
 
   return (
-    <div className="min-h-[200vh] bg-black flex items-center justify-center px-4">
+    <div className="h-screen bg-black flex items-center justify-center px-4">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <h2 className="text-3xl font-bold text-white mb-2">Admin Access</h2>
