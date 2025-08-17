@@ -77,6 +77,12 @@ export const sendSignUpConfirmationEmail = async (userData: {
   lastName: string;
 }) => {
   try {
+    console.log('EmailJS Config:', {
+      serviceId: EMAILJS_CONFIG.serviceId,
+      templateId: EMAILJS_CONFIG.templateIds.signUpConfirmation,
+      publicKey: process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY
+    });
+
     const templateParams = {
       to_email: userData.email,
       user_name: `${userData.firstName} ${userData.lastName}`,
@@ -85,15 +91,23 @@ export const sendSignUpConfirmationEmail = async (userData: {
       support_email: 'gemsutopia@gmail.com',
     };
 
+    console.log('Template params:', templateParams);
+
     const result = await emailjs.send(
       EMAILJS_CONFIG.serviceId,
       EMAILJS_CONFIG.templateIds.signUpConfirmation,
       templateParams
     );
 
+    console.log('EmailJS success:', result);
     return { success: true, result };
   } catch (error) {
     console.error('Failed to send sign up confirmation email:', error);
+    console.error('Error details:', {
+      message: error.message,
+      status: error.status,
+      text: error.text
+    });
     return { success: false, error };
   }
 };
