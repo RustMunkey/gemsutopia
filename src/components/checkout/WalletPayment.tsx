@@ -4,6 +4,7 @@ import { Wallet, CheckCircle, AlertCircle } from 'lucide-react';
 import { TokenIcon } from '@web3icons/react';
 import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { ethers } from 'ethers';
+import * as bitcoin from 'bitcoinjs-lib';
 import { fetchCryptoPrices, calculateCryptoAmount } from '@/lib/cryptoPrices';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useWallet } from '@/contexts/WalletContext';
@@ -234,7 +235,7 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
           let bitcoinWallet = null;
           let walletName = '';
 
-          // Check for various Bitcoin wallets
+          // Check for various Bitcoin wallets in order of preference
           if ((window as any).unisat) {
             bitcoinWallet = (window as any).unisat;
             walletName = 'Unisat';
@@ -248,26 +249,42 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
 
           if (bitcoinWallet) {
             try {
+              console.log(`Attempting to connect to ${walletName} wallet...`);
+              
               // Different connection methods for different wallets
               if (walletName === 'Unisat') {
-                const accounts = await bitcoinWallet.requestAccounts();
+                await bitcoinWallet.requestAccounts();
+                const accounts = await bitcoinWallet.getAccounts();
                 address = accounts[0];
+                
+                // Switch to testnet
+                const network = await bitcoinWallet.getNetwork();
+                if (network !== 'testnet') {
+                  await bitcoinWallet.switchNetwork('testnet');
+                }
               } else if (walletName === 'Xverse') {
                 const response = await bitcoinWallet.request('getAccounts', null);
-                address = response.result.addresses[0].address;
+                address = response.result.addresses.find((addr: any) => addr.purpose === 'payment')?.address;
+                if (!address) {
+                  address = response.result.addresses[0]?.address;
+                }
               } else if (walletName === 'Leather') {
                 const response = await bitcoinWallet.request('getAddresses');
-                address = response.result.addresses[0].address;
+                address = response.result.addresses.find((addr: any) => addr.type === 'p2wpkh')?.address;
+                if (!address) {
+                  address = response.result.addresses[0]?.address;
+                }
               }
-              console.log(`Connected to ${walletName} wallet:`, address);
+              
+              console.log(`✅ Connected to ${walletName} wallet:`, address);
             } catch (error: any) {
+              console.error(`${walletName} connection error:`, error);
               onError(`Failed to connect ${walletName}: ${error.message}`);
               return;
             }
           } else {
-            // Fallback: simulate Bitcoin wallet for demo purposes
-            address = 'tb1q' + Math.random().toString(36).substring(2, 20);
-            console.log('No Bitcoin wallet detected, using simulated address for demo');
+            onError('No Bitcoin wallet detected. Please install Unisat, Xverse, or Leather wallet for Bitcoin payments.');
+            return;
           }
         }
       }
@@ -305,15 +322,109 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
       } else if (selectedCrypto === 'ETH') {
         // Process actual Ethereum Sepolia testnet transaction
         await processEthereumPayment(cryptoAmount);
-      } else {
-        // For BTC, use simulation for now
-        await processSimulatedPayment(selectedCrypto, cryptoAmount);
+      } else if (selectedCrypto === 'BTC') {
+        // Process actual Bitcoin testnet transaction
+        await processBitcoinPayment(cryptoAmount);
       }
     } catch (error: any) {
       console.error('Payment processing error:', error);
       onError(`Payment failed: ${error.message || 'Please try again.'}`);
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const processBitcoinPayment = async (cryptoAmount: number) => {
+    try {
+      if (typeof window === 'undefined') {
+        throw new Error('Bitcoin wallet not found');
+      }
+
+      let bitcoinWallet = null;
+      let walletName = '';
+
+      // Get the connected Bitcoin wallet
+      if ((window as any).unisat) {
+        bitcoinWallet = (window as any).unisat;
+        walletName = 'Unisat';
+      } else if ((window as any).xverse) {
+        bitcoinWallet = (window as any).xverse;
+        walletName = 'Xverse';
+      } else if ((window as any).LeatherProvider) {
+        bitcoinWallet = (window as any).LeatherProvider;
+        walletName = 'Leather';
+      }
+
+      if (!bitcoinWallet) {
+        throw new Error('Bitcoin wallet not found for transaction');
+      }
+
+      console.log(`Processing Bitcoin payment with ${walletName}...`);
+
+      // Merchant Bitcoin testnet address (replace with your actual testnet address)
+      const merchantAddress = 'tb1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh'; // Example testnet address
+      
+      // Convert to satoshis (Bitcoin's smallest unit)
+      const satoshiAmount = Math.floor(cryptoAmount * 100000000); // 1 BTC = 100,000,000 satoshis
+      
+      console.log('Bitcoin transaction details:', {
+        amount: `${cryptoAmount} BTC`,
+        amountInSatoshis: satoshiAmount,
+        to: merchantAddress,
+        from: walletAddress,
+        network: 'testnet'
+      });
+
+      let txid = '';
+
+      // Different transaction methods for different wallets
+      if (walletName === 'Unisat') {
+        // Unisat wallet transaction
+        const txResult = await bitcoinWallet.sendBitcoin(merchantAddress, satoshiAmount);
+        txid = txResult;
+      } else if (walletName === 'Xverse') {
+        // Xverse wallet transaction
+        const response = await bitcoinWallet.request('sendTransfer', {
+          recipients: [{
+            address: merchantAddress,
+            amount: satoshiAmount
+          }]
+        });
+        txid = response.result.txid;
+      } else if (walletName === 'Leather') {
+        // Leather wallet transaction
+        const response = await bitcoinWallet.request('sendTransfer', {
+          recipients: [{
+            address: merchantAddress,
+            amount: satoshiAmount
+          }]
+        });
+        txid = response.result.txid;
+      }
+
+      if (!txid) {
+        throw new Error('Transaction failed - no transaction ID received');
+      }
+
+      console.log('Bitcoin transaction successful:', {
+        txid: txid,
+        amount: cryptoAmount,
+        satoshis: satoshiAmount,
+        from: walletAddress,
+        to: merchantAddress,
+        wallet: walletName
+      });
+
+      // Save order to database
+      await saveCryptoOrder(txid, selectedCrypto!, cryptoAmount);
+    } catch (error: any) {
+      console.error('Bitcoin payment error:', error);
+      if (error.message?.includes('insufficient funds')) {
+        throw new Error('Insufficient BTC balance. Please add more test BTC to your wallet.');
+      } else if (error.message?.includes('rejected')) {
+        throw new Error('Transaction rejected by user.');
+      }
+      throw new Error(`Bitcoin payment failed: ${error.message}`);
     }
   };
 
@@ -630,23 +741,6 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
     }
   };
 
-  const processSimulatedPayment = async (cryptoType: CryptoType, cryptoAmount: number) => {
-    // Simulate transaction for BTC and ETH
-    console.log(`Processing ${cryptoType} payment:`, {
-      amount: cryptoAmount,
-      to: 'merchant_address_placeholder',
-      from: walletAddress,
-      network: cryptoOptions.find(c => c.symbol === cryptoType)?.network
-    });
-    
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    const mockTransactionId = `${cryptoType.toLowerCase()}_testnet_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-    
-    // Save order to database
-    await saveCryptoOrder(mockTransactionId, cryptoType, cryptoAmount);
-  };
 
   const formatAddress = (address: string) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -693,9 +787,7 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
                           <div>
                             <h4 className="font-semibold text-gray-900">{crypto.name} ({crypto.symbol})</h4>
                             <p className="text-sm text-gray-600">{crypto.network}</p>
-                            {(crypto.symbol === 'SOL' || crypto.symbol === 'ETH') && (
-                              <p className="text-xs text-green-600 font-medium">✓ Real transactions</p>
-                            )}
+                            <p className="text-xs text-green-600 font-medium">✓ Real transactions</p>
                           </div>
                         </div>
                         <div className="text-right">
@@ -746,7 +838,15 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
                   >
                     Sepolia faucet
                   </a>
-                  <br />• <strong>Bitcoin:</strong> Unisat, Xverse, Leather - Testnet simulation for now
+                  <br />• <strong>Bitcoin:</strong> Unisat, Xverse, Leather - Get testnet BTC from{' '}
+                  <a 
+                    href="https://coinfaucet.eu/en/btc-testnet/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="underline hover:text-orange-700"
+                  >
+                    Bitcoin faucet
+                  </a>
                 </p>
               </div>
             </div>

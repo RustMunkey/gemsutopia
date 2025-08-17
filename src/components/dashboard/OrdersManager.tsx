@@ -349,6 +349,19 @@ export default function OrdersManager() {
                               </a>
                             </p>
                           )}
+                          {selectedOrder.payment_details.crypto_currency === 'BTC' && (
+                            <p className="text-white">
+                              <strong>Explorer:</strong> 
+                              <a 
+                                href={`https://blockstream.info/testnet/tx/${selectedOrder.payment_details.payment_id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-400 hover:text-blue-300 underline ml-2 text-xs"
+                              >
+                                View Transaction
+                              </a>
+                            </p>
+                          )}
                         </>
                       )}
                     </div>
