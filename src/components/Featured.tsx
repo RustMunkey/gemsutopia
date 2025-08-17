@@ -41,14 +41,14 @@ export default function Featured() {
     if (!product) return;
     
     const productData = {
-      id: parseInt(product.product_id?.toString() || product.id),
+      id: product.product_id || product.id,
       name: product.name,
       price: product.price,
       image: product.image_url
     };
     
-    if (isInWishlist(parseInt(product.product_id?.toString() || product.id))) {
-      removeFromWishlist(parseInt(product.product_id?.toString() || product.id));
+    if (isInWishlist(product.product_id || product.id)) {
+      removeFromWishlist(product.product_id || product.id);
     } else {
       addToWishlist(productData);
     }
@@ -60,14 +60,14 @@ export default function Featured() {
     if (!product) return;
     
     const productData = {
-      id: parseInt(product.product_id?.toString() || product.id),
+      id: product.product_id || product.id,
       name: product.name,
       price: product.price,
       image: product.image_url
     };
     
-    if (isInPouch(parseInt(product.product_id?.toString() || product.id))) {
-      removeItem(parseInt(product.product_id?.toString() || product.id));
+    if (isInPouch(product.product_id || product.id)) {
+      removeItem(product.product_id || product.id);
     } else {
       addItem(productData);
     }
