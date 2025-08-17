@@ -44,10 +44,13 @@ Gemsutopia is a modern, responsive e-commerce platform specializing in ethically
 - **Framework:** Next.js 14 (App Router)
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS
-- **Icons:** Lucide React, Font Awesome
-- **State Management:** React Context (Wishlist, Cart, Cookies)
+- **Icons:** Lucide React, Font Awesome, Web3 Icons
+- **State Management:** React Context (Wishlist, Cart, Cookies, Wallet)
 - **Storage:** localStorage for persistence
 - **Email:** EmailJS (ready to configure)
+- **Blockchain:** Solana Web3.js, Ethers.js
+- **Crypto APIs:** CoinGecko (live pricing)
+- **Database:** Supabase (orders, users, admin)
 
 ## 📁 Project Structure
 
@@ -135,12 +138,26 @@ Professional GDPR-compliant cookie management:
 - ✅ **Session Management** - Advanced session security
 - ✅ **IP Allowlisting** - Optional maximum security mode
 
-### ❌ Not Started (Backend)
-- ❌ **Payment Processing** - Stripe/PayPal integration
-- ❌ **Database** - Product and order management
+### 💰 Cryptocurrency Payments (New!)
+- ✅ **Multi-Wallet Support** - Works with any compatible wallet
+- ✅ **Solana Payments** - Real devnet transactions (Phantom, Solflare, Backpack)
+- ✅ **Ethereum Payments** - Real Sepolia testnet transactions (MetaMask, Coinbase, Trust)
+- ✅ **Live Pricing** - Real-time crypto prices via CoinGecko API
+- ✅ **Admin Dashboard** - Complete order tracking with blockchain explorer links
+- ✅ **Smart Balance Checking** - Prevents failed transactions
+- ✅ **Multi-Currency Support** - USD, CAD, SOL, ETH, BTC display
+- 🔄 **Bitcoin Payments** - Planned (Unisat, Xverse, Leather wallet support)
+
+### 🔄 Traditional Payments (Planned)
+- 🔄 **Stripe Integration** - Credit card processing
+- 🔄 **PayPal Integration** - PayPal checkout
+- 🔄 **Apple/Google Pay** - Mobile payment methods
+
+### ❌ Not Started (Additional Features)
 - ❌ **User Authentication** - Account system (customer-facing)
-- ❌ **Order Management** - Checkout and fulfillment
+- ❌ **Order Fulfillment** - Shipping and tracking
 - ❌ **Email Automation** - Order confirmations, shipping notifications
+- ❌ **Inventory Management** - Stock tracking and updates
 
 ## 🎨 Brand Identity
 
