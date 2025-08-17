@@ -345,8 +345,8 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
       const provider = new ethers.BrowserProvider(ethereumProvider);
       const signer = await provider.getSigner();
       
-      // Merchant address (replace with your actual merchant ETH address)
-      const merchantAddress = '0x742d35cc6bF8fF9F27D3D3F5a2d0fF91aF9c0B6a'; // Example address - replace with yours
+      // Merchant address (using your actual address with proper checksum)
+      const merchantAddress = '0xb5Fa059E3dF30ac31027aA18f426Ea6dd449eAe3'; // Your address
       
       // Convert ETH amount to wei
       const amountInWei = ethers.parseEther(cryptoAmount.toString());
