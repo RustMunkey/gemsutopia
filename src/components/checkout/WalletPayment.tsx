@@ -515,12 +515,29 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
       console.log('=== CART DEBUG FOR RECEIPT ===');
       console.log('Items in cart:', items);
       console.log('Items length:', items.length);
+      console.log('Items type:', typeof items);
+      console.log('Items is array:', Array.isArray(items));
+      
       items.forEach((item, index) => {
-        console.log(`Item ${index}:`, { name: item.name, price: item.price, id: item.id });
+        console.log(`Item ${index}:`, {
+          name: item.name,
+          price: item.price,
+          id: item.id,
+          image: item.image,
+          fullItem: item
+        });
       });
       
       // Calculate totals properly - ensure we're using the right amount
-      const subtotal = items.reduce((sum, item) => sum + item.price, 0);
+      const subtotal = items.reduce((sum, item) => {
+        const price = Number(item.price) || 0;
+        console.log(`Adding item price: ${item.name} = $${price}`);
+        return sum + price;
+      }, 0);
+      
+      console.log('Calculated subtotal from cart:', subtotal);
+      console.log('Payment amount received:', amount);
+      console.log('Currency:', currency);
       
       // For business records, ensure accurate breakdown
       let actualSubtotal, tax, shipping;
@@ -531,20 +548,26 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
         tax = actualSubtotal * 0.13;
         shipping = actualSubtotal >= 100 ? 0 : 15;
       } else {
-        // Back-calculate from payment amount if cart is empty/corrupted
-        // For $128 total: if shipping is $15, then taxable amount is $113
-        // Subtotal = $113 / 1.13 = $100, Tax = $13, Shipping = $15
-        const totalMinusShipping = amount - 15; // Assume $15 shipping first
-        actualSubtotal = totalMinusShipping / 1.13; // Remove tax
-        tax = actualSubtotal * 0.13;
-        shipping = actualSubtotal >= 100 ? 0 : 15;
+        // ERROR: Cart is empty but payment was made - this shouldn't happen in production
+        console.error('🚨 CRITICAL: Cart is empty but payment processed! This indicates a data flow problem.');
+        console.error('Payment amount:', amount, currency);
+        console.error('This suggests items were lost between cart and payment processing.');
         
-        // Recalculate if we hit free shipping threshold
-        if (actualSubtotal >= 100) {
-          actualSubtotal = amount / 1.13; // No shipping
+        // Emergency fallback for business records (but this needs to be fixed)
+        // Try to guess reasonable breakdown, but log as data integrity issue
+        const hasShipping = amount > 50; // Assume shipping if over $50
+        if (hasShipping) {
+          const totalMinusShipping = amount - 15;
+          actualSubtotal = totalMinusShipping / 1.13;
+          tax = actualSubtotal * 0.13;
+          shipping = 15;
+        } else {
+          actualSubtotal = amount / 1.13;
           tax = actualSubtotal * 0.13;
           shipping = 0;
         }
+        
+        console.error('🚨 Using emergency fallback calculation - MUST FIX CART DATA FLOW');
       }
       
       console.log('Calculated breakdown:', {
