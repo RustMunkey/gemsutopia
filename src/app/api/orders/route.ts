@@ -11,6 +11,15 @@ export async function POST(request: NextRequest) {
     const orderData = await request.json();
     console.log('Received order data:', JSON.stringify(orderData, null, 2));
     
+    // Validate required fields
+    if (!orderData.customerInfo || !orderData.payment || !orderData.totals) {
+      console.error('Missing required order data fields');
+      return NextResponse.json(
+        { error: 'Missing required order data' },
+        { status: 400 }
+      );
+    }
+    
     // Save order to database
     const { data, error } = await supabase
       .from('orders')
@@ -51,11 +60,20 @@ export async function POST(request: NextRequest) {
     if (error) {
       console.error('Database error:', error);
       return NextResponse.json(
-        { error: 'Failed to save order' },
+        { error: 'Failed to save order', details: error.message },
         { status: 500 }
       );
     }
 
+    if (!data || data.length === 0) {
+      console.error('No data returned from database insert');
+      return NextResponse.json(
+        { error: 'Order creation failed - no data returned' },
+        { status: 500 }
+      );
+    }
+
+    console.log('Order saved successfully to database:', data[0]);
     return NextResponse.json({ success: true, order: data[0] });
   } catch (error) {
     console.error('Error saving order:', error);

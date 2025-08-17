@@ -268,6 +268,8 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
         timestamp: new Date().toISOString()
       };
 
+      console.log('Saving crypto order with data:', JSON.stringify(orderData, null, 2));
+
       const response = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -276,10 +278,11 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
 
       if (response.ok) {
         const orderResult = await response.json();
+        console.log('Order saved successfully:', orderResult);
         onSuccess({ orderId: orderResult.order.id });
       } else {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        console.error('Order save failed:', errorData);
+        console.error('Order save failed. Status:', response.status, 'Error:', errorData);
         onError(`Payment processed but order save failed: ${errorData.error || 'Unknown error'}. Please contact support with transaction ID: ${transactionId}`);
       }
     } catch (error) {
