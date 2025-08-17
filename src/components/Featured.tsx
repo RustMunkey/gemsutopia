@@ -29,7 +29,7 @@ export default function Featured() {
   const { getContent } = useCMSContent();
   const { addItem, removeItem, isInPouch } = useGemPouch();
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist();
-  const { formatPrice } = useCurrency();
+  const { formatPrice, formatPriceNoSuffix } = useCurrency();
   const [featuredProducts, setFeaturedProducts] = useState<FeaturedProduct[]>([]);
   const [isClient, setIsClient] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -269,9 +269,13 @@ export default function Featured() {
                             </button>
                             <div className="flex items-center gap-2">
                               {product.price < product.original_price && (
-                                <span className="text-sm text-black line-through">{formatPrice(product.original_price)}</span>
+                                <>
+                                  <span className="text-sm text-black line-through md:hidden">{formatPriceNoSuffix(product.original_price)}</span>
+                                  <span className="text-sm text-black line-through hidden md:inline">{formatPrice(product.original_price)}</span>
+                                </>
                               )}
-                              <span className="text-lg font-bold text-black">{formatPrice(product.price)}</span>
+                              <span className="text-lg font-bold text-black md:hidden">{formatPriceNoSuffix(product.price)}</span>
+                              <span className="text-lg font-bold text-black hidden md:inline">{formatPrice(product.price)}</span>
                             </div>
                             <button
                               onClick={(e) => toggleGemPouch(product.id, e)}
@@ -378,9 +382,13 @@ export default function Featured() {
                               </button>
                               <div className="flex items-center gap-2">
                                 {product.price < product.original_price && (
-                                  <span className="text-sm text-black line-through">{formatPrice(product.original_price)}</span>
+                                  <>
+                                    <span className="text-sm text-black line-through md:hidden">{formatPriceNoSuffix(product.original_price)}</span>
+                                    <span className="text-sm text-black line-through hidden md:inline">{formatPrice(product.original_price)}</span>
+                                  </>
                                 )}
-                                <span className="text-lg font-bold text-black">{formatPrice(product.price)}</span>
+                                <span className="text-lg font-bold text-black md:hidden">{formatPriceNoSuffix(product.price)}</span>
+                                <span className="text-lg font-bold text-black hidden md:inline">{formatPrice(product.price)}</span>
                               </div>
                               <button
                                 onClick={(e) => toggleGemPouch(product.id, e)}

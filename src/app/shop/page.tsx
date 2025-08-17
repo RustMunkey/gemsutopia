@@ -15,7 +15,7 @@ export default function Shop() {
   const router = useRouter();
   const { addItem, removeItem, isInPouch } = useGemPouch();
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist();
-  const { formatPrice } = useCurrency();
+  const { formatPrice, formatPriceNoSuffix } = useCurrency();
   const { shopRefreshTrigger } = useInventory();
   
   const [sortBy, setSortBy] = useState('default');
@@ -24,7 +24,7 @@ export default function Shop() {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
-  const toggleWishlist = (productId: number, e: React.MouseEvent) => {
+  const toggleWishlist = (productId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     const product = products.find(p => p.id === productId);
     if (!product) return;
@@ -43,7 +43,7 @@ export default function Shop() {
     }
   };
   
-  const toggleGemPouch = (productId: number, e: React.MouseEvent) => {
+  const toggleGemPouch = (productId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     const product = products.find(p => p.id === productId);
     if (!product) return;
@@ -371,9 +371,13 @@ export default function Shop() {
                       </button>
                       <div className="flex items-center gap-2">
                         {product.price < product.originalPrice && (
-                          <span className="text-sm text-black line-through">{formatPrice(product.originalPrice)}</span>
+                          <>
+                            <span className="text-sm text-black line-through md:hidden">{formatPriceNoSuffix(product.originalPrice)}</span>
+                            <span className="text-sm text-black line-through hidden md:inline">{formatPrice(product.originalPrice)}</span>
+                          </>
                         )}
-                        <span className="text-lg font-bold text-black">{formatPrice(product.price)}</span>
+                        <span className="text-lg font-bold text-black md:hidden">{formatPriceNoSuffix(product.price)}</span>
+                        <span className="text-lg font-bold text-black hidden md:inline">{formatPrice(product.price)}</span>
                       </div>
                       <button
                         onClick={(e) => toggleGemPouch(product.id, e)}

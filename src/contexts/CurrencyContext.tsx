@@ -8,6 +8,7 @@ interface CurrencyContextType {
   setCurrency: (currency: Currency) => void;
   convertPrice: (price: number) => number;
   formatPrice: (price: number) => string;
+  formatPriceNoSuffix: (price: number) => string;
   exchangeRate: number;
 }
 
@@ -53,6 +54,11 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     return `$${convertedPrice.toFixed(2)} ${currency}`;
   };
 
+  const formatPriceNoSuffix = (price: number): string => {
+    const convertedPrice = convertPrice(price);
+    return `$${convertedPrice.toFixed(2)}`;
+  };
+
   const handleSetCurrency = (newCurrency: Currency) => {
     setCurrency(newCurrency);
   };
@@ -63,6 +69,7 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
       setCurrency: handleSetCurrency,
       convertPrice,
       formatPrice,
+      formatPriceNoSuffix,
       exchangeRate
     }}>
       {children}
