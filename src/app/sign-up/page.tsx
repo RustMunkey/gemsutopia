@@ -1,10 +1,9 @@
 'use client';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { initEmailJS, sendSignUpConfirmationEmail } from '@/lib/emailjs';
 
 export default function SignUp() {
   const { signUp } = useAuth();
@@ -20,10 +19,6 @@ export default function SignUp() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [statusMessage, setStatusMessage] = useState('');
-
-  useEffect(() => {
-    initEmailJS();
-  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -102,20 +97,9 @@ export default function SignUp() {
         return;
       }
 
-      // Send confirmation email
-      const emailResult = await sendSignUpConfirmationEmail({
-        email: formData.email,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-      });
-
-      if (emailResult.success) {
-        setSubmitStatus('success');
-        setStatusMessage('Account created successfully! Please check your email to confirm your account.');
-      } else {
-        setSubmitStatus('success');
-        setStatusMessage('Account created successfully! Please check your email to confirm your account.');
-      }
+      // Supabase automatically sends confirmation email - no need for custom email
+      setSubmitStatus('success');
+      setStatusMessage('Account created successfully! Please check your email to confirm your account.');
       
       // Reset form
       setFormData({
