@@ -1,9 +1,54 @@
+'use client';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCcAmex, faCcApplePay, faCcDiscover, faGooglePay, faCcMastercard, faCcPaypal, faCcVisa, faInstagram, faFacebook, faXTwitter } from '@fortawesome/free-brands-svg-icons';
 import { ExchangeCoinbase } from '@web3icons/react';
 import Image from 'next/image';
+import { useState, useEffect } from 'react';
+import { initEmailJS } from '@/lib/emailjs';
 
 export default function Footer() {
+  const [email, setEmail] = useState('');
+  const [isSubscribing, setIsSubscribing] = useState(false);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [statusMessage, setStatusMessage] = useState('');
+
+  useEffect(() => {
+    initEmailJS();
+  }, []);
+
+  const handleNewsletterSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email || !email.includes('@')) {
+      setSubscriptionStatus('error');
+      setStatusMessage('Please enter a valid email address');
+      return;
+    }
+
+    setIsSubscribing(true);
+    setSubscriptionStatus('idle');
+    
+    try {
+      // TODO: Implement newsletter signup with Mailchimp later
+      // For now, just show success message without sending email
+      setSubscriptionStatus('success');
+      setStatusMessage('Thank you for subscribing! We will keep you updated.');
+      setEmail('');
+    } catch (error) {
+      console.error('Newsletter signup error:', error);
+      setSubscriptionStatus('error');
+      setStatusMessage('An error occurred. Please try again.');
+    } finally {
+      setIsSubscribing(false);
+      
+      // Clear status message after 5 seconds
+      setTimeout(() => {
+        setSubscriptionStatus('idle');
+        setStatusMessage('');
+      }, 5000);
+    }
+  };
+
   return (
     <div className="bg-black text-white w-full h-[50vh] flex flex-col justify-between border-t border-white/20 relative z-10" style={{ 
       filter: 'drop-shadow(0 -10px 20px rgba(0, 0, 0, 0.3))',
@@ -114,17 +159,37 @@ export default function Footer() {
           <div className="mt-8 mb-4">
             <p className="text-white text-left text-sm">Sign up for exclusive promotions, new arrivals, and special offers delivered straight to your inbox!</p>
           </div>
-          <div className="border border-white h-10 mb-6 rounded flex items-center overflow-hidden">
-            <input 
-              type="email" 
-              placeholder="Enter your email"
-              className="flex-1 h-full px-3 text-gray-400 bg-transparent border-none outline-none placeholder-gray-400 focus:text-white"
-              suppressHydrationWarning={true}
-            />
-            <button className="bg-white text-black px-8 h-full text-sm font-bold hover:bg-transparent hover:text-white hover:border-l hover:border-white transition-all">
-              Subscribe
-            </button>
-          </div>
+          
+          {statusMessage && (
+            <div className={`mb-4 p-3 rounded text-sm ${
+              subscriptionStatus === 'success' 
+                ? 'bg-green-900 text-green-100 border border-green-700' 
+                : 'bg-red-900 text-red-100 border border-red-700'
+            }`}>
+              {statusMessage}
+            </div>
+          )}
+          
+          <form onSubmit={handleNewsletterSignup} className="mb-6">
+            <div className="border border-white h-10 rounded flex items-center overflow-hidden">
+              <input 
+                type="email" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                className="flex-1 h-full px-3 text-gray-400 bg-transparent border-none outline-none placeholder-gray-400 focus:text-white"
+                disabled={isSubscribing}
+                suppressHydrationWarning={true}
+              />
+              <button 
+                type="submit"
+                disabled={isSubscribing}
+                className="bg-white text-black px-8 h-full text-sm font-bold hover:bg-transparent hover:text-white hover:border-l hover:border-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubscribing ? 'Subscribing...' : 'Subscribe'}
+              </button>
+            </div>
+          </form>
           <div className="pt-4 bg-black -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
             <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:justify-between md:items-center space-y-4 md:space-y-0 bg-black">
               <p className="text-sm text-center md:text-left bg-black">© 2025 Gemsutopia. All rights reserved.</p>

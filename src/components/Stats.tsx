@@ -47,7 +47,7 @@ export default function Stats() {
     const container = containerRef.current;
     
     // Calculate dimensions
-    const cardWidth = 220; // w-[220px] + margins
+    const cardWidth = 236; // w-[220px] + mx-2 (16px margin) = 236px total width per card
     const oneSetWidth = stats.length * cardWidth;
     
     const animate = () => {
@@ -56,11 +56,11 @@ export default function Stats() {
       const speed = 45; // pixels per second - same as reviews/featured
       const translateX = (elapsed * speed); // POSITIVE for rightward movement
       
-      // Better normalization to prevent glitches - same as reviews/featured
+      // Better normalization to prevent glitches - EXACT copy from reviews but reversed
       let normalizedTranslateX = 0;
       if (oneSetWidth > 0) {
         const rawMod = translateX % oneSetWidth;
-        normalizedTranslateX = rawMod;
+        normalizedTranslateX = rawMod >= oneSetWidth ? rawMod - oneSetWidth : rawMod;
       }
       
       // Directly update the transform without causing React re-renders
@@ -160,7 +160,7 @@ export default function Stats() {
                     willChange: 'transform',
                     backfaceVisibility: 'hidden',
                     WebkitBackfaceVisibility: 'hidden',
-                    transform: `translate3d(-${stats.length * 220}px, 0, 0)` // Start offset to create smooth reverse loop
+                    transform: 'translateZ(0)'
                   }}
                 >
                   {stats.concat(stats).concat(stats).map((stat, index) => {

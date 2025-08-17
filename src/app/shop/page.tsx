@@ -8,11 +8,13 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useGemPouch } from '@/contexts/GemPouchContext';
 import { useWishlist } from '@/contexts/WishlistContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 export default function Shop() {
   const router = useRouter();
   const { addItem, removeItem, isInPouch } = useGemPouch();
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist();
+  const { formatPrice } = useCurrency();
   
   const [sortBy, setSortBy] = useState('default');
   const [priceFilter, setPriceFilter] = useState('all');
@@ -366,9 +368,9 @@ export default function Shop() {
                       </button>
                       <div className="flex items-center gap-2">
                         {product.price < product.originalPrice && (
-                          <span className="text-sm text-black line-through">${product.originalPrice}</span>
+                          <span className="text-sm text-black line-through">{formatPrice(product.originalPrice)}</span>
                         )}
-                        <span className="text-lg font-bold text-black">${product.price}</span>
+                        <span className="text-lg font-bold text-black">{formatPrice(product.price)}</span>
                       </div>
                       <button
                         onClick={(e) => toggleGemPouch(product.id, e)}

@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useGemPouch } from '@/contexts/GemPouchContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import CartReview from './CartReview';
 import CustomerInfo from './CustomerInfo';
 import PaymentMethods from './PaymentMethods';
@@ -29,6 +30,7 @@ type CheckoutStep = 'cart' | 'customer' | 'payment-method' | 'payment' | 'succes
 
 export default function CheckoutFlow() {
   const { items, clearPouch } = useGemPouch();
+  const { formatPrice } = useCurrency();
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('cart');
   const [checkoutData, setCheckoutData] = useState<CheckoutData>({
     customer: {
@@ -248,7 +250,7 @@ export default function CheckoutFlow() {
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900 truncate">{item.name}</p>
                       </div>
-                      <p className="text-sm font-medium text-gray-900">${item.price.toFixed(2)}</p>
+                      <p className="text-sm font-medium text-gray-900">{formatPrice(item.price)}</p>
                     </div>
                   ))}
                 </div>
@@ -256,19 +258,19 @@ export default function CheckoutFlow() {
                 <div className="border-t border-gray-200 pt-4 space-y-2">
                   <div className="flex justify-between text-sm text-gray-600">
                     <span>Subtotal</span>
-                    <span>${subtotal.toFixed(2)}</span>
+                    <span>{formatPrice(subtotal)}</span>
                   </div>
                   <div className="flex justify-between text-sm text-gray-600">
                     <span>Shipping</span>
-                    <span>{shipping === 0 ? 'Free' : `$${shipping.toFixed(2)}`}</span>
+                    <span>{shipping === 0 ? 'Free' : formatPrice(shipping)}</span>
                   </div>
                   <div className="flex justify-between text-sm text-gray-600">
                     <span>Tax (HST)</span>
-                    <span>${tax.toFixed(2)}</span>
+                    <span>{formatPrice(tax)}</span>
                   </div>
                   <div className="flex justify-between text-lg font-semibold text-gray-900 pt-2 border-t border-gray-200">
                     <span>Total</span>
-                    <span>${total.toFixed(2)} CAD</span>
+                    <span>{formatPrice(total)}</span>
                   </div>
                 </div>
               </div>

@@ -4,11 +4,13 @@ import Footer from '@/components/Footer';
 import { IconTrash } from '@tabler/icons-react';
 import { ShoppingBag } from 'lucide-react';
 import { useGemPouch } from '@/contexts/GemPouchContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import Image from 'next/image';
 import Link from 'next/link';
 
 export default function GemPouch() {
   const { items, removeItem } = useGemPouch();
+  const { formatPrice } = useCurrency();
   const totalPrice = items.reduce((sum, item) => sum + item.price, 0);
   return (
     <div className="min-h-[200vh] flex flex-col relative">
@@ -67,7 +69,7 @@ export default function GemPouch() {
                     </div>
                     <div className="flex-grow">
                       <h3 className="text-xl font-semibold text-black mb-2">{item.name}</h3>
-                      <p className="text-lg font-bold text-black">${item.price}</p>
+                      <p className="text-lg font-bold text-black">{formatPrice(item.price)}</p>
                     </div>
                     <button
                       onClick={() => removeItem(item.id)}

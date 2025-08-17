@@ -5,12 +5,24 @@ import { IconTrash } from '@tabler/icons-react';
 import { Star, ShoppingBag } from 'lucide-react';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useGemPouch } from '@/contexts/GemPouchContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import Image from 'next/image';
 import Link from 'next/link';
 
 export default function Wishlist() {
-  const { items, removeItem } = useWishlist();
+  const { items, removeItem, clearWishlist } = useWishlist();
   const { addItem: addToGemPouch, isInPouch } = useGemPouch();
+  const { formatPrice } = useCurrency();
+  
+  const addAllToCart = () => {
+    items.forEach(item => {
+      if (!isInPouch(item.id)) {
+        addToGemPouch(item);
+      }
+    });
+  };
+  
+  const availableItems = items.filter(item => !isInPouch(item.id));
   return (
     <div className="min-h-[200vh] flex flex-col relative">
       {/* Fixed Background */}
@@ -33,6 +45,27 @@ export default function Wishlist() {
             <div className="text-center mb-12">
               <h1 className="text-3xl md:text-4xl font-bold text-black mb-4">Wishlist</h1>
               <p className="text-lg text-neutral-600">Your saved gemstones and jewelry</p>
+              
+              {items.length > 0 && (
+                <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center">
+                  {availableItems.length > 0 && (
+                    <button
+                      onClick={addAllToCart}
+                      className="inline-flex items-center justify-center bg-black text-white py-3 px-6 rounded-full font-semibold hover:bg-neutral-800 transition-colors"
+                    >
+                      <ShoppingBag className="h-5 w-5 mr-2" />
+                      Add All to Cart ({availableItems.length})
+                    </button>
+                  )}
+                  <button
+                    onClick={clearWishlist}
+                    className="inline-flex items-center justify-center border border-red-500 text-red-500 py-3 px-6 rounded-full font-semibold hover:bg-red-500 hover:text-white transition-colors"
+                  >
+                    <IconTrash className="h-5 w-5 mr-2" />
+                    Clear Wishlist
+                  </button>
+                </div>
+              )}
             </div>
           
           {items.length === 0 ? (
@@ -67,7 +100,7 @@ export default function Wishlist() {
                   </div>
                   <div className="flex-grow">
                     <h3 className="text-xl font-semibold text-black mb-2">{item.name}</h3>
-                    <p className="text-lg font-bold text-black">${item.price}</p>
+                    <p className="text-lg font-bold text-black">{formatPrice(item.price)}</p>
                   </div>
                   <div className="flex items-center gap-3">
                     <button

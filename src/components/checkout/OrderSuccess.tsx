@@ -1,14 +1,52 @@
 'use client';
 import { CheckCircle, Package, Mail, ArrowRight } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useCurrency } from '@/contexts/CurrencyContext';
+import { initEmailJS, sendOrderReceiptEmail } from '@/lib/emailjs';
 
 interface OrderSuccessProps {
   orderId: string;
   customerEmail: string;
+  customerName?: string;
   amount: number;
+  items?: Array<{ name: string; price: number; quantity: number }>;
 }
 
-export default function OrderSuccess({ orderId, customerEmail, amount }: OrderSuccessProps) {
+export default function OrderSuccess({ orderId, customerEmail, customerName, amount, items = [] }: OrderSuccessProps) {
+  const [emailSent, setEmailSent] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Initialize EmailJS
+    initEmailJS();
+
+    // Send order receipt email
+    const sendReceiptEmail = async () => {
+      try {
+        const orderData = {
+          customerEmail,
+          customerName: customerName || 'Customer',
+          orderId,
+          amount,
+          items,
+        };
+
+        const result = await sendOrderReceiptEmail(orderData);
+        
+        if (result.success) {
+          setEmailSent(true);
+        } else {
+          setEmailError('Failed to send receipt email');
+        }
+      } catch (error) {
+        console.error('Error sending receipt email:', error);
+        setEmailError('Failed to send receipt email');
+      }
+    };
+
+    sendReceiptEmail();
+  }, [orderId, customerEmail, customerName, amount, items]);
+
   useEffect(() => {
     // Simple CSS-based confetti animation instead of external script
     const createConfetti = () => {
@@ -100,13 +138,44 @@ export default function OrderSuccess({ orderId, customerEmail, amount }: OrderSu
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+          <div className={`border rounded-lg p-6 ${
+            emailSent 
+              ? 'bg-green-50 border-green-200' 
+              : emailError 
+                ? 'bg-red-50 border-red-200' 
+                : 'bg-blue-50 border-blue-200'
+          }`}>
             <div className="flex items-center mb-3">
-              <Mail className="h-6 w-6 text-blue-600 mr-3" />
-              <h3 className="font-semibold text-blue-900">Email Confirmation</h3>
+              <Mail className={`h-6 w-6 mr-3 ${
+                emailSent 
+                  ? 'text-green-600' 
+                  : emailError 
+                    ? 'text-red-600' 
+                    : 'text-blue-600'
+              }`} />
+              <h3 className={`font-semibold ${
+                emailSent 
+                  ? 'text-green-900' 
+                  : emailError 
+                    ? 'text-red-900' 
+                    : 'text-blue-900'
+              }`}>
+                Email Confirmation
+              </h3>
             </div>
-            <p className="text-blue-800 text-sm">
-              We've sent an order confirmation and receipt to <strong>{customerEmail}</strong>
+            <p className={`text-sm ${
+              emailSent 
+                ? 'text-green-800' 
+                : emailError 
+                  ? 'text-red-800' 
+                  : 'text-blue-800'
+            }`}>
+              {emailSent 
+                ? `✓ Order confirmation and receipt sent to ${customerEmail}`
+                : emailError 
+                  ? `⚠ ${emailError}. Please contact support if you don't receive your receipt.`
+                  : `Sending order confirmation and receipt to ${customerEmail}...`
+              }
             </p>
           </div>
 

@@ -4,6 +4,7 @@ import { ShoppingBag, Store, Info, Mail, HelpCircle } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import CurrencySwitcher from './CurrencySwitcher';
 
 interface DropdownProps {
   isOpen: boolean;
@@ -105,6 +106,8 @@ export default function Dropdown({ isOpen, onClose }: DropdownProps) {
               Support
             </a>
           </nav>
+          
+          <CurrencySwitcher variant="mobile" />
           
           <div className="space-y-4 pb-8">
             <a

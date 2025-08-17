@@ -7,6 +7,7 @@ import { ShoppingBag, Check } from 'lucide-react';
 import { useCMSContent } from '@/hooks/useCMSContent';
 import { useGemPouch } from '@/contexts/GemPouchContext';
 import { useWishlist } from '@/contexts/WishlistContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { extractVibrantColor } from '@/utils/colorExtraction';
 
 interface FeaturedProduct {
@@ -28,6 +29,7 @@ export default function Featured() {
   const { getContent } = useCMSContent();
   const { addItem, removeItem, isInPouch } = useGemPouch();
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist();
+  const { formatPrice } = useCurrency();
   const [featuredProducts, setFeaturedProducts] = useState<FeaturedProduct[]>([]);
   const [isClient, setIsClient] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -267,9 +269,9 @@ export default function Featured() {
                             </button>
                             <div className="flex items-center gap-2">
                               {product.price < product.original_price && (
-                                <span className="text-sm text-black line-through">${product.original_price}</span>
+                                <span className="text-sm text-black line-through">{formatPrice(product.original_price)}</span>
                               )}
-                              <span className="text-lg font-bold text-black">${product.price}</span>
+                              <span className="text-lg font-bold text-black">{formatPrice(product.price)}</span>
                             </div>
                             <button
                               onClick={(e) => toggleGemPouch(product.id, e)}
@@ -376,9 +378,9 @@ export default function Featured() {
                               </button>
                               <div className="flex items-center gap-2">
                                 {product.price < product.original_price && (
-                                  <span className="text-sm text-black line-through">${product.original_price}</span>
+                                  <span className="text-sm text-black line-through">{formatPrice(product.original_price)}</span>
                                 )}
-                                <span className="text-lg font-bold text-black">${product.price}</span>
+                                <span className="text-lg font-bold text-black">{formatPrice(product.price)}</span>
                               </div>
                               <button
                                 onClick={(e) => toggleGemPouch(product.id, e)}

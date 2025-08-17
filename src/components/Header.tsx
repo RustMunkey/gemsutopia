@@ -9,6 +9,7 @@ import Dropdown from './Dropdown';
 import { useGemPouch } from '../contexts/GemPouchContext';
 import { useWishlist } from '../contexts/WishlistContext';
 import { useCMSContent } from '@/hooks/useCMSContent';
+import CurrencySwitcher from './CurrencySwitcher';
 
 export default function Header() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -135,6 +136,7 @@ export default function Header() {
             
             {/* Desktop items */}
             <div className="hidden md:flex items-center gap-4">
+              <CurrencySwitcher variant="header" />
               <a href="/wishlist" className="text-white hover:text-gray-300 flex items-center gap-2 relative">
                 {wishlistCount > 0 ? (
                   <Star fill="white" className="h-6 w-6" strokeWidth={2} />
