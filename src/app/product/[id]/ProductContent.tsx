@@ -179,7 +179,7 @@ export default function ProductContent({ product: initialProduct }: ProductConte
                 </div>
                 <button 
                   onClick={handleIncreaseQuantity}
-                  disabled={cartQuantity >= product.stock}
+                  disabled={cartQuantity >= product.inventory}
                   className={`text-white hover:text-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed text-xl font-bold w-8 h-8 flex items-center justify-center ${cartQuantity === 0 ? 'invisible' : ''}`}
                 >
                   +
@@ -203,16 +203,22 @@ export default function ProductContent({ product: initialProduct }: ProductConte
               <div>
                 <h3 className="text-base md:text-lg font-semibold text-black mb-2">Details</h3>
                 <ul className="text-sm md:text-base text-neutral-600 space-y-1">
-                  <li>• Premium quality gemstone</li>
-                  <li>• Authentically sourced</li>
-                  <li>• Lifetime guarantee</li>
-                  <li>• Certificate of authenticity included</li>
+                  {(product.metadata?.details || [
+                    'Premium quality gemstone',
+                    'Authentically sourced',
+                    'Lifetime guarantee',
+                    'Certificate of authenticity included'
+                  ]).map((detail: string, index: number) => (
+                    <li key={index}>• {detail}</li>
+                  ))}
                 </ul>
               </div>
               
               <div>
                 <h3 className="text-base md:text-lg font-semibold text-black mb-2">Shipping</h3>
-                <p className="text-sm md:text-base text-neutral-600">Free worldwide shipping. Delivery in 3-5 business days.</p>
+                <p className="text-sm md:text-base text-neutral-600">
+                  {product.metadata?.shipping_info || 'Free worldwide shipping. Delivery in 3-5 business days.'}
+                </p>
               </div>
             </div>
           </div>

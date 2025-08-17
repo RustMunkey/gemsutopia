@@ -389,7 +389,16 @@ function ProductModal({ product, onClose, onSave }: {
     is_active: product?.is_active !== false,
     featured: product?.featured || false,
     images: product?.images || [],
-    tags: product?.tags?.join(', ') || ''
+    tags: product?.tags?.join(', ') || '',
+    // Product details
+    details: (product?.metadata?.details || [
+      'Premium quality gemstone',
+      'Authentically sourced',
+      'Lifetime guarantee',
+      'Certificate of authenticity included'
+    ]).join('\n'),
+    // Shipping info
+    shipping_info: product?.metadata?.shipping_info || 'Free worldwide shipping. Delivery in 3-5 business days.'
   });
   const [loading, setLoading] = useState(false);
   const [customCategory, setCustomCategory] = useState('');
@@ -449,7 +458,12 @@ function ProductModal({ product, onClose, onSave }: {
         inventory: parseInt(formData.inventory),
         weight: formData.weight ? parseFloat(formData.weight) : null,
         tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean),
-        images: formData.images
+        images: formData.images,
+        metadata: {
+          ...(product?.metadata || {}),
+          details: formData.details.split('\n').map(item => item.trim()).filter(Boolean),
+          shipping_info: formData.shipping_info
+        }
       };
 
       const url = product ? `/api/products/${product.id}` : '/api/products';
@@ -639,6 +653,36 @@ function ProductModal({ product, onClose, onSave }: {
               className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-white"
               placeholder="gold, handmade, vintage, etc."
             />
+          </div>
+
+          {/* Product Details */}
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              Product Details (one per line)
+            </label>
+            <textarea
+              value={formData.details}
+              onChange={(e) => setFormData(prev => ({...prev, details: e.target.value}))}
+              rows={4}
+              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-white"
+              placeholder="Premium quality gemstone&#10;Authentically sourced&#10;Lifetime guarantee&#10;Certificate of authenticity included"
+            />
+            <p className="text-xs text-slate-400 mt-1">These will appear as bullet points on the product page</p>
+          </div>
+
+          {/* Shipping Information */}
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              Shipping Information
+            </label>
+            <textarea
+              value={formData.shipping_info}
+              onChange={(e) => setFormData(prev => ({...prev, shipping_info: e.target.value}))}
+              rows={2}
+              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-white"
+              placeholder="Free worldwide shipping. Delivery in 3-5 business days."
+            />
+            <p className="text-xs text-slate-400 mt-1">This will appear in the shipping section on the product page</p>
           </div>
 
           {/* Images */}
