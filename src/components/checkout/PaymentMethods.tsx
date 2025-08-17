@@ -3,11 +3,11 @@ import { useState } from 'react';
 import { CreditCard, Wallet, Shield } from 'lucide-react';
 
 interface PaymentMethodsProps {
-  onSelect: (method: 'stripe' | 'paypal') => void;
+  onSelect: (method: 'stripe' | 'paypal' | 'wallet') => void;
 }
 
 export default function PaymentMethods({ onSelect }: PaymentMethodsProps) {
-  const [selectedMethod, setSelectedMethod] = useState<'stripe' | 'paypal' | null>(null);
+  const [selectedMethod, setSelectedMethod] = useState<'stripe' | 'paypal' | 'wallet' | null>(null);
 
   const paymentMethods = [
     {
@@ -15,16 +15,21 @@ export default function PaymentMethods({ onSelect }: PaymentMethodsProps) {
       name: 'Credit or Debit Card',
       description: 'Visa, Mastercard, American Express, and more',
       icon: CreditCard,
-      available: true,
-      logos: ['💳']
+      available: true
     },
     {
       id: 'paypal' as const,
       name: 'PayPal',
       description: 'Pay with your PayPal account or credit card',
       icon: Wallet,
-      available: true,
-      logos: ['🟡']
+      available: true
+    },
+    {
+      id: 'wallet' as const,
+      name: 'Connect Wallet',
+      description: 'Pay with cryptocurrency using WalletConnect',
+      icon: Wallet,
+      available: true
     }
   ];
 
@@ -75,9 +80,6 @@ export default function PaymentMethods({ onSelect }: PaymentMethodsProps) {
                 </div>
                 
                 <div className="flex items-center space-x-2">
-                  {method.logos.map((logo, index) => (
-                    <span key={index} className="text-2xl">{logo}</span>
-                  ))}
                   {isSelected && method.available && (
                     <div className="w-6 h-6 bg-black rounded-full flex items-center justify-center">
                       <div className="w-2 h-2 bg-white rounded-full"></div>

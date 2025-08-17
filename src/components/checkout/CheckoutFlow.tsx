@@ -22,7 +22,7 @@ interface CheckoutData {
     country: string;
     phone?: string;
   };
-  paymentMethod: 'stripe' | 'paypal' | null;
+  paymentMethod: 'stripe' | 'paypal' | 'wallet' | null;
   orderTotal: number;
 }
 

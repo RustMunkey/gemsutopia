@@ -11,6 +11,7 @@ import {
 import { loadStripe } from '@stripe/stripe-js';
 import { Lock, CreditCard, Wallet } from 'lucide-react';
 import PayPalPayment from '../payments/PayPalPayment';
+import WalletPayment from './WalletPayment';
 
 const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 
@@ -19,7 +20,7 @@ console.log('Stripe publishable key:', publishableKey ? 'Found' : 'Missing');
 const stripePromise = publishableKey ? loadStripe(publishableKey) : null;
 
 interface PaymentFormProps {
-  paymentMethod: 'stripe' | 'paypal';
+  paymentMethod: 'stripe' | 'paypal' | 'wallet';
   amount: number;
   customerData: any;
   items: any[];
@@ -457,6 +458,16 @@ export default function PaymentForm(props: PaymentFormProps) {
       <Elements stripe={stripePromise}>
         <StripeForm {...props} />
       </Elements>
+    );
+  }
+
+  if (props.paymentMethod === 'wallet') {
+    return (
+      <WalletPayment
+        amount={props.amount}
+        onSuccess={(transactionId) => props.onSuccess({ orderId: transactionId })}
+        onError={props.onError}
+      />
     );
   }
 

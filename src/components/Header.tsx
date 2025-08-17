@@ -137,7 +137,7 @@ export default function Header() {
             </div>
             
             {/* Desktop items */}
-            <div className="hidden md:flex items-center gap-4">
+            <div className="hidden md:flex items-center gap-6">
               <CurrencySwitcher variant="header" />
               <a href="/wishlist" className="text-white hover:text-gray-300 flex items-center gap-2 relative">
                 {wishlistCount > 0 ? (
@@ -154,28 +154,29 @@ export default function Header() {
                   </span>
                 )}
               </a>
-              {user ? (
-                <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3">
+                {user && (
                   <span className="text-white text-sm">
-                    Hi, {user.user_metadata?.first_name || user.email?.split('@')[0]}
+                    Hi, {user.user_metadata?.first_name || user.email?.split('@')[0]}!
                   </span>
+                )}
+                {user ? (
                   <button
                     onClick={() => signOut()}
-                    className="border border-white text-white hover:bg-white hover:text-black text-sm font-bold px-6 py-2 rounded-full transition-all"
+                    className="border border-white text-white hover:bg-white hover:text-black text-sm font-bold px-10 py-2 rounded-full transition-all"
                   >
                     Sign Out
                   </button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <a href="/sign-in" className="text-white hover:text-gray-300 text-sm font-medium">
+                ) : pathname === '/sign-up' ? (
+                  <a href="/sign-in" className="border border-white text-white hover:bg-white hover:text-black text-sm font-bold px-10 py-2 rounded-full transition-all">
                     Sign In
                   </a>
-                  <a href="/sign-up" className="border border-white text-white hover:bg-white hover:text-black text-sm font-bold px-6 py-2 rounded-full transition-all">
+                ) : (
+                  <a href="/sign-up" className="border border-white text-white hover:bg-white hover:text-black text-sm font-bold px-10 py-2 rounded-full transition-all">
                     Sign Up
                   </a>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         </div>

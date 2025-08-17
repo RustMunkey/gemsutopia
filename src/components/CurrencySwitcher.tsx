@@ -34,11 +34,10 @@ export default function CurrencySwitcher({ variant = 'header' }: CurrencySwitche
   return (
     <button
       onClick={toggleCurrency}
-      className="flex items-center space-x-1 bg-black text-white py-1 px-2 rounded-md text-sm font-medium transition-colors hover:bg-gray-800"
+      className="text-white hover:text-gray-300 transition-colors"
       title={`Switch to ${currency === 'USD' ? 'CAD' : 'USD'}`}
     >
-      <span className="text-sm">{getCurrentFlag()}</span>
-      <span className="hidden sm:inline">{currency}</span>
+      <span className="text-xl">{getCurrentFlag()}</span>
     </button>
   );
 }

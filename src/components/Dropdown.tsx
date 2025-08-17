@@ -4,6 +4,7 @@ import { ShoppingBag, Store, Info, Mail, HelpCircle } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import CurrencySwitcher from './CurrencySwitcher';
 
 interface DropdownProps {
@@ -13,6 +14,7 @@ interface DropdownProps {
 
 export default function Dropdown({ isOpen, onClose }: DropdownProps) {
   const [mounted, setMounted] = useState(false);
+  const { user, signOut } = useAuth();
 
   useEffect(() => {
     setMounted(true);
@@ -110,20 +112,30 @@ export default function Dropdown({ isOpen, onClose }: DropdownProps) {
           <CurrencySwitcher variant="mobile" />
           
           <div className="space-y-4 pb-8">
-            <a
-              href="/sign-in"
-              className="block w-full text-center bg-transparent border border-white text-white py-3 px-10 rounded-full font-semibold hover:bg-white hover:text-black transition-all"
-              onClick={onClose}
-            >
-              Sign In
-            </a>
-            <a
-              href="/sign-up"
-              className="block w-full text-center bg-white text-black py-3 px-10 rounded-full font-semibold hover:bg-gray-200 transition-all"
-              onClick={onClose}
-            >
-              Sign Up
-            </a>
+            {user ? (
+              <div className="space-y-3">
+                <div className="text-center text-white text-sm">
+                  Hi, {user.user_metadata?.first_name || user.email?.split('@')[0]}!
+                </div>
+                <button
+                  onClick={() => {
+                    signOut();
+                    onClose();
+                  }}
+                  className="block w-full text-center bg-transparent border border-white text-white py-3 px-10 rounded-full font-semibold hover:bg-white hover:text-black transition-all"
+                >
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <a
+                href="/sign-up"
+                className="block w-full text-center bg-white text-black py-3 px-10 rounded-full font-semibold hover:bg-gray-200 transition-all"
+                onClick={onClose}
+              >
+                Sign Up
+              </a>
+            )}
           </div>
           </div>
         </div>
