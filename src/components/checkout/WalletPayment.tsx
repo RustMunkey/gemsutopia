@@ -84,66 +84,136 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
       let address = '';
       
       if (cryptoType === 'ETH') {
-        // MetaMask for Ethereum
+        // Ethereum - works with any EIP-1193 compatible wallet (MetaMask, Coinbase, Trust, etc.)
         if (typeof window !== 'undefined' && (window as any).ethereum) {
-          // Switch to Sepolia testnet
           try {
-            await (window as any).ethereum.request({
-              method: 'wallet_switchEthereumChain',
-              params: [{ chainId: '0xaa36a7' }], // Sepolia testnet chain ID
-            });
-          } catch (switchError: any) {
-            // This error code indicates that the chain has not been added to MetaMask
-            if (switchError.code === 4902) {
-              try {
-                await (window as any).ethereum.request({
-                  method: 'wallet_addEthereumChain',
-                  params: [
-                    {
-                      chainId: '0xaa36a7',
-                      chainName: 'Sepolia Test Network',
-                      rpcUrls: ['https://rpc.sepolia.org'],
-                      nativeCurrency: {
-                        name: 'SepoliaETH',
-                        symbol: 'ETH',
-                        decimals: 18,
+            // Switch to Sepolia testnet
+            try {
+              await (window as any).ethereum.request({
+                method: 'wallet_switchEthereumChain',
+                params: [{ chainId: '0xaa36a7' }], // Sepolia testnet chain ID
+              });
+            } catch (switchError: any) {
+              // This error code indicates that the chain has not been added to the wallet
+              if (switchError.code === 4902) {
+                try {
+                  await (window as any).ethereum.request({
+                    method: 'wallet_addEthereumChain',
+                    params: [
+                      {
+                        chainId: '0xaa36a7',
+                        chainName: 'Sepolia Test Network',
+                        rpcUrls: ['https://rpc.sepolia.org'],
+                        nativeCurrency: {
+                          name: 'SepoliaETH',
+                          symbol: 'ETH',
+                          decimals: 18,
+                        },
+                        blockExplorerUrls: ['https://sepolia.etherscan.io/'],
                       },
-                      blockExplorerUrls: ['https://sepolia.etherscan.io/'],
-                    },
-                  ],
-                });
-              } catch (addError) {
-                onError('Failed to add Sepolia network to MetaMask.');
+                    ],
+                  });
+                } catch (addError) {
+                  onError('Failed to add Sepolia network to your Ethereum wallet.');
+                  return;
+                }
+              } else {
+                onError('Failed to switch to Sepolia network. Please manually switch to Sepolia testnet in your wallet.');
                 return;
               }
-            } else {
-              onError('Failed to switch to Sepolia network.');
-              return;
             }
-          }
 
-          const accounts = await (window as any).ethereum.request({
-            method: 'eth_requestAccounts',
-          });
-          if (accounts.length > 0) {
-            address = accounts[0];
+            const accounts = await (window as any).ethereum.request({
+              method: 'eth_requestAccounts',
+            });
+            if (accounts.length > 0) {
+              address = accounts[0];
+            }
+          } catch (error: any) {
+            onError(`Failed to connect Ethereum wallet: ${error.message}`);
+            return;
           }
         } else {
-          onError('Please install MetaMask to use Ethereum payments.');
+          onError('No Ethereum wallet detected. Please install MetaMask, Coinbase Wallet, or another Ethereum wallet.');
           return;
         }
       } else if (cryptoType === 'SOL') {
-        // Phantom for Solana
-        if (typeof window !== 'undefined' && (window as any).solana) {
-          const response = await (window as any).solana.connect();
-          address = response.publicKey.toString();
-        } else {
-          onError('Please install Phantom wallet to use Solana payments.');
-          return;
+        // Solana - works with multiple wallets (Phantom, Solflare, Backpack, etc.)
+        if (typeof window !== 'undefined') {
+          let solanaWallet = null;
+          let walletName = '';
+
+          // Check for various Solana wallets in order of preference
+          if ((window as any).solana) {
+            solanaWallet = (window as any).solana;
+            if (solanaWallet.isPhantom) walletName = 'Phantom';
+            else if (solanaWallet.isSolflare) walletName = 'Solflare';
+            else if (solanaWallet.isBackpack) walletName = 'Backpack';
+            else walletName = 'Solana Wallet';
+          } else if ((window as any).solflare) {
+            solanaWallet = (window as any).solflare;
+            walletName = 'Solflare';
+          } else if ((window as any).backpack) {
+            solanaWallet = (window as any).backpack;
+            walletName = 'Backpack';
+          }
+
+          if (solanaWallet) {
+            try {
+              const response = await solanaWallet.connect();
+              address = response.publicKey.toString();
+              console.log(`Connected to ${walletName} wallet:`, address);
+            } catch (error: any) {
+              onError(`Failed to connect ${walletName}: ${error.message}`);
+              return;
+            }
+          } else {
+            onError('No Solana wallet detected. Please install Phantom, Solflare, Backpack, or another Solana wallet.');
+            return;
+          }
         }
       } else if (cryptoType === 'BTC') {
-        // Simulate Bitcoin wallet connection (for demo)
-        address = 'tb1q' + Math.random().toString(36).substring(2, 20);
+        // Bitcoin - works with multiple wallets (Unisat, Xverse, Leather, etc.)
+        if (typeof window !== 'undefined') {
+          let bitcoinWallet = null;
+          let walletName = '';
+
+          // Check for various Bitcoin wallets
+          if ((window as any).unisat) {
+            bitcoinWallet = (window as any).unisat;
+            walletName = 'Unisat';
+          } else if ((window as any).xverse) {
+            bitcoinWallet = (window as any).xverse;
+            walletName = 'Xverse';
+          } else if ((window as any).LeatherProvider) {
+            bitcoinWallet = (window as any).LeatherProvider;
+            walletName = 'Leather';
+          }
+
+          if (bitcoinWallet) {
+            try {
+              // Different connection methods for different wallets
+              if (walletName === 'Unisat') {
+                const accounts = await bitcoinWallet.requestAccounts();
+                address = accounts[0];
+              } else if (walletName === 'Xverse') {
+                const response = await bitcoinWallet.request('getAccounts', null);
+                address = response.result.addresses[0].address;
+              } else if (walletName === 'Leather') {
+                const response = await bitcoinWallet.request('getAddresses');
+                address = response.result.addresses[0].address;
+              }
+              console.log(`Connected to ${walletName} wallet:`, address);
+            } catch (error: any) {
+              onError(`Failed to connect ${walletName}: ${error.message}`);
+              return;
+            }
+          } else {
+            // Fallback: simulate Bitcoin wallet for demo purposes
+            address = 'tb1q' + Math.random().toString(36).substring(2, 20);
+            console.log('No Bitcoin wallet detected, using simulated address for demo');
+          }
+        }
       }
       
       if (address) {
@@ -194,7 +264,7 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
   const processEthereumPayment = async (cryptoAmount: number) => {
     try {
       if (typeof window === 'undefined' || !(window as any).ethereum) {
-        throw new Error('MetaMask not found');
+        throw new Error('Ethereum wallet not found');
       }
 
       // Create provider and signer
@@ -289,10 +359,18 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
       // Convert SOL amount to lamports
       const lamports = Math.floor(cryptoAmount * LAMPORTS_PER_SOL);
       
-      // Get Phantom provider
-      const { solana } = window as any;
-      if (!solana || !solana.isPhantom) {
-        throw new Error('Phantom wallet not found');
+      // Get active Solana provider (works with any Solana wallet)
+      let solanaWallet = null;
+      if ((window as any).solana) {
+        solanaWallet = (window as any).solana;
+      } else if ((window as any).solflare) {
+        solanaWallet = (window as any).solflare;
+      } else if ((window as any).backpack) {
+        solanaWallet = (window as any).backpack;
+      }
+      
+      if (!solanaWallet) {
+        throw new Error('Solana wallet not found');
       }
 
       // Create transaction
@@ -320,7 +398,7 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
       // Sign and send transaction with error handling
       let signature;
       try {
-        const signedTransaction = await solana.signTransaction(transaction);
+        const signedTransaction = await solanaWallet.signTransaction(transaction);
         signature = await connection.sendRawTransaction(signedTransaction.serialize(), {
           skipPreflight: false,
           preflightCommitment: 'confirmed'
@@ -513,8 +591,8 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
               <div>
                 <h4 className="text-sm font-semibold text-orange-900">Testnet Payment</h4>
                 <p className="text-sm text-orange-800">
-                  This uses test networks with real blockchain transactions. Get free test tokens:
-                  <br />• <strong>Solana:</strong> Get devnet SOL from the{' '}
+                  Works with any compatible wallet. Get free test tokens:
+                  <br />• <strong>Solana:</strong> Phantom, Solflare, Backpack - Get devnet SOL from{' '}
                   <a 
                     href="https://faucet.solana.com/" 
                     target="_blank" 
@@ -523,7 +601,7 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
                   >
                     Solana faucet
                   </a>
-                  <br />• <strong>Ethereum:</strong> Get Sepolia ETH from{' '}
+                  <br />• <strong>Ethereum:</strong> MetaMask, Coinbase, Trust - Get Sepolia ETH from{' '}
                   <a 
                     href="https://sepoliafaucet.com/" 
                     target="_blank" 
@@ -532,6 +610,7 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
                   >
                     Sepolia faucet
                   </a>
+                  <br />• <strong>Bitcoin:</strong> Unisat, Xverse, Leather - Testnet simulation for now
                 </p>
               </div>
             </div>
