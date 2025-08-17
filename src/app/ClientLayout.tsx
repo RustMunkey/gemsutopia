@@ -4,6 +4,8 @@ import { WishlistProvider } from '../contexts/WishlistContext';
 import { CookieProvider } from '../contexts/CookieContext';
 import { CurrencyProvider } from '../contexts/CurrencyContext';
 import { AuthProvider } from '../contexts/AuthContext';
+import { NotificationProvider } from '../contexts/NotificationContext';
+import { WalletProvider } from '../contexts/WalletContext';
 import CookieBanner from '../components/CookieBanner';
 
 export default function ClientLayout({
@@ -17,8 +19,12 @@ export default function ClientLayout({
         <CurrencyProvider>
           <WishlistProvider>
             <GemPouchProvider>
-              {children}
-              <CookieBanner />
+              <WalletProvider>
+                <NotificationProvider>
+                  {children}
+                  <CookieBanner />
+                </NotificationProvider>
+              </WalletProvider>
             </GemPouchProvider>
           </WishlistProvider>
         </CurrencyProvider>

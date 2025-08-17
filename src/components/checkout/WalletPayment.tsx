@@ -1,6 +1,11 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Wallet, CheckCircle, AlertCircle, Bitcoin, Coins } from 'lucide-react';
+import { Wallet, CheckCircle, AlertCircle } from 'lucide-react';
+import { TokenIcon } from '@web3icons/react';
+import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { fetchCryptoPrices, calculateCryptoAmount } from '@/lib/cryptoPrices';
+import { useCurrency } from '@/contexts/CurrencyContext';
+import { useWallet } from '@/contexts/WalletContext';
 
 type CryptoType = 'BTC' | 'SOL' | 'ETH';
 
@@ -15,41 +20,61 @@ interface CryptoOption {
   name: string;
   network: string;
   icon: React.ReactNode;
-  testPrice: number; // Simulated price for devnet
+}
+
+interface CryptoPrices {
+  bitcoin: { usd: number; cad: number };
+  ethereum: { usd: number; cad: number };
+  solana: { usd: number; cad: number };
 }
 
 export default function WalletPayment({ amount, onSuccess, onError }: WalletPaymentProps) {
-  const [selectedCrypto, setSelectedCrypto] = useState<CryptoType | null>(null);
+  const { currency } = useCurrency();
+  const { isConnected, walletAddress, selectedCrypto, connectWallet, disconnectWallet } = useWallet();
   const [isConnecting, setIsConnecting] = useState(false);
-  const [isConnected, setIsConnected] = useState(false);
-  const [walletAddress, setWalletAddress] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [cryptoPrices, setCryptoPrices] = useState<CryptoPrices | null>(null);
+  const [loadingPrices, setLoadingPrices] = useState(true);
 
   const cryptoOptions: CryptoOption[] = [
     {
       symbol: 'BTC',
       name: 'Bitcoin',
       network: 'Testnet',
-      icon: <Bitcoin className="h-6 w-6" />,
-      testPrice: 45000 // Simulated BTC price
+      icon: <TokenIcon symbol="bsv" variant="mono" size={24} color="#000000" />
     },
     {
       symbol: 'ETH',
       name: 'Ethereum',
       network: 'Sepolia Testnet',
-      icon: <Coins className="h-6 w-6" />,
-      testPrice: 2500 // Simulated ETH price
+      icon: <TokenIcon symbol="eth" variant="mono" size={24} color="#000000" />
     },
     {
       symbol: 'SOL',
       name: 'Solana',
       network: 'Devnet',
-      icon: <Coins className="h-6 w-6" />,
-      testPrice: 85 // Simulated SOL price
+      icon: <TokenIcon symbol="sol" variant="mono" size={24} color="#000000" />
     }
   ];
 
-  const connectWallet = async (cryptoType: CryptoType) => {
+  // Fetch real-time crypto prices on component mount
+  useEffect(() => {
+    const loadPrices = async () => {
+      try {
+        const prices = await fetchCryptoPrices();
+        setCryptoPrices(prices);
+      } catch (error) {
+        console.error('Failed to load crypto prices:', error);
+        onError('Failed to load current crypto prices. Please try again.');
+      } finally {
+        setLoadingPrices(false);
+      }
+    };
+
+    loadPrices();
+  }, [onError]);
+
+  const handleConnectWallet = async (cryptoType: CryptoType) => {
     setIsConnecting(true);
     
     try {
@@ -83,9 +108,7 @@ export default function WalletPayment({ amount, onSuccess, onError }: WalletPaym
       }
       
       if (address) {
-        setWalletAddress(address);
-        setIsConnected(true);
-        setSelectedCrypto(cryptoType);
+        connectWallet(cryptoType, address);
       }
     } catch (error: any) {
       console.error('Wallet connection error:', error);
@@ -96,13 +119,12 @@ export default function WalletPayment({ amount, onSuccess, onError }: WalletPaym
   };
 
   const getCryptoAmount = (cryptoType: CryptoType) => {
-    const crypto = cryptoOptions.find(c => c.symbol === cryptoType);
-    if (!crypto) return 0;
-    return amount / crypto.testPrice;
+    if (!cryptoPrices) return 0;
+    return calculateCryptoAmount(amount, cryptoType, currency as 'USD' | 'CAD', cryptoPrices);
   };
 
   const processPayment = async () => {
-    if (!isConnected || !walletAddress || !selectedCrypto) {
+    if (!isConnected || !walletAddress || !selectedCrypto || !cryptoPrices) {
       onError('Please connect your wallet first.');
       return;
     }
@@ -112,25 +134,121 @@ export default function WalletPayment({ amount, onSuccess, onError }: WalletPaym
     try {
       const cryptoAmount = getCryptoAmount(selectedCrypto);
       
-      // Simulate devnet/testnet transaction
-      console.log(`Processing ${selectedCrypto} payment:`, {
-        amount: cryptoAmount,
-        to: 'merchant_address_placeholder',
-        from: walletAddress,
-        network: cryptoOptions.find(c => c.symbol === selectedCrypto)?.network
-      });
-      
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      const mockTransactionId = `${selectedCrypto.toLowerCase()}_testnet_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      onSuccess(mockTransactionId);
+      if (selectedCrypto === 'SOL') {
+        // Process actual Solana devnet transaction
+        await processSolanaPayment(cryptoAmount);
+      } else {
+        // For BTC and ETH, use simulation for now
+        await processSimulatedPayment(selectedCrypto, cryptoAmount);
+      }
     } catch (error: any) {
       console.error('Payment processing error:', error);
-      onError('Payment failed. Please try again.');
+      onError(`Payment failed: ${error.message || 'Please try again.'}`);
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const processSolanaPayment = async (cryptoAmount: number) => {
+    try {
+      // Connect to Solana devnet with multiple RPC endpoints as fallback
+      let connection = new Connection('https://api.devnet.solana.com', 'confirmed');
+      
+      // Test connection first, fallback to alternative RPC if needed
+      try {
+        await connection.getLatestBlockhash();
+      } catch (error) {
+        console.log('Primary RPC failed, trying alternative...');
+        connection = new Connection('https://devnet.helius-rpc.com/?api-key=demo', 'confirmed');
+      }
+      
+      // Merchant wallet (you'll need to replace this with your actual merchant address)
+      const merchantAddress = new PublicKey('CFWAhZ8rCnX47rhCDPDuVqXNb5azzY5mc5bAM2xQk7SZ'); // Using your Phantom address for demo
+      
+      // Convert SOL amount to lamports
+      const lamports = Math.floor(cryptoAmount * LAMPORTS_PER_SOL);
+      
+      // Get Phantom provider
+      const { solana } = window as any;
+      if (!solana || !solana.isPhantom) {
+        throw new Error('Phantom wallet not found');
+      }
+
+      // Create transaction
+      const transaction = new Transaction().add(
+        SystemProgram.transfer({
+          fromPubkey: new PublicKey(walletAddress),
+          toPubkey: merchantAddress,
+          lamports: lamports,
+        })
+      );
+
+      // Get recent blockhash with retry logic
+      let blockhash;
+      try {
+        const blockHashInfo = await connection.getLatestBlockhash();
+        blockhash = blockHashInfo.blockhash;
+      } catch (error) {
+        console.error('Failed to get blockhash:', error);
+        throw new Error('Unable to connect to Solana network. Please try again.');
+      }
+      
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = new PublicKey(walletAddress);
+
+      // Sign and send transaction with error handling
+      let signature;
+      try {
+        const signedTransaction = await solana.signTransaction(transaction);
+        signature = await connection.sendRawTransaction(signedTransaction.serialize(), {
+          skipPreflight: false,
+          preflightCommitment: 'confirmed'
+        });
+      } catch (error: any) {
+        console.error('Transaction failed:', error);
+        if (error.message.includes('insufficient funds')) {
+          throw new Error('Insufficient SOL balance. Please add more SOL to your wallet.');
+        }
+        throw new Error('Transaction failed. Please try again.');
+      }
+      
+      // Wait for confirmation with timeout
+      try {
+        await connection.confirmTransaction(signature, 'confirmed');
+      } catch (error) {
+        console.warn('Confirmation timeout, but transaction may still succeed');
+        // Continue anyway as transaction might still be processed
+      }
+      
+      console.log('Solana transaction successful:', {
+        signature,
+        amount: cryptoAmount,
+        lamports,
+        from: walletAddress,
+        to: merchantAddress.toString()
+      });
+
+      onSuccess(signature);
+    } catch (error: any) {
+      console.error('Solana payment error:', error);
+      throw new Error(`Solana payment failed: ${error.message}`);
+    }
+  };
+
+  const processSimulatedPayment = async (cryptoType: CryptoType, cryptoAmount: number) => {
+    // Simulate transaction for BTC and ETH
+    console.log(`Processing ${cryptoType} payment:`, {
+      amount: cryptoAmount,
+      to: 'merchant_address_placeholder',
+      from: walletAddress,
+      network: cryptoOptions.find(c => c.symbol === cryptoType)?.network
+    });
+    
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    
+    const mockTransactionId = `${cryptoType.toLowerCase()}_testnet_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    onSuccess(mockTransactionId);
   };
 
   const formatAddress = (address: string) => {
@@ -148,34 +266,55 @@ export default function WalletPayment({ amount, onSuccess, onError }: WalletPaym
         <div>
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Choose Cryptocurrency</h3>
-            <div className="space-y-3">
-              {cryptoOptions.map((crypto) => (
-                <button
-                  key={crypto.symbol}
-                  onClick={() => connectWallet(crypto.symbol)}
-                  disabled={isConnecting}
-                  className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="text-blue-600">
-                        {crypto.icon}
+            
+            {loadingPrices ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                <p className="text-gray-600">Loading current crypto prices...</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {cryptoOptions.map((crypto) => {
+                  const currentPrice = cryptoPrices ? 
+                    (currency === 'CAD' ? 
+                      cryptoPrices[crypto.symbol.toLowerCase() as keyof typeof cryptoPrices]?.cad :
+                      cryptoPrices[crypto.symbol.toLowerCase() as keyof typeof cryptoPrices]?.usd
+                    ) : 0;
+                  
+                  return (
+                    <button
+                      key={crypto.symbol}
+                      onClick={() => handleConnectWallet(crypto.symbol)}
+                      disabled={isConnecting || !cryptoPrices}
+                      className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="flex-shrink-0">
+                            {crypto.icon}
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-gray-900">{crypto.name} ({crypto.symbol})</h4>
+                            <p className="text-sm text-gray-600">{crypto.network}</p>
+                            {crypto.symbol === 'SOL' && (
+                              <p className="text-xs text-green-600 font-medium">✓ Real transactions</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-lg font-bold text-gray-900">
+                            {getCryptoAmount(crypto.symbol).toFixed(6)} {crypto.symbol}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            ${currentPrice?.toLocaleString()} {currency} (live price)
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="font-semibold text-gray-900">{crypto.name} ({crypto.symbol})</h4>
-                        <p className="text-sm text-gray-600">{crypto.network}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-gray-900">
-                        {getCryptoAmount(crypto.symbol).toFixed(6)} {crypto.symbol}
-                      </p>
-                      <p className="text-sm text-gray-500">${crypto.testPrice.toLocaleString()} (test price)</p>
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {isConnecting && (
@@ -191,7 +330,15 @@ export default function WalletPayment({ amount, onSuccess, onError }: WalletPaym
               <div>
                 <h4 className="text-sm font-semibold text-orange-900">Testnet Payment</h4>
                 <p className="text-sm text-orange-800">
-                  This is a demo using test networks. No real cryptocurrency will be charged. You'll need the appropriate wallet installed (MetaMask for ETH, Phantom for SOL).
+                  This uses test networks with real blockchain transactions. For Solana, make sure you have devnet SOL in your Phantom wallet. You can get free devnet SOL from the{' '}
+                  <a 
+                    href="https://faucet.solana.com/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="underline hover:text-orange-700"
+                  >
+                    Solana faucet
+                  </a>.
                 </p>
               </div>
             </div>
@@ -249,11 +396,7 @@ export default function WalletPayment({ amount, onSuccess, onError }: WalletPaym
           </button>
 
           <button
-            onClick={() => {
-              setIsConnected(false);
-              setWalletAddress('');
-              setSelectedCrypto(null);
-            }}
+            onClick={disconnectWallet}
             className="w-full text-gray-600 hover:text-gray-800 text-sm transition-colors"
           >
             Disconnect Wallet

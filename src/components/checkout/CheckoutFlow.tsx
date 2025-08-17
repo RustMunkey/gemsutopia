@@ -2,6 +2,8 @@
 import { useState } from 'react';
 import { useGemPouch } from '@/contexts/GemPouchContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { useWallet } from '@/contexts/WalletContext';
+import { useNotification } from '@/contexts/NotificationContext';
 import CartReview from './CartReview';
 import CustomerInfo from './CustomerInfo';
 import PaymentMethods from './PaymentMethods';
@@ -31,6 +33,8 @@ type CheckoutStep = 'cart' | 'customer' | 'payment-method' | 'payment' | 'succes
 export default function CheckoutFlow() {
   const { items, clearPouch } = useGemPouch();
   const { formatPrice } = useCurrency();
+  const { isConnected, disconnectWallet } = useWallet();
+  const { showNotification } = useNotification();
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('cart');
   const [checkoutData, setCheckoutData] = useState<CheckoutData>({
     customer: {
@@ -88,6 +92,12 @@ export default function CheckoutFlow() {
   };
 
   const goBack = () => {
+    // If wallet is connected and we're going back from payment step, disconnect wallet
+    if (currentStep === 'payment' && isConnected) {
+      disconnectWallet();
+      showNotification('info', 'Wallet disconnected');
+    }
+    
     switch (currentStep) {
       case 'customer':
         setCurrentStep('cart');
