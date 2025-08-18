@@ -2,7 +2,7 @@
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { IconTrash } from '@tabler/icons-react';
-import { Star, ShoppingBag } from 'lucide-react';
+import { Star, ShoppingBag, Check } from 'lucide-react';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useGemPouch } from '@/contexts/GemPouchContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -11,7 +11,7 @@ import Link from 'next/link';
 
 export default function Wishlist() {
   const { items, removeItem, clearWishlist } = useWishlist();
-  const { addItem: addToGemPouch, isInPouch } = useGemPouch();
+  const { addItem: addToGemPouch, removeItem: removeFromGemPouch, isInPouch } = useGemPouch();
   const { formatPrice } = useCurrency();
   
   const addAllToCart = () => {
@@ -20,6 +20,14 @@ export default function Wishlist() {
         addToGemPouch(item);
       }
     });
+  };
+
+  const toggleGemPouch = (item: any) => {
+    if (isInPouch(item.id)) {
+      removeFromGemPouch(item.id);
+    } else {
+      addToGemPouch(item);
+    }
   };
   
   const availableItems = items.filter(item => !isInPouch(item.id));
@@ -104,20 +112,19 @@ export default function Wishlist() {
                   </div>
                   <div className="flex items-center gap-3">
                     <button
-                      onClick={() => addToGemPouch(item)}
-                      disabled={isInPouch(item.id)}
-                      className={`p-2 rounded-lg transition-colors ${
-                        isInPouch(item.id) 
-                          ? 'text-green-600 bg-green-100 cursor-not-allowed' 
-                          : 'text-black hover:bg-neutral-100'
-                      }`}
-                      title={isInPouch(item.id) ? 'Already in gem pouch' : 'Add to gem pouch'}
+                      onClick={() => toggleGemPouch(item)}
+                      className="text-black hover:text-neutral-600 transition-colors p-1 relative"
+                      title={isInPouch(item.id) ? 'Remove from gem pouch' : 'Add to gem pouch'}
                     >
-                      <ShoppingBag className="h-5 w-5" />
+                      <ShoppingBag className="h-6 w-6" strokeWidth={2} />
+                      {isInPouch(item.id) && (
+                        <Check className="absolute bottom-0 right-0 h-4 w-4 text-green-500" strokeWidth={4} />
+                      )}
                     </button>
                     <button
                       onClick={() => removeItem(item.id)}
                       className="text-red-600 hover:text-red-800 p-2"
+                      title="Remove from wishlist"
                     >
                       <IconTrash className="h-5 w-5" />
                     </button>

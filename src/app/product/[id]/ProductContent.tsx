@@ -162,25 +162,25 @@ export default function ProductContent({ product: initialProduct }: ProductConte
             
             <div className="space-y-3 md:space-y-4">
               <div className="w-full bg-black text-white py-3 md:py-4 px-6 md:px-8 rounded-full font-semibold text-base md:text-lg flex items-center justify-between min-h-[52px] md:min-h-[60px]">
-                <button 
+                <button
+                  type="button"
                   onClick={handleDecreaseQuantity}
                   className={`text-white hover:text-gray-300 text-xl font-bold w-8 h-8 flex items-center justify-center ${cartQuantity === 0 ? 'invisible' : ''}`}
                 >
                   -
                 </button>
-                <div className="flex-1 flex items-center justify-center">
-                  <button 
-                    onClick={handleIncreaseQuantity}
-                    disabled={cartQuantity >= product.inventory}
-                    className="text-center"
-                  >
-                    {cartQuantity > 0 ? `Add to Cart (${cartQuantity})` : 'Add to Cart'}
-                  </button>
-                </div>
                 <button 
                   onClick={handleIncreaseQuantity}
                   disabled={cartQuantity >= product.inventory}
-                  className={`text-white hover:text-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed text-xl font-bold w-8 h-8 flex items-center justify-center ${cartQuantity === 0 ? 'invisible' : ''}`}
+                  className="flex-1 flex items-center justify-center disabled:cursor-not-allowed"
+                >
+                  {cartQuantity > 0 ? `Add to Cart (${cartQuantity})` : 'Add to Cart'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleIncreaseQuantity}
+                  disabled={cartQuantity >= product.inventory}
+                  className={`text-white text-xl font-bold w-8 h-8 flex items-center justify-center ${cartQuantity === 0 ? 'invisible' : ''} ${cartQuantity >= product.inventory ? 'opacity-30' : 'hover:text-gray-300'}`}
                 >
                   +
                 </button>

@@ -8,6 +8,7 @@ import { NotificationProvider } from '../contexts/NotificationContext';
 import { WalletProvider } from '../contexts/WalletContext';
 import { InventoryProvider } from '../contexts/InventoryContext';
 import CookieBanner from '../components/CookieBanner';
+import PageViewTracker from '../components/PageViewTracker';
 
 export default function ClientLayout({
   children,
@@ -23,6 +24,7 @@ export default function ClientLayout({
               <GemPouchProvider>
                 <WalletProvider>
                   <NotificationProvider>
+                    <PageViewTracker />
                     {children}
                     <CookieBanner />
                   </NotificationProvider>

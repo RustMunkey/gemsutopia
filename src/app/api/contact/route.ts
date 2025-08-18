@@ -1,57 +1,102 @@
 import { NextRequest, NextResponse } from 'next/server';
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
+
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, message } = await request.json();
-
-    // Validate inputs
+    const { name, email, subject, message } = await request.json();
+    
+    // Validate required fields
     if (!name || !email || !message) {
-      return NextResponse.json(
-        { error: 'All fields are required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Name, email, and message are required' }, { status: 400 });
     }
 
-    // Create transporter (you'll need to configure this with your email service)
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json({ error: 'Invalid email format' }, { status: 400 });
+    }
+    
+    if (!process.env.RESEND_API_KEY || !resend) {
+      console.error('RESEND_API_KEY not configured');
+      return NextResponse.json({ error: 'Email service not configured' }, { status: 500 });
+    }
+
+    console.log('Sending contact form email to gemsutopia@gmail.com');
+    
+    const result = await resend.emails.send({
+      from: 'Gemsutopia Contact <orders@gemsutopia.com>',
+      to: ['gemsutopia@gmail.com'],
+      replyTo: email,
+      subject: subject ? `Contact Form: ${subject}` : `Contact Form from ${name}`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Contact Form Submission</title>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 30px; }
+            .logo { font-size: 24px; font-weight: bold; color: #000; margin-bottom: 5px; }
+            .field { background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 5px; }
+            .field-label { font-weight: bold; color: #000; margin-bottom: 5px; }
+            .message-content { background: #fff; padding: 15px; border: 1px solid #ddd; border-radius: 5px; white-space: pre-wrap; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="logo">💎 GEMSUTOPIA</div>
+            <p style="margin: 0; color: #666;">New Contact Form Submission</p>
+          </div>
+
+          <div class="field">
+            <div class="field-label">Customer Name:</div>
+            <div>${name}</div>
+          </div>
+
+          <div class="field">
+            <div class="field-label">Email Address:</div>
+            <div><a href="mailto:${email}">${email}</a></div>
+          </div>
+
+          ${subject ? `
+          <div class="field">
+            <div class="field-label">Subject:</div>
+            <div>${subject}</div>
+          </div>
+          ` : ''}
+
+          <div class="field">
+            <div class="field-label">Message:</div>
+            <div class="message-content">${message.replace(/\n/g, '<br>')}</div>
+          </div>
+
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 14px;">
+            <p><strong>Reply directly to this email</strong> to respond to the customer.</p>
+            <p>Received: ${new Date().toLocaleString('en-US', { 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+              timeZone: 'America/Edmonton'
+            })} (Mountain Time)</p>
+          </div>
+        </body>
+        </html>
+      `
     });
 
-    // Email content
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: 'gemsutopia@gmail.ca',
-      subject: `Contact Form Submission from ${name}`,
-      text: `
-Name: ${name}
-Email: ${email}
-Message: ${message}
-      `,
-      html: `
-        <h3>New Contact Form Submission</h3>
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Message:</strong> ${message}</p>
-      `,
-    };
+    console.log('Contact form email sent successfully:', result.data?.id);
+    return NextResponse.json({ success: true, message: 'Message sent successfully!', id: result.data?.id });
 
-    // Send email
-    await transporter.sendMail(mailOptions);
-
-    return NextResponse.json(
-      { message: 'Email sent successfully' },
-      { status: 200 }
-    );
   } catch (error) {
-    console.error('Error sending email:', error);
-    return NextResponse.json(
-      { error: 'Failed to send email' },
-      { status: 500 }
-    );
+    console.error('Contact form error:', error);
+    return NextResponse.json({ 
+      error: 'Failed to send message', 
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }

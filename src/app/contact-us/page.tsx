@@ -1,6 +1,5 @@
 'use client';
 import { useState, useRef, FormEvent } from 'react';
-import emailjs from '@emailjs/browser';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { IconMail, IconPhone, IconMapPin } from '@tabler/icons-react';
@@ -12,7 +11,7 @@ export default function ContactUs() {
   const [message, setMessage] = useState('');
   const { getContent } = useCMSContent();
 
-  const sendEmail = (e: FormEvent<HTMLFormElement>) => {
+  const sendEmail = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
     setMessage('');
@@ -23,26 +22,38 @@ export default function ContactUs() {
       return;
     }
 
-    // EmailJS configuration - you'll need to set these up at emailjs.com
-    const SERVICE_ID = 'service_gemsutopia';
-    const TEMPLATE_ID = 'template_contact';
-    const PUBLIC_KEY = 'your_public_key_here';
+    // Get form data
+    const formData = new FormData(form.current);
+    const data = {
+      name: formData.get('name') as string,
+      email: formData.get('email') as string,
+      subject: formData.get('subject') as string,
+      message: formData.get('message') as string,
+    };
 
-    emailjs
-      .sendForm(SERVICE_ID, TEMPLATE_ID, form.current, PUBLIC_KEY)
-      .then(
-        () => {
-          setMessage('Message sent successfully! We\'ll get back to you soon.');
-          form.current?.reset();
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        (error) => {
-          console.log('FAILED...', error.text);
-          setMessage('Failed to send message. Please try again or email us directly at gemsutopia@gmail.ca');
-        }
-      )
-      .finally(() => {
-        setIsLoading(false);
+        body: JSON.stringify(data),
       });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        setMessage('Message sent successfully! We\'ll get back to you soon.');
+        form.current?.reset();
+      } else {
+        setMessage(result.error || 'Failed to send message. Please try again.');
+      }
+    } catch (error) {
+      console.error('Contact form error:', error);
+      setMessage('Failed to send message. Please try again or email us directly at gemsutopia@gmail.com');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -100,7 +111,7 @@ export default function ContactUs() {
                   <input
                     type="text"
                     id="name"
-                    name="user_name"
+                    name="name"
                     required
                     className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                     placeholder="Your name"
@@ -114,10 +125,24 @@ export default function ContactUs() {
                   <input
                     type="email"
                     id="email"
-                    name="user_email"
+                    name="email"
                     required
                     className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                     placeholder="your@email.com"
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="subject" className="block text-sm font-medium text-black mb-2">
+                    Subject
+                  </label>
+                  <input
+                    type="text"
+                    id="subject"
+                    name="subject"
+                    required
+                    className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                    placeholder="What is this regarding?"
                   />
                 </div>
                 
