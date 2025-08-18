@@ -28,7 +28,7 @@ export default function OrderSuccess({ orderId, customerEmail, customerName, amo
     }
     
     const itemsSubtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const shippingAmount = 0; // Free shipping
+    const shippingAmount = 15; // $15 shipping in fiat
     
     // Tax calculation
     let taxRate = 0;
@@ -45,11 +45,11 @@ export default function OrderSuccess({ orderId, customerEmail, customerName, amo
     const totalAmount = itemsSubtotal + shippingAmount + taxAmount;
     
     if (cryptoCurrency && cryptoAmount) {
-      // For crypto payments: convert all amounts to crypto
-      const conversionRate = cryptoAmount / totalAmount;
+      // For crypto payments: convert all amounts to crypto based on total paid
+      const conversionRate = cryptoAmount / amount; // Use the actual fiat amount paid
       return {
         subtotal: itemsSubtotal * conversionRate,
-        tax: taxAmount * conversionRate,
+        tax: 0, // Crypto is tax-free
         shipping: shippingAmount * conversionRate,
       };
     } else {
@@ -154,7 +154,7 @@ export default function OrderSuccess({ orderId, customerEmail, customerName, amo
         // Calculate proper amounts based on payment method
         const calculateAmounts = () => {
           const itemsSubtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-          const shippingAmount = 0; // Free shipping
+          const shippingAmount = 15; // $15 shipping in fiat
           
           // Tax calculation based on payment method and currency
           let taxRate = 0;
@@ -172,11 +172,11 @@ export default function OrderSuccess({ orderId, customerEmail, customerName, amo
           const totalAmount = itemsSubtotal + shippingAmount + taxAmount;
           
           if (cryptoCurrency && cryptoAmount) {
-            // For crypto payments: convert all amounts to crypto
-            const conversionRate = cryptoAmount / totalAmount;
+            // For crypto payments: convert all amounts to crypto based on total paid
+            const conversionRate = cryptoAmount / amount; // Use the actual fiat amount paid
             return {
               subtotal: itemsSubtotal * conversionRate,
-              tax: taxAmount * conversionRate,
+              tax: 0, // Crypto is tax-free
               shipping: shippingAmount * conversionRate,
               total: cryptoAmount,
               currency: cryptoCurrency
