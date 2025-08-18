@@ -106,66 +106,79 @@ function generateReceiptHTML(order: OrderData): string {
         </div>
       </div>
 
-      <table class="items-table">
-        <thead>
-          <tr>
-            <th>Item</th>
-            <th>Quantity</th>
-            <th>Price</th>
-            <th>Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${order.items.map(item => `
+      <div style="margin: 20px 0;">
+        <h3 style="margin: 0 0 15px 0; color: #333; font-size: 18px;">📦 Items Purchased</h3>
+        <table class="items-table">
+          <thead>
             <tr>
-              <td>${item.name}</td>
-              <td><strong>${item.quantity}</strong></td>
-              ${order.paymentMethod === 'crypto' && order.cryptoCurrency ? `
-                <td>${item.price.toFixed(8)} ${order.cryptoCurrency}</td>
-                <td><strong>${(item.price * item.quantity).toFixed(8)} ${order.cryptoCurrency}</strong></td>
-              ` : `
-                <td>$${item.price.toFixed(2)} ${order.currency}</td>
-                <td><strong>$${(item.price * item.quantity).toFixed(2)} ${order.currency}</strong></td>
-              `}
+              <th style="text-align: left; padding: 12px; border-bottom: 2px solid #ddd; background: #f8f9fa;">Item</th>
+              <th style="text-align: center; padding: 12px; border-bottom: 2px solid #ddd; background: #f8f9fa;">Qty</th>
+              <th style="text-align: right; padding: 12px; border-bottom: 2px solid #ddd; background: #f8f9fa;">Unit Price</th>
+              <th style="text-align: right; padding: 12px; border-bottom: 2px solid #ddd; background: #f8f9fa;">Total</th>
             </tr>
-          `).join('')}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            ${order.items.map(item => `
+              <tr>
+                <td style="padding: 12px; border-bottom: 1px solid #ddd;">
+                  <strong>${item.name}</strong><br>
+                  <small style="color: #666;">Premium ethically sourced gemstone</small>
+                </td>
+                <td style="text-align: center; padding: 12px; border-bottom: 1px solid #ddd;">
+                  <strong style="color: #000;">${item.quantity}</strong>
+                </td>
+                ${order.paymentMethod === 'crypto' && order.cryptoCurrency ? `
+                  <td style="text-align: right; padding: 12px; border-bottom: 1px solid #ddd;">${item.price.toFixed(8)} ${order.cryptoCurrency}</td>
+                  <td style="text-align: right; padding: 12px; border-bottom: 1px solid #ddd;">
+                    <strong style="color: #000;">${(item.price * item.quantity).toFixed(8)} ${order.cryptoCurrency}</strong>
+                  </td>
+                ` : `
+                  <td style="text-align: right; padding: 12px; border-bottom: 1px solid #ddd;">$${item.price.toFixed(2)} ${order.currency}</td>
+                  <td style="text-align: right; padding: 12px; border-bottom: 1px solid #ddd;">
+                    <strong style="color: #000;">$${(item.price * item.quantity).toFixed(2)} ${order.currency}</strong>
+                  </td>
+                `}
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
 
       <div class="totals">
+        <h3 style="margin: 0 0 15px 0; color: #333; font-size: 18px;">💰 Order Summary</h3>
         ${order.paymentMethod === 'crypto' && order.cryptoCurrency ? `
-          <div class="total-row">
-            <span>Subtotal:</span>
-            <span>${order.subtotal.toFixed(8)} ${order.cryptoCurrency}</span>
+          <div class="total-row" style="display: flex; justify-content: space-between; margin: 8px 0; padding: 8px 0;">
+            <span style="color: #666;">Subtotal:</span>
+            <span style="font-weight: 500;">${order.subtotal.toFixed(8)} ${order.cryptoCurrency}</span>
           </div>
-          <div class="total-row">
-            <span>Shipping:</span>
-            <span>${order.shipping === 0 || order.shipping.toFixed(8) === '0.00000000' ? 'Free' : `${order.shipping.toFixed(8)} ${order.cryptoCurrency}`}</span>
+          <div class="total-row" style="display: flex; justify-content: space-between; margin: 8px 0; padding: 8px 0;">
+            <span style="color: #666;">Shipping:</span>
+            <span style="font-weight: 500; color: #28a745;">${order.shipping === 0 || order.shipping.toFixed(8) === '0.00000000' ? 'FREE' : `${order.shipping.toFixed(8)} ${order.cryptoCurrency}`}</span>
           </div>
-          <div class="total-row">
-            <span>Tax:</span>
-            <span>${order.tax === 0 || order.tax.toFixed(8) === '0.00000000' ? 'Tax Free (Crypto)' : `${order.tax.toFixed(8)} ${order.cryptoCurrency}`}</span>
+          <div class="total-row" style="display: flex; justify-content: space-between; margin: 8px 0; padding: 8px 0;">
+            <span style="color: #666;">Tax:</span>
+            <span style="font-weight: 500; color: #28a745;">${order.tax === 0 || order.tax.toFixed(8) === '0.00000000' ? 'TAX FREE (Crypto)' : `${order.tax.toFixed(8)} ${order.cryptoCurrency}`}</span>
           </div>
-          <div class="total-row total-final">
-            <span>Total Paid:</span>
-            <span>${order.total.toFixed(8)} ${order.cryptoCurrency}</span>
+          <div class="total-row total-final" style="display: flex; justify-content: space-between; margin: 15px 0 0 0; padding: 15px 0 0 0; border-top: 2px solid #000; font-weight: bold; font-size: 18px;">
+            <span>TOTAL PAID:</span>
+            <span style="color: #000;">${order.total.toFixed(8)} ${order.cryptoCurrency}</span>
           </div>
         ` : `
-          <div class="total-row">
-            <span>Subtotal:</span>
-            <span>$${order.subtotal.toFixed(2)} ${order.currency}</span>
+          <div class="total-row" style="display: flex; justify-content: space-between; margin: 8px 0; padding: 8px 0;">
+            <span style="color: #666;">Subtotal:</span>
+            <span style="font-weight: 500;">$${order.subtotal.toFixed(2)} ${order.currency}</span>
           </div>
-          <div class="total-row">
-            <span>Shipping:</span>
-            <span>${order.shipping === 0 ? 'Free' : `$${order.shipping.toFixed(2)} ${order.currency}`}</span>
+          <div class="total-row" style="display: flex; justify-content: space-between; margin: 8px 0; padding: 8px 0;">
+            <span style="color: #666;">Shipping:</span>
+            <span style="font-weight: 500; color: #28a745;">${order.shipping === 0 ? 'FREE' : `$${order.shipping.toFixed(2)} ${order.currency}`}</span>
           </div>
-          <div class="total-row">
-            <span>Tax (HST):</span>
-            <span>$${order.tax.toFixed(2)} ${order.currency}</span>
+          <div class="total-row" style="display: flex; justify-content: space-between; margin: 8px 0; padding: 8px 0;">
+            <span style="color: #666;">Tax (${order.currency === 'CAD' ? 'HST' : 'Sales Tax'}):</span>
+            <span style="font-weight: 500;">$${order.tax.toFixed(2)} ${order.currency}</span>
           </div>
-          <div class="total-row total-final">
-            <span>Total Paid:</span>
-            <span>$${order.total.toFixed(2)} ${order.currency}</span>
+          <div class="total-row total-final" style="display: flex; justify-content: space-between; margin: 15px 0 0 0; padding: 15px 0 0 0; border-top: 2px solid #000; font-weight: bold; font-size: 18px;">
+            <span>TOTAL PAID:</span>
+            <span style="color: #000;">$${order.total.toFixed(2)} ${order.currency}</span>
           </div>
         `}
       </div>

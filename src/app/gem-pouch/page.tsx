@@ -85,7 +85,7 @@ export default function GemPouch() {
               <div className="bg-white rounded-lg shadow-lg p-6">
                 <div className="flex justify-between items-center mb-6">
                   <span className="text-xl font-semibold text-black">Total:</span>
-                  <span className="text-2xl font-bold text-black">${totalPrice}</span>
+                  <span className="text-2xl font-bold text-black">{formatPrice(totalPrice)}</span>
                 </div>
                 <Link href="/checkout" className="block w-full bg-black text-white py-3 px-8 rounded-full font-semibold hover:bg-neutral-800 transition-colors text-center">
                   Proceed to Checkout
