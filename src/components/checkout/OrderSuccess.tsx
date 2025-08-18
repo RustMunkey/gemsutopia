@@ -20,6 +20,49 @@ interface OrderSuccessProps {
 }
 
 export default function OrderSuccess({ orderId, customerEmail, customerName, amount, cryptoAmount, currency = 'CAD', cryptoCurrency, items = [], subtotal, tax, shipping, cryptoPrices }: OrderSuccessProps) {
+  
+  // Calculate proper amounts for display
+  const calculateDisplayAmounts = () => {
+    if (!items || items.length === 0) {
+      return { subtotal: 0, tax: 0, shipping: 0 };
+    }
+    
+    const itemsSubtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const shippingAmount = 0; // Free shipping
+    
+    // Tax calculation
+    let taxRate = 0;
+    if (!cryptoCurrency) {
+      if (currency === 'CAD') {
+        taxRate = 0.15; // 15% HST for Canada
+      } else if (currency === 'USD') {
+        taxRate = 0.08; // 8% average US sales tax
+      }
+    }
+    // Crypto payments are tax-free (taxRate remains 0)
+    
+    const taxAmount = itemsSubtotal * taxRate;
+    const totalAmount = itemsSubtotal + shippingAmount + taxAmount;
+    
+    if (cryptoCurrency && cryptoAmount) {
+      // For crypto payments: convert all amounts to crypto
+      const conversionRate = cryptoAmount / totalAmount;
+      return {
+        subtotal: itemsSubtotal * conversionRate,
+        tax: taxAmount * conversionRate,
+        shipping: shippingAmount * conversionRate,
+      };
+    } else {
+      // For fiat payments: use fiat amounts
+      return {
+        subtotal: itemsSubtotal,
+        tax: taxAmount,
+        shipping: shippingAmount,
+      };
+    }
+  };
+
+  const displayAmounts = calculateDisplayAmounts();
   const [transactionId, setTransactionId] = useState<string>('');
   const [walletAddress, setWalletAddress] = useState<string>('');
   const [emailSent, setEmailSent] = useState(false);
@@ -312,25 +355,60 @@ export default function OrderSuccess({ orderId, customerEmail, customerName, amo
                   {/* Items */}
                   {items.length > 0 && (
                     <div className="space-y-1 mb-3">
-                      {items.map((item, index) => (
-                        <div key={index} className="flex justify-between text-sm">
-                          <span className="text-gray-600">
-                            {item.name} {item.quantity > 1 && `(×${item.quantity})`}
-                          </span>
-                          <span>${(item.price * item.quantity).toFixed(2)}</span>
-                        </div>
-                      ))}
+                      {items.map((item, index) => {
+                        const itemTotal = item.price * item.quantity;
+                        const itemCryptoTotal = cryptoCurrency && cryptoAmount ? 
+                          (itemTotal * (cryptoAmount / (displayAmounts.subtotal + displayAmounts.tax + displayAmounts.shipping))) : 
+                          itemTotal;
+                        
+                        return (
+                          <div key={index} className="flex justify-between text-sm">
+                            <span className="text-gray-600">
+                              {item.name} {item.quantity > 1 && `(×${item.quantity})`}
+                            </span>
+                            <span>
+                              {cryptoCurrency ? 
+                                `${itemCryptoTotal.toFixed(8)} ${cryptoCurrency}` : 
+                                `$${itemTotal.toFixed(2)} ${currency}`
+                              }
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                   
-                  {/* Financial breakdown with dual currency support */}
-                  {subtotal !== undefined && (
-                    <div className="space-y-2 text-sm border-t border-gray-200 pt-2">
-                      {formatDualCurrency(subtotal, 'Subtotal')}
-                      {shipping !== undefined && formatDualCurrency(shipping, 'Shipping')}
-                      {tax !== undefined && formatDualCurrency(tax, 'Tax (HST)')}
+                  {/* Financial breakdown */}
+                  <div className="space-y-2 text-sm border-t border-gray-200 pt-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Subtotal:</span>
+                      <span>
+                        {cryptoCurrency ? 
+                          `${displayAmounts.subtotal.toFixed(8)} ${cryptoCurrency}` : 
+                          `$${displayAmounts.subtotal.toFixed(2)} ${currency}`
+                        }
+                      </span>
                     </div>
-                  )}
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Shipping:</span>
+                      <span>
+                        {displayAmounts.shipping === 0 ? 'Free' : 
+                          cryptoCurrency ? 
+                            `${displayAmounts.shipping.toFixed(8)} ${cryptoCurrency}` : 
+                            `$${displayAmounts.shipping.toFixed(2)} ${currency}`
+                        }
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Tax:</span>
+                      <span>
+                        {cryptoCurrency ? 
+                          (displayAmounts.tax === 0 ? 'Tax Free (Crypto)' : `${displayAmounts.tax.toFixed(8)} ${cryptoCurrency}`) :
+                          `$${displayAmounts.tax.toFixed(2)} ${currency}`
+                        }
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </>
             )}
