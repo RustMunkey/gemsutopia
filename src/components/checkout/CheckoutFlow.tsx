@@ -65,7 +65,7 @@ export default function CheckoutFlow() {
   } | null>(null);
 
   // Calculate totals
-  const subtotal = items.reduce((sum, item) => sum + item.price, 0);
+  const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const tax = subtotal * 0.13; // 13% HST for Canada
   const shipping = subtotal > 100 ? 0 : 15; // Free shipping over $100
   const total = subtotal + tax + shipping;
@@ -249,7 +249,7 @@ export default function CheckoutFlow() {
                     currency={paymentInfo?.currency || 'CAD'}
                     cryptoCurrency={paymentInfo?.cryptoCurrency}
                     cryptoPrices={paymentInfo?.cryptoPrices}
-                    items={items.map(item => ({ ...item, quantity: 1 }))}
+                    items={items}
                     subtotal={subtotal}
                     tax={tax}
                     shipping={shipping}
@@ -291,8 +291,9 @@ export default function CheckoutFlow() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900 truncate">{item.name}</p>
+                        <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
                       </div>
-                      <p className="text-sm font-medium text-gray-900">{formatPrice(item.price)}</p>
+                      <p className="text-sm font-medium text-gray-900">{formatPrice(item.price * item.quantity)}</p>
                     </div>
                   ))}
                 </div>

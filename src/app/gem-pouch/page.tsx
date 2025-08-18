@@ -9,9 +9,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 export default function GemPouch() {
-  const { items, removeItem } = useGemPouch();
+  const { items, removeItem, updateQuantity } = useGemPouch();
   const { formatPrice } = useCurrency();
-  const totalPrice = items.reduce((sum, item) => sum + item.price, 0);
+  const totalPrice = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   return (
     <div className="min-h-[200vh] flex flex-col relative">
       {/* Fixed Background */}
@@ -69,7 +69,22 @@ export default function GemPouch() {
                     </div>
                     <div className="flex-grow">
                       <h3 className="text-xl font-semibold text-black mb-2">{item.name}</h3>
-                      <p className="text-lg font-bold text-black">{formatPrice(item.price)}</p>
+                      <p className="text-lg font-bold text-black">{formatPrice(item.price * item.quantity)}</p>
+                      <div className="flex items-center gap-3 mt-2">
+                        <button
+                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          className="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-black font-bold"
+                        >
+                          −
+                        </button>
+                        <span className="font-medium text-black">Qty: {item.quantity}</span>
+                        <button
+                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          className="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-black font-bold"
+                        >
+                          +
+                        </button>
+                      </div>
                     </div>
                     <button
                       onClick={() => removeItem(item.id)}

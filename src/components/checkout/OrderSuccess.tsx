@@ -38,14 +38,16 @@ export default function OrderSuccess({ orderId, customerEmail, customerName, amo
       return { subtotal: 0, tax: 0, shipping: 0 };
     }
     
+    // Calculate proper subtotal using actual quantities
     const itemsSubtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const shippingAmount = 15; // $15 shipping in fiat
+    const shippingAmount = itemsSubtotal > 100 ? 0 : 15; // Free shipping over $100
     
-    // Tax calculation
+    // Tax calculation based on payment method and currency
     let taxRate = 0;
     if (!cryptoCurrency) {
+      // Fiat payments: apply proper tax based on currency/country
       if (currency === 'CAD') {
-        taxRate = 0.15; // 15% HST for Canada
+        taxRate = 0.13; // 13% HST for Canada (matches CheckoutFlow)
       } else if (currency === 'USD') {
         taxRate = 0.08; // 8% average US sales tax
       }
@@ -53,11 +55,11 @@ export default function OrderSuccess({ orderId, customerEmail, customerName, amo
     // Crypto payments are tax-free (taxRate remains 0)
     
     const taxAmount = itemsSubtotal * taxRate;
-    const totalAmount = itemsSubtotal + shippingAmount + taxAmount;
+    const fiatTotal = itemsSubtotal + shippingAmount + taxAmount;
     
     if (cryptoCurrency && cryptoAmount) {
-      // For crypto payments: convert all amounts to crypto based on total paid
-      const conversionRate = cryptoAmount / amount; // Use the actual fiat amount paid
+      // For crypto payments: convert all amounts to crypto
+      const conversionRate = cryptoAmount / fiatTotal;
       return {
         subtotal: itemsSubtotal * conversionRate,
         tax: 0, // Crypto is tax-free
@@ -162,17 +164,17 @@ export default function OrderSuccess({ orderId, customerEmail, customerName, amo
 
         const emailJSResult = await sendOrderReceiptEmail(emailJSData);
         
-        // Calculate proper amounts based on payment method
+        // Calculate proper amounts based on payment method (SAME LOGIC AS DISPLAY)
         const calculateAmounts = () => {
           const itemsSubtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-          const shippingAmount = 15; // $15 shipping in fiat
+          const shippingAmount = itemsSubtotal > 100 ? 0 : 15; // Free shipping over $100
           
           // Tax calculation based on payment method and currency
           let taxRate = 0;
           if (!cryptoCurrency) {
             // Fiat payments: apply proper tax based on currency/country
             if (currency === 'CAD') {
-              taxRate = 0.15; // 15% HST for Canada
+              taxRate = 0.13; // 13% HST for Canada (matches CheckoutFlow)
             } else if (currency === 'USD') {
               taxRate = 0.08; // 8% average US sales tax
             }
@@ -180,11 +182,11 @@ export default function OrderSuccess({ orderId, customerEmail, customerName, amo
           // Crypto payments are tax-free (taxRate remains 0)
           
           const taxAmount = itemsSubtotal * taxRate;
-          const totalAmount = itemsSubtotal + shippingAmount + taxAmount;
+          const fiatTotal = itemsSubtotal + shippingAmount + taxAmount;
           
           if (cryptoCurrency && cryptoAmount) {
-            // For crypto payments: convert all amounts to crypto based on total paid
-            const conversionRate = cryptoAmount / amount; // Use the actual fiat amount paid
+            // For crypto payments: convert all amounts to crypto
+            const conversionRate = cryptoAmount / fiatTotal;
             return {
               subtotal: itemsSubtotal * conversionRate,
               tax: 0, // Crypto is tax-free
@@ -198,7 +200,7 @@ export default function OrderSuccess({ orderId, customerEmail, customerName, amo
               subtotal: itemsSubtotal,
               tax: taxAmount,
               shipping: shippingAmount,
-              total: totalAmount,
+              total: fiatTotal,
               currency: currency || 'CAD'
             };
           }

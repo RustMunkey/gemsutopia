@@ -6,15 +6,18 @@ interface GemPouchItem {
   name: string;
   price: number;
   image: string;
+  quantity: number;
 }
 
 interface GemPouchContextType {
   items: GemPouchItem[];
-  addItem: (item: GemPouchItem) => void;
+  addItem: (item: Omit<GemPouchItem, 'quantity'>) => void;
   removeItem: (id: string) => void;
+  updateQuantity: (id: string, quantity: number) => void;
   clearPouch: () => void;
   isInPouch: (id: string) => boolean;
   itemCount: number;
+  totalItems: number;
 }
 
 const GemPouchContext = createContext<GemPouchContextType | undefined>(undefined);
@@ -44,18 +47,39 @@ export function GemPouchProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('gemPouch', JSON.stringify(items));
   }, [items, isClient]);
 
-  const addItem = (item: GemPouchItem) => {
-    setItems(prev => [...prev, item]); // Allow multiple copies of same item
+  const addItem = (item: Omit<GemPouchItem, 'quantity'>) => {
+    setItems(prev => {
+      const existingItem = prev.find(i => i.id === item.id);
+      if (existingItem) {
+        // Increase quantity if item already exists
+        return prev.map(i => 
+          i.id === item.id 
+            ? { ...i, quantity: i.quantity + 1 }
+            : i
+        );
+      } else {
+        // Add new item with quantity 1
+        return [...prev, { ...item, quantity: 1 }];
+      }
+    });
   };
 
   const removeItem = (id: string) => {
-    setItems(prev => {
-      const index = prev.findIndex(item => item.id === id);
-      if (index > -1) {
-        return prev.filter((_, i) => i !== index); // Remove only the first occurrence
-      }
-      return prev;
-    });
+    setItems(prev => prev.filter(item => item.id !== id));
+  };
+
+  const updateQuantity = (id: string, quantity: number) => {
+    if (quantity <= 0) {
+      removeItem(id);
+      return;
+    }
+    setItems(prev => 
+      prev.map(item => 
+        item.id === id 
+          ? { ...item, quantity }
+          : item
+      )
+    );
   };
 
   const clearPouch = () => {
@@ -66,16 +90,19 @@ export function GemPouchProvider({ children }: { children: ReactNode }) {
     return items.some(item => item.id === id);
   };
 
-  const itemCount = items.length;
+  const itemCount = items.length; // Number of unique items
+  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0); // Total quantity
 
   return (
     <GemPouchContext.Provider value={{
       items,
       addItem,
       removeItem,
+      updateQuantity,
       clearPouch,
       isInPouch,
-      itemCount
+      itemCount,
+      totalItems
     }}>
       {children}
     </GemPouchContext.Provider>
