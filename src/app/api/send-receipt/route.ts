@@ -91,9 +91,14 @@ function generateReceiptHTML(order: OrderData): string {
           ${order.items.map(item => `
             <tr>
               <td>${item.name}</td>
-              <td>${item.quantity}</td>
-              <td>$${item.price.toFixed(2)} ${order.currency}</td>
-              <td>$${(item.price * item.quantity).toFixed(2)} ${order.currency}</td>
+              <td><strong>${item.quantity}</strong></td>
+              ${order.paymentMethod === 'crypto' && order.cryptoCurrency ? `
+                <td>${item.price.toFixed(8)} ${order.cryptoCurrency}</td>
+                <td><strong>${(item.price * item.quantity).toFixed(8)} ${order.cryptoCurrency}</strong></td>
+              ` : `
+                <td>$${item.price.toFixed(2)} ${order.currency}</td>
+                <td><strong>$${(item.price * item.quantity).toFixed(2)} ${order.currency}</strong></td>
+              `}
             </tr>
           `).join('')}
         </tbody>

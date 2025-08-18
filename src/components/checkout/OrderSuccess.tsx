@@ -157,13 +157,26 @@ export default function OrderSuccess({ orderId, customerEmail, customerName, amo
           orderId,
           customerEmail,
           customerName: customerName || 'Customer',
-          items: items.map(item => ({
-            name: item.name,
-            price: cryptoCurrency && cryptoAmount ? 
-              (item.price * item.quantity * (cryptoAmount / amounts.total)) / item.quantity : 
-              item.price,
-            quantity: item.quantity
-          })),
+          items: items.map(item => {
+            if (cryptoCurrency && cryptoAmount) {
+              // For crypto: convert individual item price to crypto
+              const itemTotalFiat = item.price * item.quantity;
+              const itemTotalCrypto = itemTotalFiat * (cryptoAmount / (amounts.total || cryptoAmount));
+              const itemPriceCrypto = itemTotalCrypto / item.quantity;
+              return {
+                name: item.name,
+                price: itemPriceCrypto,
+                quantity: item.quantity
+              };
+            } else {
+              // For fiat: use original price
+              return {
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity
+              };
+            }
+          }),
           subtotal: amounts.subtotal,
           tax: amounts.tax,
           shipping: amounts.shipping,
