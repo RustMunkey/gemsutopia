@@ -191,29 +191,41 @@ function getExplorerLink(cryptoCurrency: string, transactionId: string): string 
 export async function POST(request: NextRequest) {
   try {
     const orderData: OrderData = await request.json();
+    console.log('Received order data for receipt:', orderData.orderId);
     
-    if (!resend || !process.env.RESEND_API_KEY) {
-      console.error('RESEND_API_KEY not configured');
-      return NextResponse.json({ error: 'Email service not configured' }, { status: 500 });
+    if (!process.env.RESEND_API_KEY) {
+      console.error('RESEND_API_KEY environment variable not found');
+      return NextResponse.json({ error: 'Email service not configured - missing API key' }, { status: 500 });
+    }
+    
+    if (!resend) {
+      console.error('Resend client failed to initialize');
+      return NextResponse.json({ error: 'Email service not configured - client error' }, { status: 500 });
     }
 
     const receiptHTML = generateReceiptHTML(orderData);
     
+    console.log('Attempting to send emails...');
+
     // Send to customer
+    console.log('Sending to customer:', orderData.customerEmail);
     const customerEmail = await resend.emails.send({
       from: 'Gemsutopia <orders@gemsutopia.com>',
       to: [orderData.customerEmail],
       subject: `Order Confirmation #${orderData.orderId.slice(-8).toUpperCase()} - Gemsutopia`,
       html: receiptHTML,
     });
+    console.log('Customer email result:', customerEmail);
 
     // Send to admin (gemsutopia@gmail.com)
+    console.log('Sending to admin: gemsutopia@gmail.com');
     const adminEmail = await resend.emails.send({
       from: 'Gemsutopia <orders@gemsutopia.com>',
       to: ['gemsutopia@gmail.com'],
       subject: `New Order Received #${orderData.orderId.slice(-8).toUpperCase()}`,
       html: receiptHTML,
     });
+    console.log('Admin email result:', adminEmail);
 
     console.log('Emails sent successfully:', {
       customer: customerEmail.data?.id,
