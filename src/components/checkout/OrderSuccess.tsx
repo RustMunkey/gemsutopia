@@ -108,6 +108,50 @@ export default function OrderSuccess({ orderId, customerEmail, customerName, amo
 
         const emailJSResult = await sendOrderReceiptEmail(emailJSData);
         
+        // Calculate proper amounts based on payment method
+        const calculateAmounts = () => {
+          const itemsSubtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+          const shippingAmount = 0; // Free shipping
+          
+          // Tax calculation based on payment method and currency
+          let taxRate = 0;
+          if (!cryptoCurrency) {
+            // Fiat payments: apply proper tax based on currency/country
+            if (currency === 'CAD') {
+              taxRate = 0.15; // 15% HST for Canada
+            } else if (currency === 'USD') {
+              taxRate = 0.08; // 8% average US sales tax
+            }
+          }
+          // Crypto payments are tax-free (taxRate remains 0)
+          
+          const taxAmount = itemsSubtotal * taxRate;
+          const totalAmount = itemsSubtotal + shippingAmount + taxAmount;
+          
+          if (cryptoCurrency && cryptoAmount) {
+            // For crypto payments: convert all amounts to crypto
+            const conversionRate = cryptoAmount / totalAmount;
+            return {
+              subtotal: itemsSubtotal * conversionRate,
+              tax: taxAmount * conversionRate,
+              shipping: shippingAmount * conversionRate,
+              total: cryptoAmount,
+              currency: cryptoCurrency
+            };
+          } else {
+            // For fiat payments: use fiat amounts
+            return {
+              subtotal: itemsSubtotal,
+              tax: taxAmount,
+              shipping: shippingAmount,
+              total: totalAmount,
+              currency: currency || 'CAD'
+            };
+          }
+        };
+
+        const amounts = calculateAmounts();
+
         // Send via Resend (new professional receipts)
         const resendData = {
           orderId,
@@ -115,17 +159,19 @@ export default function OrderSuccess({ orderId, customerEmail, customerName, amo
           customerName: customerName || 'Customer',
           items: items.map(item => ({
             name: item.name,
-            price: item.price,
+            price: cryptoCurrency && cryptoAmount ? 
+              (item.price * item.quantity * (cryptoAmount / amounts.total)) / item.quantity : 
+              item.price,
             quantity: item.quantity
           })),
-          subtotal: subtotal || 0,
-          tax: tax || 0,
-          shipping: shipping || 0,
-          total: amount,
+          subtotal: amounts.subtotal,
+          tax: amounts.tax,
+          shipping: amounts.shipping,
+          total: amounts.total,
           paymentMethod: cryptoCurrency ? 'crypto' : 'standard',
           cryptoAmount,
           cryptoCurrency,
-          currency: currency || 'CAD',
+          currency: amounts.currency,
           // Add additional crypto details if available
           transactionId: transactionId || orderId,
           network: cryptoCurrency ? getNetworkName(cryptoCurrency) : undefined,
