@@ -17,9 +17,20 @@ interface OrderSuccessProps {
   tax?: number;
   shipping?: number;
   cryptoPrices?: any; // For converting individual amounts to crypto
+  shippingAddress?: {
+    firstName: string;
+    lastName: string;
+    address: string;
+    apartment?: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+    phone?: string;
+  };
 }
 
-export default function OrderSuccess({ orderId, customerEmail, customerName, amount, cryptoAmount, currency = 'CAD', cryptoCurrency, items = [], subtotal, tax, shipping, cryptoPrices }: OrderSuccessProps) {
+export default function OrderSuccess({ orderId, customerEmail, customerName, amount, cryptoAmount, currency = 'CAD', cryptoCurrency, items = [], subtotal, tax, shipping, cryptoPrices, shippingAddress }: OrderSuccessProps) {
   
   // Calculate proper amounts for display
   const calculateDisplayAmounts = () => {
@@ -232,6 +243,8 @@ export default function OrderSuccess({ orderId, customerEmail, customerName, amo
           transactionId: transactionId || orderId,
           network: cryptoCurrency ? getNetworkName(cryptoCurrency) : undefined,
           walletAddress: walletAddress,
+          // Add shipping address
+          shippingAddress: shippingAddress,
         };
 
         const resendResponse = await fetch('/api/send-receipt', {
@@ -254,7 +267,7 @@ export default function OrderSuccess({ orderId, customerEmail, customerName, amo
     };
 
     sendReceiptEmails();
-  }, [orderId, customerEmail, customerName, amount, items, subtotal, tax, shipping, cryptoAmount, cryptoCurrency, currency]);
+  }, [orderId, customerEmail, customerName, amount, items, subtotal, tax, shipping, cryptoAmount, cryptoCurrency, currency, shippingAddress]);
 
   // Helper function to get network name for crypto currencies
   const getNetworkName = (crypto: string) => {

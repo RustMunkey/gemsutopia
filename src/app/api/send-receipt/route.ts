@@ -26,6 +26,18 @@ interface OrderData {
   network?: string;
   walletAddress?: string;
   currency: string;
+  // Shipping address details
+  shippingAddress?: {
+    firstName: string;
+    lastName: string;
+    address: string;
+    apartment?: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+    phone?: string;
+  };
 }
 
 function generateReceiptHTML(order: OrderData): string {
@@ -66,16 +78,32 @@ function generateReceiptHTML(order: OrderData): string {
 
       <div class="order-details">
         <div class="order-number">Order Receipt #${order.orderId.slice(-8).toUpperCase()}</div>
-        <p><strong>Customer:</strong> ${order.customerName}</p>
-        <p><strong>Email:</strong> ${order.customerEmail}</p>
-        <p><strong>Order Date:</strong> ${new Date().toLocaleDateString('en-US', { 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        })}</p>
-        <p class="success">✅ Payment Confirmed</p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px;">
+          <div>
+            <h4 style="margin: 0 0 10px 0; color: #333; font-size: 16px;">Customer Information</h4>
+            <p style="margin: 5px 0;"><strong>Name:</strong> ${order.customerName}</p>
+            <p style="margin: 5px 0;"><strong>Email:</strong> ${order.customerEmail}</p>
+            <p style="margin: 5px 0;"><strong>Order Date:</strong> ${new Date().toLocaleDateString('en-US', { 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}</p>
+            <p class="success" style="margin: 10px 0;">✅ Payment Confirmed</p>
+          </div>
+          ${order.shippingAddress ? `
+            <div>
+              <h4 style="margin: 0 0 10px 0; color: #333; font-size: 16px;">Shipping Address</h4>
+              <p style="margin: 5px 0;"><strong>${order.shippingAddress.firstName} ${order.shippingAddress.lastName}</strong></p>
+              <p style="margin: 5px 0;">${order.shippingAddress.address}</p>
+              ${order.shippingAddress.apartment ? `<p style="margin: 5px 0;">${order.shippingAddress.apartment}</p>` : ''}
+              <p style="margin: 5px 0;">${order.shippingAddress.city}, ${order.shippingAddress.state} ${order.shippingAddress.zipCode}</p>
+              <p style="margin: 5px 0;">${order.shippingAddress.country}</p>
+              ${order.shippingAddress.phone ? `<p style="margin: 5px 0;"><strong>Phone:</strong> ${order.shippingAddress.phone}</p>` : ''}
+            </div>
+          ` : ''}
+        </div>
       </div>
 
       <table class="items-table">

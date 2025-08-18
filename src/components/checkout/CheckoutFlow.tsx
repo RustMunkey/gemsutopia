@@ -253,6 +253,7 @@ export default function CheckoutFlow() {
                     subtotal={subtotal}
                     tax={tax}
                     shipping={shipping}
+                    shippingAddress={checkoutData.customer}
                   />
                 </div>
               </div>
