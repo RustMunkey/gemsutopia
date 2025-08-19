@@ -6,6 +6,47 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+// Function to determine if an order is a test order based on payment details
+function isTestOrderFromPayment(orderData: any): boolean {
+  const { payment } = orderData;
+  
+  // Check payment method and detect test vs live
+  switch (payment.paymentMethod) {
+    case 'stripe':
+    case 'card':
+      // Test Stripe payments use test keys and have payment IDs starting with pi_test_
+      return payment.paymentIntentId?.startsWith('pi_test_') || 
+             payment.currency === 'USD' || // Currently all USD is test
+             payment.currency === 'CAD';   // Currently all CAD is test
+             
+    case 'paypal':
+      // Test PayPal payments use sandbox environment
+      return payment.captureID?.includes('sandbox') ||
+             payment.captureID?.includes('test') ||
+             payment.currency === 'USD' || // Currently all USD is test
+             payment.currency === 'CAD';   // Currently all CAD is test
+             
+    case 'crypto':
+      // Determine test vs live based on network and currency
+      const testNetworks = ['devnet', 'sepolia', 'testnet'];
+      const isTestNetwork = testNetworks.some(network => 
+        payment.network?.toLowerCase().includes(network.toLowerCase())
+      );
+      
+      // Check for test cryptocurrencies
+      const isTestCrypto = payment.cryptoCurrency === 'tBTC' ||
+                          payment.cryptoCurrency?.toLowerCase().includes('test');
+      
+      // For now, all crypto payments are test until mainnet is enabled
+      // TODO: Update this when mainnet crypto payments are enabled
+      return true; // All current crypto is test (devnet/testnet)
+      
+    default:
+      // Unknown payment method, default to test for safety
+      return true;
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const orderData = await request.json();
@@ -19,6 +60,11 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+    
+    // Determine if this is a test order
+    const isTestOrder = isTestOrderFromPayment(orderData);
+    
+    console.log(`Order detection: ${isTestOrder ? 'TEST' : 'LIVE'} order for payment method: ${orderData.payment.paymentMethod}`);
     
     // Save order to database
     const { data, error } = await supabase
@@ -53,6 +99,7 @@ export async function POST(request: NextRequest) {
         tax: orderData.totals.tax,
         total: orderData.totals.total,
         status: 'confirmed',
+        is_test_order: isTestOrder,
         created_at: orderData.timestamp
       }])
       .select();
@@ -129,10 +176,23 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '50');
     const offset = parseInt(searchParams.get('offset') || '0');
+    const mode = searchParams.get('mode') || 'dev'; // 'dev' or 'live'
 
-    const { data: orders, error } = await supabase
+    console.log(`Fetching orders for ${mode} mode`);
+
+    // Filter orders based on mode
+    let query = supabase
       .from('orders')
-      .select('*')
+      .select('*');
+
+    // Apply mode-based filtering
+    if (mode === 'live') {
+      query = query.eq('is_test_order', false);
+    } else {
+      query = query.eq('is_test_order', true);
+    }
+
+    const { data: orders, error } = await query
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
@@ -144,7 +204,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ orders });
+    console.log(`Found ${orders?.length || 0} ${mode} orders`);
+
+    return NextResponse.json({ orders: orders || [] });
   } catch (error) {
     console.error('Error fetching orders:', error);
     return NextResponse.json(

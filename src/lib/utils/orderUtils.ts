@@ -30,12 +30,20 @@ interface Order {
 export const isTestOrder = (order: Order): boolean => {
   const { payment_details } = order;
   
+  // IMPORTANT: ALL CURRENT ORDERS ARE TEST ORDERS
+  // Since the site hasn't had any real orders yet, we treat all existing orders as test orders
+  
   // ALL USD/CAD payments are currently test payments (using test Stripe/PayPal keys)
   if (payment_details.currency === 'USD' || payment_details.currency === 'CAD') {
     return true;
   }
   
-  // Check for test crypto currencies
+  // ALL orders with no currency specified should also be test orders
+  if (!payment_details.currency) {
+    return true;
+  }
+  
+  // Check for test crypto currencies and networks
   if (payment_details.method === 'crypto') {
     const testNetworks = ['devnet', 'sepolia', 'testnet'];
     
@@ -46,8 +54,9 @@ export const isTestOrder = (order: Order): boolean => {
       return true;
     }
     
-    // Check for test Bitcoin (tBTC)
-    if (payment_details.crypto_currency === 'tBTC') {
+    // Check for test cryptocurrencies (tBTC, testnet tokens)
+    if (payment_details.crypto_currency === 'tBTC' ||
+        payment_details.crypto_currency?.toLowerCase().includes('test')) {
       return true;
     }
     
@@ -55,6 +64,16 @@ export const isTestOrder = (order: Order): boolean => {
     if (payment_details.payment_id?.includes('test') || 
         payment_details.wallet_address?.startsWith('tb1') || // Bitcoin testnet
         payment_details.payment_id?.length < 20) { // Short test transaction IDs
+      return true;
+    }
+    
+    // ALL current Solana payments are test orders (no live integration yet)
+    if (payment_details.crypto_currency === 'SOL') {
+      return true;
+    }
+    
+    // ALL current Ethereum payments are test orders (no live integration yet)  
+    if (payment_details.crypto_currency === 'ETH') {
       return true;
     }
   }
@@ -77,7 +96,9 @@ export const isTestOrder = (order: Order): boolean => {
     }
   }
   
-  return false;
+  // Since ALL current orders are test orders, default to true for safety
+  // This ensures live mode shows a clean slate until real orders come in
+  return true;
 };
 
 // Filter out test orders from an array

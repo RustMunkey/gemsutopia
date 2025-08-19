@@ -8,7 +8,7 @@ import {
   Eye,
   ArrowUpRight
 } from 'lucide-react';
-import { filterOrdersByMode, isTestOrder } from '@/lib/utils/orderUtils';
+import { isTestOrder } from '@/lib/utils/orderUtils';
 import { useMode } from '@/lib/contexts/ModeContext';
 
 interface MetricData {
@@ -146,7 +146,7 @@ export default function Overview({
 
       // Fetch dashboard stats
       Promise.all([
-        fetch('/api/orders').then(res => res.ok ? res.json() : { orders: [] }),
+        fetch(`/api/orders?mode=${mode}`).then(res => res.ok ? res.json() : { orders: [] }),
         fetch('/api/products?includeInactive=true', {
           headers: { Authorization: `Bearer ${token}` }
         }).then(res => res.ok ? res.json() : { products: [] })
@@ -155,8 +155,8 @@ export default function Overview({
         const orders = ordersData.orders || [];
         const products = productsData.products || [];
         
-        // Filter orders based on current mode
-        const filteredOrders = filterOrdersByMode(orders, mode);
+        // Orders are already filtered by backend based on mode
+        const filteredOrders = orders;
         
         // Calculate stats from filtered orders
         const totalRevenue = filteredOrders.reduce((sum: number, order: any) => {
@@ -313,15 +313,12 @@ export default function Overview({
   useEffect(() => {
     const fetchRecentOrders = async () => {
       try {
-        const response = await fetch('/api/orders');
+        const response = await fetch(`/api/orders?mode=${mode}&limit=5`);
         const data = await response.json();
         if (data.orders) {
-          const filteredOrders = filterOrdersByMode(data.orders, mode);
-          // Get the 5 most recent orders
-          const recent = filteredOrders
-            .sort((a: Order, b: Order) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-            .slice(0, 5);
-          setRecentOrders(recent);
+          setRecentOrders(data.orders);
+        } else {
+          setRecentOrders([]);
         }
       } catch (error) {
         console.error('Error fetching recent orders:', error);
@@ -579,47 +576,63 @@ export default function Overview({
           </button>
         </div>
         
-        <div className="space-y-4">
-          {recentOrders.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <ShoppingCart className="h-12 w-12 text-slate-500 mb-4" />
-              <p className="text-slate-400 font-medium">No recent orders</p>
-              <p className="text-sm text-slate-500">Orders will appear here once customers start purchasing</p>
-            </div>
-          ) : (
-            recentOrders.map((order) => (
-              <div
-                key={order.id}
-                className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors cursor-pointer"
-                onClick={onNavigateToOrders}
-              >
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="font-mono text-sm text-slate-300">#{order.id.slice(-8)}</span>
-                    <span className={`
-                      px-2 py-1 rounded text-xs font-medium border
-                      ${getStatusColor(order.status, isTestOrder(order))}
-                    `}>
-                      {isTestOrder(order) ? 'TEST' : order.status.toUpperCase()}
-                    </span>
-                  </div>
-                  <div className="mb-1">
-                    <p className="text-white font-medium text-sm">{order.customer_name}</p>
-                    <p className="text-slate-400 text-xs">{order.customer_email}</p>
-                  </div>
-                  <p className="text-xs text-slate-500">
-                    {order.items.length} item{order.items.length !== 1 ? 's' : ''}
-                  </p>
-                </div>
-                
-                <div className="text-right">
-                  <p className="font-semibold text-white text-sm">{formatPaymentAmount(order)}</p>
-                  <p className="text-xs text-slate-400">{formatDate(order.created_at)}</p>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
+        {recentOrders.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <ShoppingCart className="h-12 w-12 text-slate-500 mb-4" />
+            <p className="text-slate-400 font-medium">No recent orders</p>
+            <p className="text-sm text-slate-500">Orders will appear here once customers start purchasing</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-white/10">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Order ID</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Customer</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Total</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Status</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Date</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentOrders.map((order) => (
+                  <tr key={order.id} className="border-b border-white/10 hover:bg-white/5">
+                    <td className="py-4 px-4 text-slate-300 font-mono text-sm">
+                      #{order.id.slice(-8)}
+                    </td>
+                    <td className="py-4 px-4">
+                      <div>
+                        <p className="text-white font-medium">{order.customer_name}</p>
+                        <p className="text-slate-400 text-sm">{order.customer_email}</p>
+                      </div>
+                    </td>
+                    <td className="py-4 px-4">
+                      {formatPaymentAmount(order)}
+                    </td>
+                    <td className="py-4 px-4">
+                      <span className={`px-2 py-1 rounded text-xs font-medium border ${getStatusColor(order.status, isTestOrder(order))}`}>
+                        {isTestOrder(order) ? 'TEST' : order.status.toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="py-4 px-4 text-slate-300">
+                      {formatDate(order.created_at)}
+                    </td>
+                    <td className="py-4 px-4">
+                      <button
+                        onClick={onNavigateToOrders}
+                        className="flex items-center gap-2 px-3 py-1 bg-white/10 hover:bg-white/20 text-white rounded text-sm transition-colors"
+                      >
+                        <Eye className="h-3 w-3" />
+                        View
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

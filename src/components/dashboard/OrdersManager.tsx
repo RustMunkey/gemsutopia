@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Package, DollarSign, User, Calendar, Eye, Download, Trash2 } from 'lucide-react';
-import { isTestOrder, filterOrdersByMode } from '@/lib/utils/orderUtils';
+import { isTestOrder } from '@/lib/utils/orderUtils';
 import { useMode } from '@/lib/contexts/ModeContext';
 
 interface Order {
@@ -46,7 +46,7 @@ export default function OrdersManager() {
 
   const fetchOrders = async () => {
     try {
-      const response = await fetch('/api/orders');
+      const response = await fetch(`/api/orders?mode=${mode}`);
       const data = await response.json();
       if (data.orders) {
         setOrders(data.orders);
@@ -192,7 +192,7 @@ export default function OrdersManager() {
             </div>
           </div>
           <div>
-            <p className="text-2xl font-bold text-white mb-1">{filterOrdersByMode(orders, mode).length}</p>
+            <p className="text-2xl font-bold text-white mb-1">{orders.length}</p>
             <p className="text-slate-400 text-sm">Total Orders</p>
           </div>
         </div>
@@ -209,7 +209,7 @@ export default function OrdersManager() {
           </div>
           <div>
             <p className="text-2xl font-bold text-white mb-1">
-              ${filterOrdersByMode(orders, mode).reduce((sum, order) => sum + order.total, 0).toFixed(2)}
+              ${orders.reduce((sum: number, order: Order) => sum + order.total, 0).toFixed(2)}
             </p>
             <p className="text-slate-400 text-sm">Total Revenue</p>
           </div>
@@ -227,7 +227,7 @@ export default function OrdersManager() {
           </div>
           <div>
             <p className="text-2xl font-bold text-white mb-1">
-              {new Set(filterOrdersByMode(orders, mode).map(order => order.customer_email)).size}
+              {new Set(orders.map(order => order.customer_email)).size}
             </p>
             <p className="text-slate-400 text-sm">Unique Customers</p>
           </div>
@@ -245,7 +245,7 @@ export default function OrdersManager() {
           </div>
           <div>
             <p className="text-2xl font-bold text-white mb-1">
-              {filterOrdersByMode(orders, mode).filter(order => 
+              {orders.filter(order => 
                 new Date(order.created_at).getMonth() === new Date().getMonth()
               ).length}
             </p>
@@ -269,7 +269,7 @@ export default function OrdersManager() {
               </tr>
             </thead>
             <tbody>
-              {filterOrdersByMode(orders, mode).map((order) => (
+              {orders.map((order) => (
                 <tr key={order.id} className="border-b border-white/10 hover:bg-white/5">
                   <td className="py-4 px-6 text-slate-300 font-mono text-sm">
                     #{order.id.slice(-8)}
