@@ -53,8 +53,11 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-[200vh] bg-black flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+      <div className="h-screen bg-black flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+          <p className="text-white font-medium">Loading Dashboard...</p>
+        </div>
       </div>
     );
   }

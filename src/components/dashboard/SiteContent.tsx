@@ -420,8 +420,8 @@ export default function SiteContentManager() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-white">Site Content</h1>
+      <div className="bg-black rounded-2xl p-6 border border-white/20">
+        <h1 className="text-2xl font-bold text-white mb-2">Site Content ✨</h1>
         <p className="text-slate-400">Edit your front page content - manage hero images, featured products, about section, and more</p>
       </div>
 

@@ -1511,10 +1511,12 @@ export default function Pages() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Page Management</h1>
-          <p className="text-slate-400 mt-1">Edit content for static pages</p>
+      <div className="bg-black rounded-2xl p-6 border border-white/20">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-white mb-2">Page Management ✨</h1>
+            <p className="text-slate-400">Edit content for static pages</p>
+          </div>
         </div>
       </div>
 
@@ -1524,9 +1526,9 @@ export default function Pages() {
           <button
             key={page.id}
             onClick={() => setSelectedPage(page.id)}
-            className={`p-4 rounded-xl border text-left transition-all ${
+            className={`p-6 rounded-2xl border text-left transition-all ${
               selectedPage === page.id
-                ? 'bg-white/10 border-white/30 text-white'
+                ? 'bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20 text-white'
                 : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:border-white/20'
             }`}
           >

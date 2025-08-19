@@ -195,27 +195,29 @@ export default function Reviews() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white mb-2">Customer Reviews</h1>
-          <p className="text-slate-400">Manage customer feedback and testimonials</p>
-        </div>
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="bg-white text-black px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors"
-          >
-            Add Review
-          </button>
-          <div className="bg-black border border-white/20 rounded-lg px-4 py-2">
-            <span className="text-white text-lg font-semibold">{reviews.length}</span>
-            <span className="text-slate-400 ml-2">Total Reviews</span>
+      <div className="bg-black rounded-2xl p-6 border border-white/20">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-white mb-2">Customer Reviews ✨</h1>
+            <p className="text-slate-400">Manage customer feedback and testimonials</p>
+          </div>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="bg-white text-black px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors"
+            >
+              Add Review
+            </button>
+            <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border border-purple-500/20 rounded-xl px-6 py-3">
+              <span className="text-white text-lg font-semibold">{reviews.length}</span>
+              <span className="text-slate-400 ml-2">Total Reviews</span>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex gap-2 bg-black border border-white/20 rounded-lg p-1">
+      <div className="flex gap-2 bg-black border border-white/20 rounded-2xl p-1">
         {[
           { id: 'all', label: 'All Reviews' },
           { id: 'pending', label: 'Pending Approval' },
@@ -238,7 +240,7 @@ export default function Reviews() {
 
       {/* Reviews List */}
       {filteredReviews.length === 0 ? (
-        <div className="text-center py-12 text-slate-400 bg-black border border-white/20 rounded-lg">
+        <div className="text-center py-12 text-slate-400 bg-black border border-white/20 rounded-2xl">
           <Star className="h-12 w-12 mx-auto mb-4 text-slate-500" />
           <p className="text-lg font-medium">No reviews found</p>
           <p>Customer reviews will appear here once submitted</p>
@@ -246,7 +248,7 @@ export default function Reviews() {
       ) : (
         <div className="space-y-4">
           {filteredReviews.map((review) => (
-            <div key={review.id} className="bg-black border border-white/20 rounded-xl p-6">
+            <div key={review.id} className="bg-black border border-white/20 rounded-2xl p-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">

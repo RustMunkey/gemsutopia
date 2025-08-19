@@ -122,64 +122,85 @@ export default function Products() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Products</h1>
-          <p className="text-slate-400">Manage your product catalog</p>
+      <div className="bg-black rounded-2xl p-6 border border-white/20">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-white mb-2">Products ✨</h1>
+            <p className="text-slate-400">Manage your product catalog</p>
+          </div>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-2 bg-white hover:bg-white/80 text-black px-4 py-2 rounded-lg transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+            Add Product
+          </button>
         </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 bg-white hover:bg-white/80 text-black px-4 py-2 rounded-lg transition-colors"
-        >
-          <Plus className="h-4 w-4" />
-          Add Product
-        </button>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-black rounded-xl p-4 border border-white/20">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-500/10 rounded-lg">
-              <Package className="h-5 w-5 text-blue-400" />
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/20 rounded-2xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 bg-blue-500/20 rounded-xl">
+              <Package className="h-6 w-6 text-blue-400" />
             </div>
-            <div>
-              <p className="text-sm text-slate-400">Total Products</p>
-              <p className="text-xl font-bold text-white">{products.length}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-black rounded-xl p-4 border border-white/20">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-white/10 rounded-lg">
-              <Eye className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-400">Active</p>
-              <p className="text-xl font-bold text-white">{products.filter(p => p.is_active).length}</p>
+            <div className="flex items-center text-sm text-blue-400">
+              <Eye className="h-4 w-4" />
+              <span className="ml-1">Live</span>
             </div>
           </div>
-        </div>
-        <div className="bg-black rounded-xl p-4 border border-white/20">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-yellow-500/10 rounded-lg">
-              <Star className="h-5 w-5 text-yellow-400" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-400">Featured</p>
-              <p className="text-xl font-bold text-white">{products.filter(p => p.featured).length}</p>
-            </div>
+          <div>
+            <p className="text-2xl font-bold text-white mb-1">{products.length}</p>
+            <p className="text-slate-400 text-sm">Total Products</p>
           </div>
         </div>
-        <div className="bg-black rounded-xl p-4 border border-white/20">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-red-500/10 rounded-lg">
-              <Tag className="h-5 w-5 text-red-400" />
+
+        <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border border-emerald-500/20 rounded-2xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 bg-emerald-500/20 rounded-xl">
+              <Eye className="h-6 w-6 text-emerald-400" />
             </div>
-            <div>
-              <p className="text-sm text-slate-400">On Sale</p>
-              <p className="text-xl font-bold text-white">{products.filter(p => p.on_sale).length}</p>
+            <div className="flex items-center text-sm text-emerald-400">
+              <Package className="h-4 w-4" />
+              <span className="ml-1">Active</span>
             </div>
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-white mb-1">{products.filter(p => p.is_active).length}</p>
+            <p className="text-slate-400 text-sm">Active Products</p>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 border border-yellow-500/20 rounded-2xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 bg-yellow-500/20 rounded-xl">
+              <Star className="h-6 w-6 text-yellow-400" />
+            </div>
+            <div className="flex items-center text-sm text-yellow-400">
+              <Star className="h-4 w-4" />
+              <span className="ml-1">Featured</span>
+            </div>
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-white mb-1">{products.filter(p => p.featured).length}</p>
+            <p className="text-slate-400 text-sm">Featured Products</p>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-red-500/10 to-red-600/5 border border-red-500/20 rounded-2xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 bg-red-500/20 rounded-xl">
+              <Tag className="h-6 w-6 text-red-400" />
+            </div>
+            <div className="flex items-center text-sm text-red-400">
+              <Tag className="h-4 w-4" />
+              <span className="ml-1">Sale</span>
+            </div>
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-white mb-1">{products.filter(p => p.on_sale).length}</p>
+            <p className="text-slate-400 text-sm">On Sale</p>
           </div>
         </div>
       </div>

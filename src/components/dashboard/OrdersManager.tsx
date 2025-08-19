@@ -132,73 +132,99 @@ export default function OrdersManager() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Orders</h1>
-          <p className="text-slate-400">Manage customer orders and payments</p>
+      <div className="bg-black rounded-2xl p-6 border border-white/20">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-white mb-2">Orders ✨</h1>
+            <p className="text-slate-400">Manage customer orders and payments</p>
+          </div>
+          <button
+            onClick={exportOrders}
+            className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
+          >
+            <Download className="h-4 w-4" />
+            Export CSV
+          </button>
         </div>
-        <button
-          onClick={exportOrders}
-          className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
-        >
-          <Download className="h-4 w-4" />
-          Export CSV
-        </button>
       </div>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-black rounded-lg border border-white/20 p-6">
-          <div className="flex items-center gap-3">
-            <Package className="h-8 w-8 text-blue-400" />
-            <div>
-              <p className="text-slate-400 text-sm">Total Orders</p>
-              <p className="text-2xl font-bold text-white">{orders.length}</p>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/20 rounded-2xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 bg-blue-500/20 rounded-xl">
+              <Package className="h-6 w-6 text-blue-400" />
             </div>
+            <div className="flex items-center text-sm text-blue-400">
+              <Eye className="h-4 w-4" />
+              <span className="ml-1">Live</span>
+            </div>
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-white mb-1">{orders.length}</p>
+            <p className="text-slate-400 text-sm">Total Orders</p>
           </div>
         </div>
         
-        <div className="bg-black rounded-lg border border-white/20 p-6">
-          <div className="flex items-center gap-3">
-            <DollarSign className="h-8 w-8 text-green-400" />
-            <div>
-              <p className="text-slate-400 text-sm">Total Revenue</p>
-              <p className="text-2xl font-bold text-white">
-                ${orders.reduce((sum, order) => sum + order.total, 0).toFixed(2)}
-              </p>
+        <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border border-emerald-500/20 rounded-2xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 bg-emerald-500/20 rounded-xl">
+              <DollarSign className="h-6 w-6 text-emerald-400" />
             </div>
+            <div className="flex items-center text-sm text-emerald-400">
+              <DollarSign className="h-4 w-4" />
+              <span className="ml-1">Revenue</span>
+            </div>
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-white mb-1">
+              ${orders.reduce((sum, order) => sum + order.total, 0).toFixed(2)}
+            </p>
+            <p className="text-slate-400 text-sm">Total Revenue</p>
           </div>
         </div>
         
-        <div className="bg-black rounded-lg border border-white/20 p-6">
-          <div className="flex items-center gap-3">
-            <User className="h-8 w-8 text-purple-400" />
-            <div>
-              <p className="text-slate-400 text-sm">Unique Customers</p>
-              <p className="text-2xl font-bold text-white">
-                {new Set(orders.map(order => order.customer_email)).size}
-              </p>
+        <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border border-purple-500/20 rounded-2xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 bg-purple-500/20 rounded-xl">
+              <User className="h-6 w-6 text-purple-400" />
             </div>
+            <div className="flex items-center text-sm text-purple-400">
+              <User className="h-4 w-4" />
+              <span className="ml-1">Unique</span>
+            </div>
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-white mb-1">
+              {new Set(orders.map(order => order.customer_email)).size}
+            </p>
+            <p className="text-slate-400 text-sm">Unique Customers</p>
           </div>
         </div>
         
-        <div className="bg-black rounded-lg border border-white/20 p-6">
-          <div className="flex items-center gap-3">
-            <Calendar className="h-8 w-8 text-yellow-400" />
-            <div>
-              <p className="text-slate-400 text-sm">This Month</p>
-              <p className="text-2xl font-bold text-white">
-                {orders.filter(order => 
-                  new Date(order.created_at).getMonth() === new Date().getMonth()
-                ).length}
-              </p>
+        <div className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 border border-yellow-500/20 rounded-2xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 bg-yellow-500/20 rounded-xl">
+              <Calendar className="h-6 w-6 text-yellow-400" />
             </div>
+            <div className="flex items-center text-sm text-yellow-400">
+              <Calendar className="h-4 w-4" />
+              <span className="ml-1">Month</span>
+            </div>
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-white mb-1">
+              {orders.filter(order => 
+                new Date(order.created_at).getMonth() === new Date().getMonth()
+              ).length}
+            </p>
+            <p className="text-slate-400 text-sm">This Month</p>
           </div>
         </div>
       </div>
 
       {/* Orders Table */}
-      <div className="bg-black rounded-lg border border-white/20 overflow-hidden">
+      <div className="bg-black rounded-2xl border border-white/20 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-white/5 border-b border-white/20">

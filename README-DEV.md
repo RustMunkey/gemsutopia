@@ -15,7 +15,7 @@ src/
 │   │   ├── admin/         # Admin-only API routes
 │   │   ├── payments/      # Stripe, PayPal, crypto
 │   │   └── orders/        # Order management
-│   ├── auth/              # Authentication pages
+│   ├── auth/              # Authentication pagesan
 │   ├── checkout/          # Multi-step checkout flow
 │   ├── contact-us/        # Contact form with Resend API
 │   ├── product/[id]/      # Dynamic product pages
