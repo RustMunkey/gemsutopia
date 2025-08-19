@@ -15,7 +15,7 @@ interface CurrencyContextType {
 const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined);
 
 export function CurrencyProvider({ children }: { children: ReactNode }) {
-  const [currency, setCurrency] = useState<Currency>('CAD');
+  const [currency, setCurrency] = useState<Currency>('USD');
   const [isClient, setIsClient] = useState(false);
   
   // Exchange rate: 1 CAD = 0.74 USD (approximate)

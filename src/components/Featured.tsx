@@ -29,7 +29,7 @@ export default function Featured() {
   const { getContent } = useCMSContent();
   const { addItem, removeItem, isInPouch } = useGemPouch();
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist();
-  const { formatPrice, formatPriceNoSuffix } = useCurrency();
+  const { formatPriceNoSuffix } = useCurrency();
   const [featuredProducts, setFeaturedProducts] = useState<FeaturedProduct[]>([]);
   const [isClient, setIsClient] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -243,22 +243,18 @@ export default function Featured() {
                             />
                           </div>
                         </div>
-                        <h3 className="text-lg font-semibold text-black mb-1 text-center min-h-[2.5rem] flex items-center justify-center leading-tight">{product.name}</h3>
-                        <div className="mt-auto pt-2 flex items-center md:justify-between justify-center">
-                          <button
-                            onClick={(e) => toggleWishlist(product.id, e)}
-                            className="text-black hover:text-yellow-400 transition-colors p-1 hidden md:block"
-                          >
-                            {isInWishlist(product.product_id || product.id) ? (
-                              <IconStarFilled className="h-6 w-6 text-yellow-400" />
-                            ) : (
-                              <IconStar className="h-6 w-6" />
+                        <h3 className="text-base font-semibold text-black mb-1 text-center min-h-[3rem] flex items-center justify-center leading-tight">{product.name}</h3>
+                        <div className="mt-auto pt-2 text-center">
+                          <div className="flex items-center justify-center gap-2 mb-2">
+                            {product.price < product.original_price && (
+                              <span className="text-sm text-black line-through">{formatPriceNoSuffix(product.original_price)}</span>
                             )}
-                          </button>
-                          <div className="flex items-center gap-3 md:gap-2">
+                            <span className="text-lg font-bold text-black">{formatPriceNoSuffix(product.price)}</span>
+                          </div>
+                          <div className="flex items-center justify-center gap-2">
                             <button
                               onClick={(e) => toggleWishlist(product.id, e)}
-                              className="text-black hover:text-yellow-400 transition-colors p-1 md:hidden"
+                              className="text-black hover:text-yellow-400 transition-colors p-1"
                             >
                               {isInWishlist(product.product_id || product.id) ? (
                                 <IconStarFilled className="h-6 w-6 text-yellow-400" />
@@ -266,19 +262,9 @@ export default function Featured() {
                                 <IconStar className="h-6 w-6" />
                               )}
                             </button>
-                            <div className="flex items-center gap-2">
-                              {product.price < product.original_price && (
-                                <>
-                                  <span className="text-sm text-black line-through md:hidden">{formatPriceNoSuffix(product.original_price)}</span>
-                                  <span className="text-sm text-black line-through hidden md:inline">{formatPrice(product.original_price)}</span>
-                                </>
-                              )}
-                              <span className="text-lg font-bold text-black md:hidden">{formatPriceNoSuffix(product.price)}</span>
-                              <span className="text-lg font-bold text-black hidden md:inline">{formatPrice(product.price)}</span>
-                            </div>
                             <button
                               onClick={(e) => toggleGemPouch(product.id, e)}
-                              className="text-black hover:text-neutral-600 transition-colors p-1 relative md:hidden"
+                              className="text-black hover:text-neutral-600 transition-colors p-1 relative"
                             >
                               <ShoppingBag className="h-6 w-6" strokeWidth={2} />
                               {isInPouch(product.product_id || product.id) && (
@@ -286,15 +272,6 @@ export default function Featured() {
                               )}
                             </button>
                           </div>
-                          <button
-                            onClick={(e) => toggleGemPouch(product.id, e)}
-                            className="text-black hover:text-neutral-600 transition-colors p-1 relative hidden md:block"
-                          >
-                            <ShoppingBag className="h-6 w-6" strokeWidth={2} />
-                            {isInPouch(product.product_id || product.id) && (
-                              <Check className="absolute bottom-0 right-0 h-4 w-4 text-green-500" strokeWidth={4} />
-                            )}
-                          </button>
                         </div>
                       </div>
                     </div>
@@ -355,22 +332,18 @@ export default function Featured() {
                               />
                             </div>
                           </div>
-                          <h3 className="text-lg font-semibold text-black mb-1 text-center min-h-[2.5rem] flex items-center justify-center leading-tight">{product.name}</h3>
-                          <div className="mt-auto pt-2 flex items-center md:justify-between justify-center">
-                            <button
-                              onClick={(e) => toggleWishlist(product.id, e)}
-                              className="text-black hover:text-yellow-400 transition-colors p-1 hidden md:block"
-                            >
-                              {isInWishlist(product.product_id || product.id) ? (
-                                <IconStarFilled className="h-6 w-6 text-yellow-400" />
-                              ) : (
-                                <IconStar className="h-6 w-6" />
+                          <h3 className="text-base font-semibold text-black mb-1 text-center min-h-[3rem] flex items-center justify-center leading-tight">{product.name}</h3>
+                          <div className="mt-auto pt-2 text-center">
+                            <div className="flex items-center justify-center gap-2 mb-2">
+                              {product.price < product.original_price && (
+                                <span className="text-sm text-black line-through">{formatPriceNoSuffix(product.original_price)}</span>
                               )}
-                            </button>
-                            <div className="flex items-center gap-3 md:gap-2">
+                              <span className="text-lg font-bold text-black">{formatPriceNoSuffix(product.price)}</span>
+                            </div>
+                            <div className="flex items-center justify-center gap-2">
                               <button
                                 onClick={(e) => toggleWishlist(product.id, e)}
-                                className="text-black hover:text-yellow-400 transition-colors p-1 md:hidden"
+                                className="text-black hover:text-yellow-400 transition-colors p-1"
                               >
                                 {isInWishlist(product.product_id || product.id) ? (
                                   <IconStarFilled className="h-6 w-6 text-yellow-400" />
@@ -378,19 +351,9 @@ export default function Featured() {
                                   <IconStar className="h-6 w-6" />
                                 )}
                               </button>
-                              <div className="flex items-center gap-2">
-                                {product.price < product.original_price && (
-                                  <>
-                                    <span className="text-sm text-black line-through md:hidden">{formatPriceNoSuffix(product.original_price)}</span>
-                                    <span className="text-sm text-black line-through hidden md:inline">{formatPrice(product.original_price)}</span>
-                                  </>
-                                )}
-                                <span className="text-lg font-bold text-black md:hidden">{formatPriceNoSuffix(product.price)}</span>
-                                <span className="text-lg font-bold text-black hidden md:inline">{formatPrice(product.price)}</span>
-                              </div>
                               <button
                                 onClick={(e) => toggleGemPouch(product.id, e)}
-                                className="text-black hover:text-neutral-600 transition-colors p-1 relative md:hidden"
+                                className="text-black hover:text-neutral-600 transition-colors p-1 relative"
                               >
                                 <ShoppingBag className="h-6 w-6" strokeWidth={2} />
                                 {isInPouch(product.product_id || product.id) && (
@@ -398,15 +361,6 @@ export default function Featured() {
                                 )}
                               </button>
                             </div>
-                            <button
-                              onClick={(e) => toggleGemPouch(product.id, e)}
-                              className="text-black hover:text-neutral-600 transition-colors p-1 relative hidden md:block"
-                            >
-                              <ShoppingBag className="h-6 w-6" strokeWidth={2} />
-                              {isInPouch(product.product_id || product.id) && (
-                                <Check className="absolute bottom-0 right-0 h-4 w-4 text-green-500" strokeWidth={4} />
-                              )}
-                            </button>
                           </div>
                         </div>
                       </div>
