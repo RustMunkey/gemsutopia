@@ -37,6 +37,8 @@ export interface Product {
     shipping_info?: string;
     video_url?: string | null;
     featured_image_index?: number;
+    view_count?: number;
+    wishlist_count?: number;
   } | null;
 }
 

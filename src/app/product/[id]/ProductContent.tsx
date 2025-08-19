@@ -44,6 +44,8 @@ export default function ProductContent({ product: initialProduct }: ProductConte
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [showZoomModal, setShowZoomModal] = useState(false);
+  const [zoomImageIndex, setZoomImageIndex] = useState(0);
   const imageContainerRef = useRef<HTMLDivElement>(null);
   
   // Get actual quantity from gem pouch context
@@ -76,6 +78,24 @@ export default function ProductContent({ product: initialProduct }: ProductConte
     setSelectedImageIndex((prev) => (prev - 1 + allMedia.length) % allMedia.length);
   };
 
+  // Zoom modal navigation functions
+  const goToNextZoomImage = () => {
+    setZoomImageIndex((prev) => (prev + 1) % allMedia.length);
+  };
+
+  const goToPrevZoomImage = () => {
+    setZoomImageIndex((prev) => (prev - 1 + allMedia.length) % allMedia.length);
+  };
+
+  const openZoomModal = () => {
+    setZoomImageIndex(selectedImageIndex);
+    setShowZoomModal(true);
+  };
+
+  const closeZoomModal = () => {
+    setShowZoomModal(false);
+  };
+
   // Touch handlers for mobile swipe
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null);
@@ -106,18 +126,31 @@ export default function ProductContent({ product: initialProduct }: ProductConte
     const handleKeyDown = (e: KeyboardEvent) => {
       if (allMedia.length <= 1) return;
       
-      if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        goToPrevImage();
-      } else if (e.key === 'ArrowRight') {
-        e.preventDefault();
-        goToNextImage();
+      if (showZoomModal) {
+        if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          goToPrevZoomImage();
+        } else if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          goToNextZoomImage();
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          closeZoomModal();
+        }
+      } else {
+        if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          goToPrevImage();
+        } else if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          goToNextImage();
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [allMedia.length]);
+  }, [allMedia.length, showZoomModal]);
   
   // Calculate current price (sale price if on sale, otherwise regular price)
   const currentPrice = product.on_sale && product.sale_price ? product.sale_price : product.price;
@@ -194,7 +227,10 @@ export default function ProductContent({ product: initialProduct }: ProductConte
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
             >
-              <div className="w-full h-full bg-neutral-100 rounded-lg overflow-hidden relative">
+              <div 
+                className="w-full h-full bg-neutral-100 rounded-lg overflow-hidden relative cursor-pointer"
+                onClick={openZoomModal}
+              >
                 {selectedImageIndex >= product.images.length && product.video_url ? (
                   <video 
                     controls
@@ -245,7 +281,7 @@ export default function ProductContent({ product: initialProduct }: ProductConte
             </div>
             
             {/* Thumbnails */}
-            {(product.images.length > 1 || product.video_url) && (
+            {allMedia.length > 1 && (
               <div className="flex gap-2 overflow-x-auto pb-2">
                 {product.images.map((image, index) => (
                   <button
@@ -380,6 +416,127 @@ export default function ProductContent({ product: initialProduct }: ProductConte
           </div>
         </div>
       </div>
+
+      {/* Zoom Modal */}
+      {showZoomModal && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center"
+          onClick={closeZoomModal}
+        >
+          <div className="relative w-full h-full max-w-7xl mx-auto p-4 flex flex-col">
+            {/* Close button */}
+            <button
+              onClick={closeZoomModal}
+              className="absolute top-4 right-4 text-white hover:text-gray-300 z-10"
+              aria-label="Close zoom"
+            >
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            {/* Main zoom image */}
+            <div className="flex-1 flex items-center justify-center relative">
+              {zoomImageIndex >= product.images.length && product.video_url ? (
+                <video 
+                  controls
+                  className="max-w-full max-h-full object-contain"
+                  preload="metadata"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <source src={product.video_url} type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+              ) : (
+                <Image 
+                  src={product.images[zoomImageIndex] || product.images[0]}
+                  alt={`${product.name} zoom view`}
+                  fill
+                  className="object-contain"
+                  sizes="100vw"
+                  onClick={(e) => e.stopPropagation()}
+                />
+              )}
+
+              {/* Navigation arrows */}
+              {allMedia.length > 1 && (
+                <>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      goToPrevZoomImage();
+                    }}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-3 transition-all duration-200"
+                    aria-label="Previous image"
+                  >
+                    <IconChevronLeft className="h-6 w-6" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      goToNextZoomImage();
+                    }}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-3 transition-all duration-200"
+                    aria-label="Next image"
+                  >
+                    <IconChevronRight className="h-6 w-6" />
+                  </button>
+                </>
+              )}
+
+              {/* Image counter */}
+              {allMedia.length > 1 && (
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded text-sm">
+                  {zoomImageIndex + 1} / {allMedia.length}
+                </div>
+              )}
+            </div>
+
+            {/* Thumbnail strip */}
+            {allMedia.length > 1 && (
+              <div className="flex justify-center gap-2 mt-4 overflow-x-auto pb-2">
+                {product.images.map((image, index) => (
+                  <button
+                    key={index}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setZoomImageIndex(index);
+                    }}
+                    className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors ${
+                      zoomImageIndex === index
+                        ? 'border-white'
+                        : 'border-gray-500 hover:border-gray-300'
+                    }`}
+                  >
+                    <Image
+                      src={image}
+                      alt={`${product.name} ${index + 1}`}
+                      width={64}
+                      height={64}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+                {product.video_url && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setZoomImageIndex(product.images.length);
+                    }}
+                    className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors flex items-center justify-center bg-gray-700 ${
+                      zoomImageIndex >= product.images.length
+                        ? 'border-white'
+                        : 'border-gray-500 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="text-xs font-medium text-white">VIDEO</div>
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
