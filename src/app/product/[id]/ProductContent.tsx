@@ -46,6 +46,8 @@ export default function ProductContent({ product: initialProduct }: ProductConte
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [showZoomModal, setShowZoomModal] = useState(false);
   const [zoomImageIndex, setZoomImageIndex] = useState(0);
+  const [viewCount, setViewCount] = useState(product.metadata?.view_count || 0);
+  const [wishlistCount, setWishlistCount] = useState(product.metadata?.wishlist_count || 0);
   const imageContainerRef = useRef<HTMLDivElement>(null);
   
   // Get actual quantity from gem pouch context
@@ -62,6 +64,28 @@ export default function ProductContent({ product: initialProduct }: ProductConte
       setSelectedImageIndex(product.featured_image_index);
     }
   }, [product.featured_image_index, product.images]);
+
+  // Track product view on component mount
+  useEffect(() => {
+    const trackView = async () => {
+      try {
+        const response = await fetch(`/api/products/${product.id}/view`, {
+          method: 'POST'
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            setViewCount(data.view_count);
+          }
+        }
+      } catch (error) {
+        console.error('Error tracking view:', error);
+      }
+    };
+
+    trackView();
+  }, [product.id]);
 
   // Get all available media (images + video)
   const allMedia = [
@@ -89,6 +113,11 @@ export default function ProductContent({ product: initialProduct }: ProductConte
 
   const openZoomModal = () => {
     setZoomImageIndex(selectedImageIndex);
+    setShowZoomModal(true);
+  };
+
+  const openZoomModalAtIndex = (index: number) => {
+    setZoomImageIndex(index);
     setShowZoomModal(true);
   };
 
@@ -178,7 +207,7 @@ export default function ProductContent({ product: initialProduct }: ProductConte
   }, [productRefreshTrigger, product.id]);
 
 
-  const toggleWishlist = () => {
+  const toggleWishlist = async () => {
     const productData = {
       id: product.id,
       name: product.name,
@@ -186,10 +215,34 @@ export default function ProductContent({ product: initialProduct }: ProductConte
       image: productImage
     };
     
-    if (isInWishlist(product.id)) {
+    const wasInWishlist = isInWishlist(product.id);
+    
+    if (wasInWishlist) {
       removeFromWishlist(product.id);
     } else {
       addToWishlist(productData);
+    }
+
+    // Track wishlist count change
+    try {
+      const response = await fetch(`/api/products/${product.id}/wishlist`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          action: wasInWishlist ? 'remove' : 'add'
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setWishlistCount(data.wishlist_count);
+        }
+      }
+    } catch (error) {
+      console.error('Error tracking wishlist:', error);
     }
   };
 
@@ -228,8 +281,9 @@ export default function ProductContent({ product: initialProduct }: ProductConte
               onTouchEnd={handleTouchEnd}
             >
               <div 
-                className="w-full h-full bg-neutral-100 rounded-lg overflow-hidden relative cursor-pointer"
+                className="w-full h-full bg-neutral-100 rounded-lg overflow-hidden relative cursor-zoom-in"
                 onClick={openZoomModal}
+                style={{ cursor: 'zoom-in' }}
               >
                 {selectedImageIndex >= product.images.length && product.video_url ? (
                   <video 
@@ -245,7 +299,7 @@ export default function ProductContent({ product: initialProduct }: ProductConte
                     src={productImage}
                     alt={product.name}
                     fill
-                    className="object-cover"
+                    className="object-cover transition-transform duration-300 hover:scale-105"
                     sizes="(max-width: 1024px) 100vw, 50vw"
                     priority
                   />
@@ -286,7 +340,12 @@ export default function ProductContent({ product: initialProduct }: ProductConte
                 {product.images.map((image, index) => (
                   <button
                     key={index}
-                    onClick={() => setSelectedImageIndex(index)}
+                    onClick={() => {
+                      setSelectedImageIndex(index);
+                      if (showZoomModal) {
+                        setZoomImageIndex(index);
+                      }
+                    }}
                     className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors ${
                       selectedImageIndex === index
                         ? 'border-black'
@@ -304,7 +363,12 @@ export default function ProductContent({ product: initialProduct }: ProductConte
                 ))}
                 {product.video_url && (
                   <button
-                    onClick={() => setSelectedImageIndex(product.images.length)}
+                    onClick={() => {
+                      setSelectedImageIndex(product.images.length);
+                      if (showZoomModal) {
+                        setZoomImageIndex(product.images.length);
+                      }
+                    }}
                     className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors flex items-center justify-center bg-gray-100 ${
                       selectedImageIndex >= product.images.length
                         ? 'border-black'
@@ -322,16 +386,32 @@ export default function ProductContent({ product: initialProduct }: ProductConte
           <div className="flex flex-col justify-center">
             <div className="flex items-center justify-between mb-4 md:mb-6">
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-black">{product.name}</h1>
-              <button
-                onClick={toggleWishlist}
-                className="text-black hover:text-neutral-600 transition-colors p-2"
-              >
-                {isInWishlist(product.id) ? (
-                  <IconStarFilled className="h-8 w-8 text-yellow-400" />
-                ) : (
-                  <IconStar className="h-8 w-8" strokeWidth={2} />
+              <div className="flex items-center gap-4">
+                {wishlistCount > 0 && (
+                  <div className="text-sm text-gray-600 flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+                      <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd"/>
+                    </svg>
+                    <span>{wishlistCount} watching</span>
+                  </div>
                 )}
-              </button>
+                <button
+                  onClick={toggleWishlist}
+                  className="text-black hover:text-neutral-600 transition-colors p-2 relative"
+                >
+                  {isInWishlist(product.id) ? (
+                    <IconStarFilled className="h-8 w-8 text-yellow-400" />
+                  ) : (
+                    <IconStar className="h-8 w-8" strokeWidth={2} />
+                  )}
+                  {wishlistCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {wishlistCount}
+                    </span>
+                  )}
+                </button>
+              </div>
             </div>
             <p className="text-base md:text-lg text-neutral-600 mb-6 md:mb-8 leading-relaxed">
               {product.description || 'Premium quality gemstone from Alberta, Canada. This exceptional gemstone features clarity and natural beauty, ethically sourced with care.'}
