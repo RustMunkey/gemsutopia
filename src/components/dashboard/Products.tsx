@@ -294,14 +294,14 @@ export default function Products() {
                       </div>
                     </td>
                     <td className="p-4">
-                      <span className={`px-2 py-1 rounded text-xs ${
+                      <span className={`px-2 py-1.5 rounded text-xs leading-relaxed ${
                         product.inventory > 10 
                           ? 'bg-white/20 text-white' 
                           : product.inventory > 0 
                           ? 'bg-yellow-500/20 text-yellow-400'
                           : 'bg-red-500/20 text-red-400'
                       }`}>
-                        {product.inventory} in stock
+                        {product.inventory}
                       </span>
                     </td>
                     <td className="p-4">

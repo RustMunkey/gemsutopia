@@ -39,6 +39,12 @@ export default function DashboardLayout({
       description: 'Dashboard Overview'
     },
     { 
+      id: 'analytics', 
+      label: 'Analytics', 
+      icon: BarChart3,
+      description: 'Sales & Insights'
+    },
+    { 
       id: 'products', 
       label: 'Products', 
       icon: Package,
@@ -72,12 +78,6 @@ export default function DashboardLayout({
       label: 'Media', 
       icon: ImageIcon,
       description: 'Image Management'
-    },
-    { 
-      id: 'analytics', 
-      label: 'Analytics', 
-      icon: BarChart3,
-      description: 'Sales & Insights'
     }
   ];
 

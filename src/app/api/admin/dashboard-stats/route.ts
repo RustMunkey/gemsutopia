@@ -26,7 +26,11 @@ export async function GET(request: NextRequest) {
     // Security checks
     const clientIP = getClientIP(request);
     
-    if (ALLOWED_IPS.length > 0 && !ALLOWED_IPS.includes(clientIP)) {
+    // Allow localhost in development
+    const isLocalhost = clientIP === '::1' || clientIP === '127.0.0.1' || clientIP === 'localhost';
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    
+    if (ALLOWED_IPS.length > 0 && !ALLOWED_IPS.includes(clientIP) && !(isDevelopment && isLocalhost)) {
       console.log(`Dashboard stats access blocked for IP: ${clientIP}`);
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
