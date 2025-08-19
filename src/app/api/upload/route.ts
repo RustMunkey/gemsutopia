@@ -17,8 +17,8 @@ const adminSupabase = createClient(
 
 // Rate limiting storage (in production, use Redis)
 const uploadAttempts = new Map<string, { count: number; lastAttempt: number }>();
-const MAX_UPLOADS_PER_HOUR = 50;
-const MAX_UPLOADS_PER_MINUTE = 5;
+const MAX_UPLOADS_PER_HOUR = 200;
+const MAX_UPLOADS_PER_MINUTE = 20;
 
 function getClientIP(request: NextRequest): string {
   const forwarded = request.headers.get('x-forwarded-for');
@@ -47,14 +47,19 @@ function checkRateLimit(ip: string): { allowed: boolean; reason?: string } {
     attempts.count = 0;
   }
   
-  // Check per-minute rate limit
-  if (now - attempts.lastAttempt < 60000 && attempts.count >= MAX_UPLOADS_PER_MINUTE) {
-    return { allowed: false, reason: 'Too many uploads per minute' };
+  // More lenient rate limiting - reset count if more than 1 minute has passed
+  if (now - attempts.lastAttempt > 60000) {
+    attempts.count = 0;
   }
   
-  // Check per-hour rate limit  
+  // Check per-minute rate limit
+  if (attempts.count >= MAX_UPLOADS_PER_MINUTE) {
+    return { allowed: false, reason: `Too many uploads per minute (${attempts.count}/${MAX_UPLOADS_PER_MINUTE})` };
+  }
+  
+  // Check per-hour rate limit (but reset more frequently)
   if (attempts.count >= MAX_UPLOADS_PER_HOUR) {
-    return { allowed: false, reason: 'Too many uploads per hour' };
+    return { allowed: false, reason: `Too many uploads per hour (${attempts.count}/${MAX_UPLOADS_PER_HOUR})` };
   }
   
   // Update attempts
@@ -139,28 +144,35 @@ export async function POST(request: NextRequest) {
     }
 
     // 4. Strict file validation
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
-    if (!allowedTypes.includes(file.type.toLowerCase())) {
+    const allowedImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+    const allowedVideoTypes = ['video/mp4'];
+    const allAllowedTypes = [...allowedImageTypes, ...allowedVideoTypes];
+    
+    if (!allAllowedTypes.includes(file.type.toLowerCase())) {
       console.log(`[SECURITY] Invalid file type attempted: ${file.type} from ${authCheck.email}`);
       return NextResponse.json(
-        { success: false, message: 'Only JPG, PNG, WebP, and GIF images are allowed' },
+        { success: false, message: 'Only JPG, PNG, WebP, GIF images and MP4 videos are allowed' },
         { status: 400 }
       );
     }
 
-    // 5. File size limits (strict)
-    const maxSize = 5 * 1024 * 1024; // 5MB (reduced from 10MB)
+    // 5. File size limits (strict - different for videos vs images)
+    const isVideo = allowedVideoTypes.includes(file.type.toLowerCase());
+    const maxSize = isVideo ? 100 * 1024 * 1024 : 5 * 1024 * 1024; // 100MB for videos, 5MB for images
+    
     if (file.size > maxSize) {
       console.log(`[SECURITY] File too large: ${file.size} bytes from ${authCheck.email}`);
       return NextResponse.json(
-        { success: false, message: 'File size must be less than 5MB' },
+        { success: false, message: `File size must be less than ${isVideo ? '100MB' : '5MB'}` },
         { status: 400 }
       );
     }
 
     // 6. Generate secure filename (no user input for path)
     const fileExt = file.name.split('.').pop()?.toLowerCase() || 'unknown';
-    if (!['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(fileExt)) {
+    const allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'mp4'];
+    
+    if (!allowedExtensions.includes(fileExt)) {
       console.log(`[SECURITY] Suspicious file extension: ${fileExt} from ${authCheck.email}`);
       return NextResponse.json(
         { success: false, message: 'Invalid file extension' },
@@ -180,31 +192,60 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Determine bucket and folder based on file type
+    const folder = formData.get('folder') as string || 'hero';
+    // Use product-images bucket for both images and videos for now
+    const bucketName = 'product-images';
+    
     // Generate secure path with timestamp and random string
-    const secureFileName = `hero/${Date.now()}-${Math.random().toString(36).substr(2, 12)}-${authCheck.email?.replace('@', '_at_')}.${file.name.split('.').pop()?.toLowerCase()}`;
+    const secureFileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(2, 12)}-${authCheck.email?.replace('@', '_at_')}.${file.name.split('.').pop()?.toLowerCase()}`;
 
-    console.log(`[SECURITY] Uploading file: ${secureFileName} (${fileBuffer.length} bytes) from ${authCheck.email}`);
+    console.log(`[SECURITY] Uploading ${isVideo ? 'video' : 'image'}: ${secureFileName} (${fileBuffer.length} bytes = ${(fileBuffer.length / 1024 / 1024).toFixed(2)}MB) from ${authCheck.email}`);
+
+    // Check if bucket exists first
+    const { data: buckets } = await adminSupabase.storage.listBuckets();
+    console.log(`[SECURITY] Available buckets:`, buckets?.map(b => b.name));
 
     // 8. Upload to Supabase Storage with security headers
+    // For large files, try using a different upload method
+    const uploadOptions = {
+      contentType: file.type,
+      upsert: false, // Prevent overwriting
+      cacheControl: isVideo ? '86400' : '3600', // Cache videos for 24 hours, images for 1 hour
+      ...(isVideo && file.size > 25 * 1024 * 1024 ? { duplex: 'half' } : {}) // Try different upload mode for large videos
+    };
+    
     const { data, error } = await adminSupabase.storage
-      .from('product-images')
-      .upload(secureFileName, fileBuffer, {
-        contentType: file.type,
-        upsert: false, // Prevent overwriting
-        cacheControl: '3600' // Cache for 1 hour
-      });
+      .from(bucketName)
+      .upload(secureFileName, fileBuffer, uploadOptions);
 
     if (error) {
-      console.error(`[SECURITY] Supabase storage error for ${authCheck.email}:`, error);
+      console.error(`[SECURITY] Supabase storage error for ${authCheck.email}:`, {
+        error: error,
+        message: error.message,
+        details: error,
+        fileName: secureFileName,
+        fileSize: fileBuffer.length,
+        isVideo: isVideo
+      });
+      
+      // If it's a size error, be more specific
+      if (error.message?.includes('size') || error.message?.includes('exceeded')) {
+        return NextResponse.json(
+          { success: false, message: `Video file too large for storage (${(fileBuffer.length / 1024 / 1024).toFixed(1)}MB). Try compressing to under 50MB or use a video hosting service.` },
+          { status: 413 }
+        );
+      }
+      
       return NextResponse.json(
-        { success: false, message: 'Failed to upload file to storage' },
+        { success: false, message: `Failed to upload file to storage: ${error.message || JSON.stringify(error)}` },
         { status: 500 }
       );
     }
 
     // 9. Get public URL
     const { data: urlData } = adminSupabase.storage
-      .from('product-images')
+      .from(bucketName)
       .getPublicUrl(secureFileName);
 
     const uploadTime = Date.now() - startTime;

@@ -17,6 +17,8 @@ interface Product {
   on_sale: boolean;
   category: string;
   images: string[];
+  video_url?: string | null;
+  featured_image_index?: number;
   tags: string[];
   inventory: number;
   sku: string;
@@ -39,11 +41,21 @@ export default function ProductContent({ product: initialProduct }: ProductConte
   const { formatPrice } = useCurrency();
   const { productRefreshTrigger } = useInventory();
   const [product, setProduct] = useState(initialProduct);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   // Get actual quantity from gem pouch context
   const cartQuantity = items.filter(item => item.id === product.id).length;
   
-  // Get the main product image
-  const productImage = product.images && product.images.length > 0 ? product.images[0] : '/images/placeholder.jpg';
+  // Get the main product image (use featured image index as default)
+  const productImage = product.images && product.images.length > 0 
+    ? product.images[selectedImageIndex] || product.images[0] 
+    : '/images/placeholder.jpg';
+  
+  // Set the initial selected image to the featured image
+  useEffect(() => {
+    if (product.featured_image_index !== undefined && product.images?.length > product.featured_image_index) {
+      setSelectedImageIndex(product.featured_image_index);
+    }
+  }, [product.featured_image_index, product.images]);
   
   // Calculate current price (sale price if on sale, otherwise regular price)
   const currentPrice = product.on_sale && product.sale_price ? product.sale_price : product.price;
@@ -109,21 +121,72 @@ export default function ProductContent({ product: initialProduct }: ProductConte
     <div className="flex-grow py-8 md:py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
-          {/* Product Image */}
-          <div 
-            className="w-full aspect-square rounded-2xl p-4 md:p-6 relative"
-            style={{ backgroundColor: '#f0f0f0' }}
-          >
-            <div className="w-full h-full bg-neutral-100 rounded-lg overflow-hidden relative">
-              <Image 
-                src={productImage}
-                alt={product.name}
-                fill
-                className="object-cover"
-                sizes="(max-width: 1024px) 100vw, 50vw"
-                priority
-              />
+          {/* Product Image Gallery */}
+          <div className="space-y-4">
+            {/* Main Image/Video Display */}
+            <div 
+              className="w-full aspect-square rounded-2xl p-4 md:p-6 relative"
+              style={{ backgroundColor: '#f0f0f0' }}
+            >
+              <div className="w-full h-full bg-neutral-100 rounded-lg overflow-hidden relative">
+                {selectedImageIndex === -1 && product.video_url ? (
+                  <video 
+                    controls
+                    className="w-full h-full object-cover"
+                    preload="metadata"
+                  >
+                    <source src={product.video_url} type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
+                ) : (
+                  <Image 
+                    src={productImage}
+                    alt={product.name}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    priority
+                  />
+                )}
+              </div>
             </div>
+            
+            {/* Thumbnails */}
+            {(product.images.length > 1 || product.video_url) && (
+              <div className="flex gap-2 overflow-x-auto pb-2">
+                {product.images.map((image, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedImageIndex(index)}
+                    className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors ${
+                      selectedImageIndex === index
+                        ? 'border-black'
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                  >
+                    <Image
+                      src={image}
+                      alt={`${product.name} ${index + 1}`}
+                      width={64}
+                      height={64}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+                {product.video_url && (
+                  <button
+                    onClick={() => setSelectedImageIndex(-1)}
+                    className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors flex items-center justify-center bg-gray-100 ${
+                      selectedImageIndex === -1
+                        ? 'border-black'
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                  >
+                    <div className="text-xs font-medium text-gray-600">VIDEO</div>
+                  </button>
+                )}
+              </div>
+            )}
           </div>
           
           {/* Product Details */}

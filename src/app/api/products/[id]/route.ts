@@ -82,6 +82,15 @@ export async function PUT(
     if (data.on_sale !== undefined) updateData.on_sale = data.on_sale;
     if (data.category !== undefined) updateData.category = data.category;
     if (data.images !== undefined) updateData.images = data.images;
+    // Store video and featured image in metadata for now (until DB schema is updated)
+    if (data.video_url !== undefined || data.featured_image_index !== undefined) {
+      const currentMetadata = updateData.metadata || {};
+      updateData.metadata = {
+        ...currentMetadata,
+        ...(data.video_url !== undefined && { video_url: data.video_url || null }),
+        ...(data.featured_image_index !== undefined && { featured_image_index: data.featured_image_index })
+      };
+    }
     if (data.tags !== undefined) updateData.tags = data.tags;
     if (data.inventory !== undefined) updateData.inventory = parseInt(data.inventory);
     if (data.sku !== undefined) updateData.sku = data.sku;

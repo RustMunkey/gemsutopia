@@ -84,7 +84,7 @@ export default function Shop() {
             type: product.category,
             price: product.on_sale && product.sale_price ? product.sale_price : product.price,
             originalPrice: product.price,
-            image: product.images?.[0] || '/images/placeholder.jpg',
+            image: product.images?.[product.featured_image_index || 0] || product.images?.[0] || '/images/placeholder.jpg',
             stock: product.inventory
           }));
           setProducts(transformedProducts);

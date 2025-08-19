@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Prepare product data
+    // Prepare product data (exclude new fields that might not exist in DB yet)
     const productData = {
       name: data.name,
       description: data.description || '',
@@ -140,7 +140,12 @@ export async function POST(request: NextRequest) {
       dimensions: data.dimensions || null,
       is_active: data.is_active !== false,
       featured: data.featured || false,
-      metadata: data.metadata || {}
+      metadata: {
+        ...(data.metadata || {}),
+        // Store video and featured image info in metadata for now
+        video_url: data.video_url || null,
+        featured_image_index: data.featured_image_index || 0
+      }
     };
 
     const { data: newProduct, error } = await supabaseAdmin
@@ -150,9 +155,16 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('Supabase error:', error);
+      console.error('Supabase error creating product:', {
+        error: error,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+        productData: productData
+      });
       return NextResponse.json(
-        { success: false, message: 'Failed to create product' },
+        { success: false, message: `Failed to create product: ${error.message || error.details || 'Unknown error'}` },
         { status: 500 }
       );
     }

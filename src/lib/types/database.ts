@@ -7,6 +7,8 @@ export interface Product {
   on_sale: boolean;
   category: string;
   images: string[];
+  video_url?: string | null;
+  featured_image_index?: number;
   tags: string[];
   inventory: number;
   sku: string;
@@ -33,6 +35,8 @@ export interface Product {
     use_gradient?: boolean;
     details?: string[];
     shipping_info?: string;
+    video_url?: string | null;
+    featured_image_index?: number;
   } | null;
 }
 

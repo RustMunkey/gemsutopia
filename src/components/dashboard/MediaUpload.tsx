@@ -3,13 +3,13 @@ import { useState } from 'react';
 import { ImageIcon, VideoIcon, X, PlayCircle } from 'lucide-react';
 import Image from 'next/image';
 
-interface ImageUploadProps {
+interface MediaUploadProps {
   images: string[];
   video_url?: string;
   featured_image_index?: number;
   onImagesChange: (images: string[]) => void;
-  onVideoChange?: (videoUrl: string | null) => void;
-  onFeaturedImageChange?: (index: number) => void;
+  onVideoChange: (videoUrl: string | null) => void;
+  onFeaturedImageChange: (index: number) => void;
   maxImages?: number;
   folder?: string;
   className?: string;
@@ -67,7 +67,7 @@ const resizeImage = (file: File, maxWidth: number, maxHeight: number, quality: n
   });
 };
 
-export default function ImageUpload({ 
+export default function MediaUpload({ 
   images, 
   video_url,
   featured_image_index = 0,
@@ -78,16 +78,17 @@ export default function ImageUpload({
   folder = 'products',
   className = '',
   label = 'Product Media',
-  description = 'Upload up to 8 images and 1 video (drag & drop or click to browse)'
-}: ImageUploadProps) {
+  description = 'Upload images and video (drag & drop or click to browse)'
+}: MediaUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
 
   const uploadFile = async (file: File): Promise<string | null> => {
     try {
-      // Resize/compress large images (but not videos)
       let processedFile = file;
-      if (file.type.startsWith('image/') && file.size > 1024 * 1024) { // If larger than 1MB
+      
+      // Resize/compress large images
+      if (file.type.startsWith('image/') && file.size > 1024 * 1024) {
         console.log('Large image detected, resizing...');
         processedFile = await resizeImage(file, 1920, 1080, 0.8);
       }
@@ -115,8 +116,37 @@ export default function ImageUpload({
       if (uploadData.success) {
         return uploadData.url;
       } else {
-        console.error('Server upload failed:', uploadData);
-        throw new Error(uploadData.message || 'Server upload failed');
+        // Fallback to client-side upload
+        const { createClient } = await import('@supabase/supabase-js');
+        
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+        const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+        
+        const supabase = createClient(supabaseUrl, supabaseAnonKey);
+        
+        // Generate secure filename
+        const fileExt = processedFile.name.split('.').pop()?.toLowerCase();
+        const bucketName = file.type.startsWith('video/') ? 'product-videos' : 'product-images';
+        const secureFileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(2, 12)}.${fileExt}`;
+        
+        // Upload directly from browser to Supabase
+        const { error } = await supabase.storage
+          .from(bucketName)
+          .upload(secureFileName, processedFile, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (error) {
+          throw new Error(error.message);
+        }
+
+        // Get public URL
+        const { data: urlData } = supabase.storage
+          .from(bucketName)
+          .getPublicUrl(secureFileName);
+
+        return urlData.publicUrl;
       }
       
     } catch (error) {
@@ -129,19 +159,25 @@ export default function ImageUpload({
   const handleFileUpload = async (files: FileList) => {
     const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
     const videoFiles = Array.from(files).filter(file => file.type === 'video/mp4');
-    const validFiles = [...imageFiles, ...videoFiles];
     
-    if (validFiles.length === 0) {
+    // Validate file types
+    const invalidFiles = Array.from(files).filter(file => 
+      !file.type.startsWith('image/') && file.type !== 'video/mp4'
+    );
+    
+    if (invalidFiles.length > 0) {
       alert('Please select only image files (JPG, PNG, WebP) or MP4 video files');
       return;
     }
 
-    const remainingSlots = maxImages - images.length;
-    if (imageFiles.length > remainingSlots) {
-      alert(`Maximum ${maxImages} images allowed. You can add ${remainingSlots} more images.`);
+    // Check image limits
+    const remainingImageSlots = maxImages - images.length;
+    if (imageFiles.length > remainingImageSlots) {
+      alert(`Maximum ${maxImages} images allowed. You can add ${remainingImageSlots} more images.`);
       return;
     }
-    
+
+    // Check video limits
     if (videoFiles.length > 1) {
       alert('Only one video file allowed per product');
       return;
@@ -153,7 +189,7 @@ export default function ImageUpload({
     }
 
     setUploading(true);
-
+    
     // Upload images
     if (imageFiles.length > 0) {
       const uploadedImageUrls: string[] = [];
@@ -168,9 +204,9 @@ export default function ImageUpload({
         onImagesChange([...images, ...uploadedImageUrls]);
       }
     }
-    
+
     // Upload video
-    if (videoFiles.length > 0 && onVideoChange) {
+    if (videoFiles.length > 0) {
       const videoUrl = await uploadFile(videoFiles[0]);
       if (videoUrl) {
         onVideoChange(videoUrl);
@@ -210,16 +246,16 @@ export default function ImageUpload({
     onImagesChange(newImages);
     
     // Adjust featured image index if needed
-    if (onFeaturedImageChange && featured_image_index >= newImages.length) {
+    if (featured_image_index >= newImages.length) {
       onFeaturedImageChange(Math.max(0, newImages.length - 1));
     }
   };
 
   const removeVideo = () => {
-    if (onVideoChange) {
-      onVideoChange(null);
-    }
+    onVideoChange(null);
   };
+
+  const canUploadMore = images.length < maxImages || !video_url;
 
   return (
     <div className={className}>
@@ -244,7 +280,7 @@ export default function ImageUpload({
           accept="image/*,video/mp4"
           onChange={handleFileInputChange}
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-          disabled={uploading}
+          disabled={uploading || !canUploadMore}
         />
         
         <div className="pointer-events-none">
@@ -257,24 +293,23 @@ export default function ImageUpload({
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mx-auto"></div>
               <p className="text-white text-sm">Uploading media...</p>
             </div>
-          ) : images.length >= maxImages && video_url ? (
+          ) : !canUploadMore ? (
             <div className="space-y-1">
               <p className="text-slate-400 text-sm">Maximum media reached</p>
-              <p className="text-slate-500 text-xs">({maxImages} images, 1 video)</p>
+              <p className="text-slate-500 text-xs">({maxImages} images max, 1 video max)</p>
             </div>
           ) : (
             <div className="space-y-1">
               <p className="text-white text-sm font-medium">Click to browse or drag & drop media</p>
               <p className="text-slate-400 text-xs">{description}</p>
               <p className="text-slate-500 text-xs">Images: JPG, PNG, WebP • Video: MP4 only</p>
-              <p className="text-slate-500 text-xs">Max {maxImages} images + 1 video (50MB max)</p>
-              <p className="text-slate-400 text-xs">For larger videos, compress them first using HandBrake or similar</p>
+              <p className="text-slate-500 text-xs">Max {maxImages} images + 1 video</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Current Media - Images and Video */}
+      {/* Current Media - Images First, Video Last */}
       {(images.length > 0 || video_url) && (
         <div>
           <h4 className="text-sm font-medium text-slate-300 mb-3">
@@ -287,11 +322,11 @@ export default function ImageUpload({
               <div key={`image-${index}`} className="relative group">
                 <div 
                   className={`relative cursor-pointer border-2 rounded-lg overflow-hidden transition-colors ${
-                    onFeaturedImageChange && featured_image_index === index 
+                    featured_image_index === index 
                       ? 'border-white' 
                       : 'border-transparent hover:border-white/40'
                   }`}
-                  onClick={() => onFeaturedImageChange && onFeaturedImageChange(index)}
+                  onClick={() => onFeaturedImageChange(index)}
                 >
                   <Image
                     src={img}
@@ -300,7 +335,7 @@ export default function ImageUpload({
                     height={80}
                     className="w-full h-20 object-cover bg-slate-700"
                   />
-                  {onFeaturedImageChange && featured_image_index === index && (
+                  {featured_image_index === index && (
                     <div className="absolute inset-0 bg-white/20 flex items-center justify-center">
                       <div className="bg-white text-black px-1 py-0.5 rounded text-xs font-medium">
                         Featured
@@ -342,32 +377,13 @@ export default function ImageUpload({
             )}
           </div>
           
-          {onFeaturedImageChange && images.length > 1 && (
+          {images.length > 1 && (
             <p className="text-xs text-slate-400 mt-2">
               Click an image to set it as the featured image for the shop page
             </p>
           )}
         </div>
       )}
-      
-      {/* Video URL Input for Google Drive or other hosting */}
-      {!video_url && onVideoChange && (
-        <div className="mt-4">
-          <label className="block text-sm font-medium text-slate-300 mb-2">
-            Video URL (Google Drive, YouTube, Vimeo, etc.)
-          </label>
-          <input
-            type="url"
-            placeholder="https://drive.google.com/file/d/... or any video URL"
-            onChange={(e) => onVideoChange(e.target.value || null)}
-            className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-white"
-          />
-          <p className="text-xs text-slate-400 mt-1">
-            For Google Drive: Share → Get link → Copy link. For large videos over 50MB.
-          </p>
-        </div>
-      )}
-      
     </div>
   );
 }

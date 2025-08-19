@@ -389,6 +389,8 @@ function ProductModal({ product, onClose, onSave }: {
     is_active: product?.is_active !== false,
     featured: product?.featured || false,
     images: product?.images || [],
+    video_url: product?.video_url || product?.metadata?.video_url || '',
+    featured_image_index: product?.featured_image_index || product?.metadata?.featured_image_index || 0,
     tags: product?.tags?.join(', ') || '',
     // Product details
     details: (product?.metadata?.details || [
@@ -459,6 +461,8 @@ function ProductModal({ product, onClose, onSave }: {
         weight: formData.weight ? parseFloat(formData.weight) : null,
         tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean),
         images: formData.images,
+        video_url: formData.video_url || null,
+        featured_image_index: formData.featured_image_index,
         metadata: {
           ...(product?.metadata || {}),
           details: formData.details.split('\n').map(item => item.trim()).filter(Boolean),
@@ -685,14 +689,24 @@ function ProductModal({ product, onClose, onSave }: {
             <p className="text-xs text-slate-400 mt-1">This will appear in the shipping section on the product page</p>
           </div>
 
-          {/* Images */}
+          {/* Media Upload (Images + Video) */}
           <ImageUpload
             images={formData.images}
-            onImagesChange={(images) => setFormData(prev => ({...prev, images}))}
-            maxImages={5}
+            video_url={formData.video_url || undefined}
+            featured_image_index={formData.featured_image_index}
+            onImagesChange={(images) => {
+              setFormData(prev => ({...prev, images}));
+              // Reset featured image index if it's now out of bounds
+              if (formData.featured_image_index >= images.length) {
+                setFormData(prev => ({...prev, featured_image_index: 0}));
+              }
+            }}
+            onVideoChange={(videoUrl) => setFormData(prev => ({...prev, video_url: videoUrl || ''}))}
+            onFeaturedImageChange={(index) => setFormData(prev => ({...prev, featured_image_index: index}))}
+            maxImages={8}
             folder="products"
-            label="Product Images"
-            description="Upload product photos (drag & drop or click to browse)"
+            label="Product Media"
+            description="Upload up to 8 images and 1 video (drag & drop or click to browse)"
           />
 
           {/* Status Options */}
