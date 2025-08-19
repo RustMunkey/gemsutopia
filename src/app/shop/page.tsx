@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { IconStar, IconStarFilled, IconFilter } from '@tabler/icons-react';
+import { IconStar, IconStarFilled, IconFilter, IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import { ShoppingBag, Check } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -10,6 +10,177 @@ import { useGemPouch } from '@/contexts/GemPouchContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useInventory } from '@/contexts/InventoryContext';
+
+// Product interface
+interface Product {
+  id: string;
+  name: string;
+  type: string;
+  price: number;
+  originalPrice: number;
+  image: string;
+  images: string[];
+  featuredImageIndex: number;
+  stock: number;
+}
+
+// Product Card Component with Navigation
+function ProductCard({ 
+  product, 
+  formatPrice, 
+  formatPriceNoSuffix, 
+  isInWishlist, 
+  toggleWishlist, 
+  isInPouch, 
+  toggleGemPouch, 
+  router 
+}: {
+  product: Product;
+  formatPrice: (price: number) => string;
+  formatPriceNoSuffix: (price: number) => string;
+  isInWishlist: (id: string) => boolean;
+  toggleWishlist: (id: string, e: React.MouseEvent) => void;
+  isInPouch: (id: string) => boolean;
+  toggleGemPouch: (id: string, e: React.MouseEvent) => void;
+  router: any;
+}) {
+  const [currentImageIndex, setCurrentImageIndex] = useState(product.featuredImageIndex);
+  const discountPercent = Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
+  
+  const goToNextImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentImageIndex((prev) => (prev + 1) % product.images.length);
+  };
+
+  const goToPrevImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentImageIndex((prev) => (prev - 1 + product.images.length) % product.images.length);
+  };
+
+  const currentImage = product.images[currentImageIndex] || product.image;
+
+  return (
+    <div 
+      className="rounded-2xl p-3 shadow-2xl shadow-white/20 border border-white/10 translate-x-1 translate-y-1 transition-all duration-200 ease-out cursor-pointer product-card select-none h-full flex flex-col group"
+      style={{ backgroundColor: '#f0f0f0' }}
+      onClick={(e) => {
+        e.stopPropagation();
+        router.push(`/product/${product.id}`);
+        window.scrollTo(0, 0);
+      }}
+    >
+      {/* Content */}
+      <div className="aspect-square bg-neutral-100 rounded-lg mb-2 overflow-hidden relative">
+        {product.price < product.originalPrice && (
+          <div className="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded z-10">
+            {discountPercent}% OFF
+          </div>
+        )}
+        
+        {/* Navigation Arrows (Desktop only, and only if multiple images) */}
+        {product.images.length > 1 && (
+          <>
+            <button
+              onClick={goToPrevImage}
+              className="absolute left-1 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hidden md:flex items-center justify-center z-10"
+              aria-label="Previous image"
+            >
+              <IconChevronLeft className="h-4 w-4" />
+            </button>
+            <button
+              onClick={goToNextImage}
+              className="absolute right-1 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hidden md:flex items-center justify-center z-10"
+              aria-label="Next image"
+            >
+              <IconChevronRight className="h-4 w-4" />
+            </button>
+          </>
+        )}
+        
+        {/* Image Counter */}
+        {product.images.length > 1 && (
+          <div className="absolute top-2 right-2 bg-black/50 text-white px-1 py-0.5 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
+            {currentImageIndex + 1}/{product.images.length}
+          </div>
+        )}
+        
+        <Image 
+          src={currentImage} 
+          alt={product.name}
+          fill
+          className="object-cover select-none pointer-events-none"
+          draggable={false}
+          onContextMenu={(e) => e.preventDefault()}
+          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          quality={75}
+        />
+        <div className="absolute bottom-2 right-2 z-10">
+          <Image 
+            src="/logos/gems-logo.png" 
+            alt="Gemsutopia"
+            width={32}
+            height={32}
+            className="h-8 opacity-70 object-contain"
+          />
+        </div>
+      </div>
+      <h3 className="text-lg font-semibold text-black mb-1 text-center min-h-[2.5rem] flex items-center justify-center leading-tight">{product.name}</h3>
+      <p className="text-neutral-600 text-xs leading-relaxed min-h-[2.5rem] md:block hidden flex-grow">Hand-mined {product.type} from Alberta, Canada. Premium quality gemstone with exceptional clarity and natural beauty.</p>
+      <div className="mt-auto pt-3 flex items-center md:justify-between justify-center">
+        <button
+          onClick={(e) => toggleWishlist(product.id, e)}
+          className="text-black hover:text-yellow-400 transition-colors p-1 hidden md:block"
+        >
+          {isInWishlist(product.id) ? (
+            <IconStarFilled className="h-6 w-6 text-yellow-400" />
+          ) : (
+            <IconStar className="h-6 w-6" />
+          )}
+        </button>
+        <div className="flex items-center gap-3 md:gap-2">
+          <button
+            onClick={(e) => toggleWishlist(product.id, e)}
+            className="text-black hover:text-yellow-400 transition-colors p-1 md:hidden"
+          >
+            {isInWishlist(product.id) ? (
+              <IconStarFilled className="h-6 w-6 text-yellow-400" />
+            ) : (
+              <IconStar className="h-6 w-6" />
+            )}
+          </button>
+          <div className="flex items-center gap-2">
+            {product.price < product.originalPrice && (
+              <>
+                <span className="text-sm text-black line-through md:hidden">{formatPriceNoSuffix(product.originalPrice)}</span>
+                <span className="text-sm text-black line-through hidden md:inline">{formatPrice(product.originalPrice)}</span>
+              </>
+            )}
+            <span className="text-lg font-bold text-black md:hidden">{formatPriceNoSuffix(product.price)}</span>
+            <span className="text-lg font-bold text-black hidden md:inline">{formatPrice(product.price)}</span>
+          </div>
+          <button
+            onClick={(e) => toggleGemPouch(product.id, e)}
+            className="text-black hover:text-neutral-600 transition-colors p-1 relative md:hidden"
+          >
+            <ShoppingBag className="h-6 w-6" strokeWidth={2} />
+            {isInPouch(product.id) && (
+              <Check className="absolute bottom-0 right-0 h-4 w-4 text-green-500" strokeWidth={4} />
+            )}
+          </button>
+        </div>
+        <button
+          onClick={(e) => toggleGemPouch(product.id, e)}
+          className="text-black hover:text-neutral-600 transition-colors p-1 relative hidden md:block"
+        >
+          <ShoppingBag className="h-6 w-6" strokeWidth={2} />
+          {isInPouch(product.id) && (
+            <Check className="absolute bottom-0 right-0 h-4 w-4 text-green-500" strokeWidth={4} />
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function Shop() {
   const router = useRouter();
@@ -85,6 +256,8 @@ export default function Shop() {
             price: product.on_sale && product.sale_price ? product.sale_price : product.price,
             originalPrice: product.price,
             image: product.images?.[product.featured_image_index || 0] || product.images?.[0] || '/images/placeholder.jpg',
+            images: product.images || [],
+            featuredImageIndex: product.featured_image_index || product.metadata?.featured_image_index || 0,
             stock: product.inventory
           }));
           setProducts(transformedProducts);

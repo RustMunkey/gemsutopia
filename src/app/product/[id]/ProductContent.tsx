@@ -1,12 +1,12 @@
 'use client';
 import Image from 'next/image';
-import { IconStar, IconStarFilled } from '@tabler/icons-react';
+import { IconStar, IconStarFilled, IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import { useGemPouch } from '@/contexts/GemPouchContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useInventory } from '@/contexts/InventoryContext';
 import CurrencySwitcher from '@/components/CurrencySwitcher';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface Product {
   id: string;
@@ -42,6 +42,10 @@ export default function ProductContent({ product: initialProduct }: ProductConte
   const { productRefreshTrigger } = useInventory();
   const [product, setProduct] = useState(initialProduct);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const imageContainerRef = useRef<HTMLDivElement>(null);
+  
   // Get actual quantity from gem pouch context
   const cartQuantity = items.filter(item => item.id === product.id).length;
   
@@ -56,6 +60,64 @@ export default function ProductContent({ product: initialProduct }: ProductConte
       setSelectedImageIndex(product.featured_image_index);
     }
   }, [product.featured_image_index, product.images]);
+
+  // Get all available media (images + video)
+  const allMedia = [
+    ...product.images,
+    ...(product.video_url ? ['video'] : [])
+  ];
+
+  // Navigation functions
+  const goToNextImage = () => {
+    setSelectedImageIndex((prev) => (prev + 1) % allMedia.length);
+  };
+
+  const goToPrevImage = () => {
+    setSelectedImageIndex((prev) => (prev - 1 + allMedia.length) % allMedia.length);
+  };
+
+  // Touch handlers for mobile swipe
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe && allMedia.length > 1) {
+      goToNextImage();
+    }
+    if (isRightSwipe && allMedia.length > 1) {
+      goToPrevImage();
+    }
+  };
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (allMedia.length <= 1) return;
+      
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        goToPrevImage();
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        goToNextImage();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [allMedia.length]);
   
   // Calculate current price (sale price if on sale, otherwise regular price)
   const currentPrice = product.on_sale && product.sale_price ? product.sale_price : product.price;
@@ -125,11 +187,15 @@ export default function ProductContent({ product: initialProduct }: ProductConte
           <div className="space-y-4">
             {/* Main Image/Video Display */}
             <div 
-              className="w-full aspect-square rounded-2xl p-4 md:p-6 relative"
+              ref={imageContainerRef}
+              className="w-full aspect-square rounded-2xl p-4 md:p-6 relative group"
               style={{ backgroundColor: '#f0f0f0' }}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
             >
               <div className="w-full h-full bg-neutral-100 rounded-lg overflow-hidden relative">
-                {selectedImageIndex === -1 && product.video_url ? (
+                {selectedImageIndex >= product.images.length && product.video_url ? (
                   <video 
                     controls
                     className="w-full h-full object-cover"
@@ -147,6 +213,33 @@ export default function ProductContent({ product: initialProduct }: ProductConte
                     sizes="(max-width: 1024px) 100vw, 50vw"
                     priority
                   />
+                )}
+                
+                {/* Navigation Arrows (Desktop) */}
+                {allMedia.length > 1 && (
+                  <>
+                    <button
+                      onClick={goToPrevImage}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hidden md:flex items-center justify-center"
+                      aria-label="Previous image"
+                    >
+                      <IconChevronLeft className="h-5 w-5" />
+                    </button>
+                    <button
+                      onClick={goToNextImage}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hidden md:flex items-center justify-center"
+                      aria-label="Next image"
+                    >
+                      <IconChevronRight className="h-5 w-5" />
+                    </button>
+                  </>
+                )}
+                
+                {/* Image Counter */}
+                {allMedia.length > 1 && (
+                  <div className="absolute bottom-4 right-4 bg-black/50 text-white px-2 py-1 rounded text-sm">
+                    {selectedImageIndex + 1} / {allMedia.length}
+                  </div>
                 )}
               </div>
             </div>
@@ -175,9 +268,9 @@ export default function ProductContent({ product: initialProduct }: ProductConte
                 ))}
                 {product.video_url && (
                   <button
-                    onClick={() => setSelectedImageIndex(-1)}
+                    onClick={() => setSelectedImageIndex(product.images.length)}
                     className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors flex items-center justify-center bg-gray-100 ${
-                      selectedImageIndex === -1
+                      selectedImageIndex >= product.images.length
                         ? 'border-black'
                         : 'border-gray-300 hover:border-gray-400'
                     }`}
