@@ -9,10 +9,10 @@ const supabase = createClient<Database>(supabaseUrl, supabaseServiceKey);
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const productId = params.id;
+    const { id: productId } = await params;
     const { action } = await request.json(); // 'add' or 'remove'
 
     if (!productId) {
