@@ -12,9 +12,11 @@ import {
   Star,
   Globe,
   ImageIcon,
-  ShoppingBag
+  ShoppingBag,
+  Settings
 } from 'lucide-react';
 import { useState } from 'react';
+import { useMode } from '@/lib/contexts/ModeContext';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -30,6 +32,7 @@ export default function DashboardLayout({
   onLogout 
 }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { mode, toggleMode } = useMode();
 
   const menuItems = [
     { 
@@ -190,10 +193,26 @@ export default function DashboardLayout({
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <div className="hidden sm:flex items-center gap-2 px-3 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
-                <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-                <span className="text-sm text-emerald-400">Live</span>
-              </div>
+              {/* Mode Toggle */}
+              <button
+                onClick={toggleMode}
+                className={`hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg border transition-all duration-200 hover:scale-105 ${
+                  mode === 'live' 
+                    ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20' 
+                    : 'bg-orange-500/10 border-orange-500/20 text-orange-400 hover:bg-orange-500/20'
+                }`}
+                title={`Switch to ${mode === 'live' ? 'Development' : 'Live'} mode`}
+              >
+                <div className={`w-2 h-2 rounded-full ${
+                  mode === 'live' 
+                    ? 'bg-emerald-400 animate-pulse' 
+                    : 'bg-orange-400 animate-pulse'
+                }`}></div>
+                <span className="text-sm font-medium">
+                  {mode === 'live' ? 'Live' : 'Dev'}
+                </span>
+                <Settings className="h-3 w-3 opacity-60" />
+              </button>
             </div>
           </div>
         </header>

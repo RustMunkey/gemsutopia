@@ -8,6 +8,8 @@ import {
   Eye,
   ArrowUpRight
 } from 'lucide-react';
+import { filterOrdersByMode, isTestOrder } from '@/lib/utils/orderUtils';
+import { useMode } from '@/lib/contexts/ModeContext';
 
 interface MetricData {
   title: string;
@@ -21,14 +23,45 @@ interface MetricData {
 
 interface Order {
   id: string;
+  customer_email: string;
+  customer_name: string;
+  total: number;
+  subtotal?: number;
+  shipping?: number;
+  tax?: number;
   status: string;
-  customer: string;
-  amount: string;
-  date: string;
-  items: string;
+  created_at: string;
+  items: Array<{
+    id: number;
+    name: string;
+    price: number;
+    quantity: number;
+  }>;
+  payment_details: {
+    method: string;
+    payment_id: string;
+    amount: number;
+    currency?: string;
+    crypto_type?: string;
+    crypto_amount?: number;
+    crypto_currency?: string;
+    wallet_address?: string;
+    network?: string;
+  };
 }
 
-export default function Overview() {
+interface OverviewProps {
+  onNavigateToProducts?: () => void;
+  onNavigateToAnalytics?: () => void;
+  onNavigateToOrders?: () => void;
+}
+
+export default function Overview({ 
+  onNavigateToProducts, 
+  onNavigateToAnalytics, 
+  onNavigateToOrders 
+}: OverviewProps) {
+  const { mode } = useMode();
   const [userInfo, setUserInfo] = useState({ name: 'Admin', email: '' });
   const [metrics, setMetrics] = useState<MetricData[]>([
     {
@@ -113,25 +146,27 @@ export default function Overview() {
 
       // Fetch dashboard stats
       Promise.all([
-        fetch('/api/orders'),
+        fetch('/api/orders').then(res => res.ok ? res.json() : { orders: [] }),
         fetch('/api/products?includeInactive=true', {
           headers: { Authorization: `Bearer ${token}` }
-        })
+        }).then(res => res.ok ? res.json() : { products: [] })
       ])
-      .then(responses => Promise.all(responses.map(res => res.json())))
       .then(([ordersData, productsData]) => {
         const orders = ordersData.orders || [];
         const products = productsData.products || [];
         
-        // Calculate stats from real data
-        const totalRevenue = orders.reduce((sum: number, order: any) => {
+        // Filter orders based on current mode
+        const filteredOrders = filterOrdersByMode(orders, mode);
+        
+        // Calculate stats from filtered orders
+        const totalRevenue = filteredOrders.reduce((sum: number, order: any) => {
           const total = order.total || order.amount || '0';
           const amount = parseFloat(typeof total === 'string' ? total.replace(/[^0-9.-]+/g, '') : total.toString());
           return sum + (isNaN(amount) ? 0 : amount);
         }, 0);
         
-        const totalOrders = orders.length;
-        const uniqueCustomers = new Set(orders.map((order: any) => order.customer)).size;
+        const totalOrders = filteredOrders.length;
+        const uniqueCustomers = new Set(filteredOrders.map((order: any) => order.customer)).size;
         const totalProducts = products.length;
         
         // Update metrics with live data
@@ -192,19 +227,11 @@ export default function Overview() {
           }
         ]);
 
-        // Update recent orders (get last 5)
-        setRecentOrders(orders.slice(0, 5).map((order: any) => ({
-          id: order.id || '',
-          status: order.status || '',
-          customer: order.customer || '',
-          amount: order.total || '',
-          date: order.created_at || '',
-          items: typeof order.items === 'string' ? order.items : '1 item'
-        })));
+        // Recent orders are now fetched separately
 
         // Update quick stats
         setQuickStats({
-          topProduct: orders.length > 0 ? 'Recent orders available' : 'No orders yet',
+          topProduct: filteredOrders.length > 0 ? 'Recent orders available' : 'No orders yet',
           conversionRate: '0%',
           newCustomers: `${uniqueCustomers} total`,
           stockStatus: 'All good'
@@ -280,7 +307,30 @@ export default function Overview() {
         setIsLoading(false);
       });
     }
-  }, []);
+  }, [mode]);
+
+  // Fetch real orders for Recent Orders section
+  useEffect(() => {
+    const fetchRecentOrders = async () => {
+      try {
+        const response = await fetch('/api/orders');
+        const data = await response.json();
+        if (data.orders) {
+          const filteredOrders = filterOrdersByMode(data.orders, mode);
+          // Get the 5 most recent orders
+          const recent = filteredOrders
+            .sort((a: Order, b: Order) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+            .slice(0, 5);
+          setRecentOrders(recent);
+        }
+      } catch (error) {
+        console.error('Error fetching recent orders:', error);
+        setRecentOrders([]);
+      }
+    };
+
+    fetchRecentOrders();
+  }, [mode]);
 
   const getUserNameFromEmail = (email: string): string => {
     switch (email) {
@@ -294,16 +344,38 @@ export default function Overview() {
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const formatPaymentAmount = (order: Order) => {
+    const { payment_details } = order;
+    
+    if (payment_details.method === 'crypto' && payment_details.crypto_amount && payment_details.crypto_currency) {
+      return `${payment_details.crypto_amount.toFixed(6)} ${payment_details.crypto_currency}`;
+    }
+    
+    return `$${order.total.toFixed(2)} ${payment_details.currency || 'CAD'}`;
+  };
+
+  const getStatusColor = (status: string, isTest: boolean = false) => {
+    if (isTest) {
+      return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
+    }
+    
     switch (status) {
-      case 'completed':
-        return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
-      case 'processing':
-        return 'bg-orange-500/20 text-orange-400 border-orange-500/30';
-      case 'shipped':
-        return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
-      default:
-        return 'bg-slate-500/20 text-slate-400 border-slate-500/30';
+      case 'pending': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
+      case 'confirmed': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+      case 'shipped': return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
+      case 'delivered': return 'bg-green-500/20 text-green-400 border-green-500/30';
+      case 'cancelled': return 'bg-red-500/20 text-red-400 border-red-500/30';
+      default: return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
     }
   };
 
@@ -349,14 +421,14 @@ export default function Overview() {
       {/* Key Metrics - Simplified */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Revenue */}
-        <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border border-emerald-500/20 rounded-2xl p-6">
+        <div className={`rounded-2xl p-6 ${mode === 'dev' ? 'bg-gradient-to-br from-orange-500/10 to-orange-600/5 border border-orange-500/20' : 'bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border border-emerald-500/20'}`}>
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-emerald-500/20 rounded-xl">
-              <DollarSign className="h-6 w-6 text-emerald-400" />
+            <div className={`p-3 rounded-xl ${mode === 'dev' ? 'bg-orange-500/20' : 'bg-emerald-500/20'}`}>
+              <DollarSign className={`h-6 w-6 ${mode === 'dev' ? 'text-orange-400' : 'text-emerald-400'}`} />
             </div>
-            <div className="flex items-center text-sm text-emerald-400">
+            <div className={`flex items-center text-sm ${mode === 'live' ? 'text-emerald-400' : 'text-orange-400'}`}>
               <ArrowUpRight className="h-4 w-4" />
-              Live
+              {mode === 'live' ? 'Live' : 'Dev'}
             </div>
           </div>
           <div>
@@ -366,14 +438,14 @@ export default function Overview() {
         </div>
 
         {/* Orders */}
-        <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/20 rounded-2xl p-6">
+        <div className={`rounded-2xl p-6 ${mode === 'dev' ? 'bg-gradient-to-br from-orange-500/10 to-orange-600/5 border border-orange-500/20' : 'bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/20'}`}>
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-blue-500/20 rounded-xl">
-              <ShoppingCart className="h-6 w-6 text-blue-400" />
+            <div className={`p-3 rounded-xl ${mode === 'dev' ? 'bg-orange-500/20' : 'bg-blue-500/20'}`}>
+              <ShoppingCart className={`h-6 w-6 ${mode === 'dev' ? 'text-orange-400' : 'text-blue-400'}`} />
             </div>
-            <div className="flex items-center text-sm text-blue-400">
+            <div className={`flex items-center text-sm ${mode === 'live' ? 'text-blue-400' : 'text-orange-400'}`}>
               <ArrowUpRight className="h-4 w-4" />
-              Live
+              {mode === 'live' ? 'Live' : 'Dev'}
             </div>
           </div>
           <div>
@@ -383,14 +455,14 @@ export default function Overview() {
         </div>
 
         {/* Customers */}
-        <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border border-purple-500/20 rounded-2xl p-6">
+        <div className={`rounded-2xl p-6 ${mode === 'dev' ? 'bg-gradient-to-br from-orange-500/10 to-orange-600/5 border border-orange-500/20' : 'bg-gradient-to-br from-purple-500/10 to-purple-600/5 border border-purple-500/20'}`}>
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-purple-500/20 rounded-xl">
-              <Users className="h-6 w-6 text-purple-400" />
+            <div className={`p-3 rounded-xl ${mode === 'dev' ? 'bg-orange-500/20' : 'bg-purple-500/20'}`}>
+              <Users className={`h-6 w-6 ${mode === 'dev' ? 'text-orange-400' : 'text-purple-400'}`} />
             </div>
-            <div className="flex items-center text-sm text-purple-400">
+            <div className={`flex items-center text-sm ${mode === 'live' ? 'text-purple-400' : 'text-orange-400'}`}>
               <ArrowUpRight className="h-4 w-4" />
-              Live
+              {mode === 'live' ? 'Live' : 'Dev'}
             </div>
           </div>
           <div>
@@ -400,12 +472,12 @@ export default function Overview() {
         </div>
 
         {/* Products */}
-        <div className="bg-gradient-to-br from-cyan-500/10 to-cyan-600/5 border border-cyan-500/20 rounded-2xl p-6">
+        <div className={`rounded-2xl p-6 ${mode === 'dev' ? 'bg-gradient-to-br from-orange-500/10 to-orange-600/5 border border-orange-500/20' : 'bg-gradient-to-br from-cyan-500/10 to-cyan-600/5 border border-cyan-500/20'}`}>
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-cyan-500/20 rounded-xl">
-              <Package className="h-6 w-6 text-cyan-400" />
+            <div className={`p-3 rounded-xl ${mode === 'dev' ? 'bg-orange-500/20' : 'bg-cyan-500/20'}`}>
+              <Package className={`h-6 w-6 ${mode === 'dev' ? 'text-orange-400' : 'text-cyan-400'}`} />
             </div>
-            <div className="flex items-center text-sm text-cyan-400">
+            <div className={`flex items-center text-sm ${mode === 'dev' ? 'text-orange-400' : 'text-cyan-400'}`}>
               <Eye className="h-4 w-4" />
               Active
             </div>
@@ -458,15 +530,36 @@ export default function Overview() {
         <div className="bg-black rounded-2xl p-6 border border-white/20">
           <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
           <div className="space-y-3">
-            <button className="w-full flex items-center gap-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl text-blue-400 hover:bg-blue-500/20 transition-colors">
+            <button 
+              onClick={onNavigateToProducts}
+              className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors ${
+                mode === 'dev' 
+                  ? 'bg-orange-500/10 border border-orange-500/20 text-orange-400 hover:bg-orange-500/20' 
+                  : 'bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/20'
+              }`}
+            >
               <Package className="h-4 w-4" />
               <span>Add New Product</span>
             </button>
-            <button className="w-full flex items-center gap-3 p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl text-purple-400 hover:bg-purple-500/20 transition-colors">
+            <button 
+              onClick={onNavigateToAnalytics}
+              className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors ${
+                mode === 'dev' 
+                  ? 'bg-orange-500/10 border border-orange-500/20 text-orange-400 hover:bg-orange-500/20' 
+                  : 'bg-purple-500/10 border border-purple-500/20 text-purple-400 hover:bg-purple-500/20'
+              }`}
+            >
               <Eye className="h-4 w-4" />
               <span>View Analytics</span>
             </button>
-            <button className="w-full flex items-center gap-3 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400 hover:bg-emerald-500/20 transition-colors">
+            <button 
+              onClick={onNavigateToOrders}
+              className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors ${
+                mode === 'dev' 
+                  ? 'bg-orange-500/10 border border-orange-500/20 text-orange-400 hover:bg-orange-500/20' 
+                  : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20'
+              }`}
+            >
               <ShoppingCart className="h-4 w-4" />
               <span>Recent Orders</span>
             </button>
@@ -478,7 +571,10 @@ export default function Overview() {
       <div className="bg-black rounded-2xl p-6 border border-white/20">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-white">Recent Orders</h2>
-          <button className="text-white hover:text-white/80 text-sm font-medium">
+          <button 
+            onClick={onNavigateToOrders}
+            className="text-white hover:text-white/80 text-sm font-medium"
+          >
             View all →
           </button>
         </div>
@@ -495,24 +591,30 @@ export default function Overview() {
               <div
                 key={order.id}
                 className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors cursor-pointer"
+                onClick={onNavigateToOrders}
               >
                 <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-1">
-                    <span className="font-medium text-white">{order.id}</span>
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="font-mono text-sm text-slate-300">#{order.id.slice(-8)}</span>
                     <span className={`
-                      px-2 py-1 rounded-lg text-xs font-medium border
-                      ${getStatusColor(order.status)}
+                      px-2 py-1 rounded text-xs font-medium border
+                      ${getStatusColor(order.status, isTestOrder(order))}
                     `}>
-                      {order.status}
+                      {isTestOrder(order) ? 'TEST' : order.status.toUpperCase()}
                     </span>
                   </div>
-                  <p className="text-sm text-slate-400">{order.customer}</p>
-                  <p className="text-sm text-slate-300">{order.items || 'Items'}</p>
+                  <div className="mb-1">
+                    <p className="text-white font-medium text-sm">{order.customer_name}</p>
+                    <p className="text-slate-400 text-xs">{order.customer_email}</p>
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    {order.items.length} item{order.items.length !== 1 ? 's' : ''}
+                  </p>
                 </div>
                 
                 <div className="text-right">
-                  <p className="font-semibold text-white">{order.amount}</p>
-                  <p className="text-xs text-slate-400">{order.date}</p>
+                  <p className="font-semibold text-white text-sm">{formatPaymentAmount(order)}</p>
+                  <p className="text-xs text-slate-400">{formatDate(order.created_at)}</p>
                 </div>
               </div>
             ))

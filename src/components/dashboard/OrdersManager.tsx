@@ -1,6 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Package, DollarSign, User, Calendar, Eye, Download } from 'lucide-react';
+import { Package, DollarSign, User, Calendar, Eye, Download, Trash2 } from 'lucide-react';
+import { isTestOrder, filterOrdersByMode } from '@/lib/utils/orderUtils';
+import { useMode } from '@/lib/contexts/ModeContext';
 
 interface Order {
   id: string;
@@ -10,7 +12,7 @@ interface Order {
   subtotal?: number;
   shipping?: number;
   tax?: number;
-  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
+  status: string;
   created_at: string;
   items: Array<{
     id: number;
@@ -31,14 +33,16 @@ interface Order {
   };
 }
 
+
 export default function OrdersManager() {
+  const { mode } = useMode();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   useEffect(() => {
     fetchOrders();
-  }, []);
+  }, [mode]);
 
   const fetchOrders = async () => {
     try {
@@ -64,7 +68,11 @@ export default function OrdersManager() {
     });
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string, isTest: boolean = false) => {
+    if (isTest) {
+      return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
+    }
+    
     switch (status) {
       case 'pending': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
       case 'confirmed': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
@@ -96,6 +104,29 @@ export default function OrdersManager() {
         ${order.total.toFixed(2)} {payment_details.currency || 'CAD'}
       </div>
     );
+  };
+
+  const deleteTestOrder = async (orderId: string) => {
+    if (!confirm('Are you sure you want to delete this test order? This cannot be undone.')) return;
+    
+    try {
+      const response = await fetch(`/api/orders/${orderId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('admin-token')}`
+        }
+      });
+      
+      if (response.ok) {
+        fetchOrders(); // Refresh the orders list
+      } else {
+        console.error('Failed to delete test order:', response.status);
+        alert('Failed to delete test order. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error deleting test order:', error);
+      alert('Error deleting test order. Please try again.');
+    }
   };
 
   const exportOrders = () => {
@@ -150,71 +181,71 @@ export default function OrdersManager() {
 
       {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/20 rounded-2xl p-6">
+        <div className={`rounded-2xl p-6 ${mode === 'dev' ? 'bg-gradient-to-br from-orange-500/10 to-orange-600/5 border border-orange-500/20' : 'bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/20'}`}>
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-blue-500/20 rounded-xl">
-              <Package className="h-6 w-6 text-blue-400" />
+            <div className={`p-3 rounded-xl ${mode === 'dev' ? 'bg-orange-500/20' : 'bg-blue-500/20'}`}>
+              <Package className={`h-6 w-6 ${mode === 'dev' ? 'text-orange-400' : 'text-blue-400'}`} />
             </div>
-            <div className="flex items-center text-sm text-blue-400">
+            <div className={`flex items-center text-sm ${mode === 'live' ? 'text-blue-400' : 'text-orange-400'}`}>
               <Eye className="h-4 w-4" />
-              <span className="ml-1">Live</span>
+              <span className="ml-1">{mode === 'live' ? 'Live' : 'Dev'}</span>
             </div>
           </div>
           <div>
-            <p className="text-2xl font-bold text-white mb-1">{orders.length}</p>
+            <p className="text-2xl font-bold text-white mb-1">{filterOrdersByMode(orders, mode).length}</p>
             <p className="text-slate-400 text-sm">Total Orders</p>
           </div>
         </div>
         
-        <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border border-emerald-500/20 rounded-2xl p-6">
+        <div className={`rounded-2xl p-6 ${mode === 'dev' ? 'bg-gradient-to-br from-orange-500/10 to-orange-600/5 border border-orange-500/20' : 'bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border border-emerald-500/20'}`}>
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-emerald-500/20 rounded-xl">
-              <DollarSign className="h-6 w-6 text-emerald-400" />
+            <div className={`p-3 rounded-xl ${mode === 'dev' ? 'bg-orange-500/20' : 'bg-emerald-500/20'}`}>
+              <DollarSign className={`h-6 w-6 ${mode === 'dev' ? 'text-orange-400' : 'text-emerald-400'}`} />
             </div>
-            <div className="flex items-center text-sm text-emerald-400">
+            <div className={`flex items-center text-sm ${mode === 'dev' ? 'text-orange-400' : 'text-emerald-400'}`}>
               <DollarSign className="h-4 w-4" />
               <span className="ml-1">Revenue</span>
             </div>
           </div>
           <div>
             <p className="text-2xl font-bold text-white mb-1">
-              ${orders.reduce((sum, order) => sum + order.total, 0).toFixed(2)}
+              ${filterOrdersByMode(orders, mode).reduce((sum, order) => sum + order.total, 0).toFixed(2)}
             </p>
             <p className="text-slate-400 text-sm">Total Revenue</p>
           </div>
         </div>
         
-        <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border border-purple-500/20 rounded-2xl p-6">
+        <div className={`rounded-2xl p-6 ${mode === 'dev' ? 'bg-gradient-to-br from-orange-500/10 to-orange-600/5 border border-orange-500/20' : 'bg-gradient-to-br from-purple-500/10 to-purple-600/5 border border-purple-500/20'}`}>
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-purple-500/20 rounded-xl">
-              <User className="h-6 w-6 text-purple-400" />
+            <div className={`p-3 rounded-xl ${mode === 'dev' ? 'bg-orange-500/20' : 'bg-purple-500/20'}`}>
+              <User className={`h-6 w-6 ${mode === 'dev' ? 'text-orange-400' : 'text-purple-400'}`} />
             </div>
-            <div className="flex items-center text-sm text-purple-400">
+            <div className={`flex items-center text-sm ${mode === 'dev' ? 'text-orange-400' : 'text-purple-400'}`}>
               <User className="h-4 w-4" />
               <span className="ml-1">Unique</span>
             </div>
           </div>
           <div>
             <p className="text-2xl font-bold text-white mb-1">
-              {new Set(orders.map(order => order.customer_email)).size}
+              {new Set(filterOrdersByMode(orders, mode).map(order => order.customer_email)).size}
             </p>
             <p className="text-slate-400 text-sm">Unique Customers</p>
           </div>
         </div>
         
-        <div className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 border border-yellow-500/20 rounded-2xl p-6">
+        <div className={`rounded-2xl p-6 ${mode === 'dev' ? 'bg-gradient-to-br from-orange-500/10 to-orange-600/5 border border-orange-500/20' : 'bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 border border-yellow-500/20'}`}>
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-yellow-500/20 rounded-xl">
-              <Calendar className="h-6 w-6 text-yellow-400" />
+            <div className={`p-3 rounded-xl ${mode === 'dev' ? 'bg-orange-500/20' : 'bg-yellow-500/20'}`}>
+              <Calendar className={`h-6 w-6 ${mode === 'dev' ? 'text-orange-400' : 'text-yellow-400'}`} />
             </div>
-            <div className="flex items-center text-sm text-yellow-400">
+            <div className={`flex items-center text-sm ${mode === 'dev' ? 'text-orange-400' : 'text-yellow-400'}`}>
               <Calendar className="h-4 w-4" />
               <span className="ml-1">Month</span>
             </div>
           </div>
           <div>
             <p className="text-2xl font-bold text-white mb-1">
-              {orders.filter(order => 
+              {filterOrdersByMode(orders, mode).filter(order => 
                 new Date(order.created_at).getMonth() === new Date().getMonth()
               ).length}
             </p>
@@ -238,7 +269,7 @@ export default function OrdersManager() {
               </tr>
             </thead>
             <tbody>
-              {orders.map((order) => (
+              {filterOrdersByMode(orders, mode).map((order) => (
                 <tr key={order.id} className="border-b border-white/10 hover:bg-white/5">
                   <td className="py-4 px-6 text-slate-300 font-mono text-sm">
                     #{order.id.slice(-8)}
@@ -253,21 +284,32 @@ export default function OrdersManager() {
                     {formatPaymentAmount(order)}
                   </td>
                   <td className="py-4 px-6">
-                    <span className={`px-2 py-1 rounded text-xs font-medium border ${getStatusColor(order.status)}`}>
-                      {order.status.toUpperCase()}
+                    <span className={`px-2 py-1 rounded text-xs font-medium border ${getStatusColor(order.status, isTestOrder(order))}`}>
+                      {isTestOrder(order) ? 'TEST' : order.status.toUpperCase()}
                     </span>
                   </td>
                   <td className="py-4 px-6 text-slate-300">
                     {formatDate(order.created_at)}
                   </td>
                   <td className="py-4 px-6">
-                    <button
-                      onClick={() => setSelectedOrder(order)}
-                      className="flex items-center gap-2 px-3 py-1 bg-white/10 hover:bg-white/20 text-white rounded text-sm transition-colors"
-                    >
-                      <Eye className="h-3 w-3" />
-                      View
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setSelectedOrder(order)}
+                        className="flex items-center gap-2 px-3 py-1 bg-white/10 hover:bg-white/20 text-white rounded text-sm transition-colors"
+                      >
+                        <Eye className="h-3 w-3" />
+                        View
+                      </button>
+                      {isTestOrder(order) && (
+                        <button
+                          onClick={() => deleteTestOrder(order.id)}
+                          className="p-1 text-red-400 hover:text-red-300 transition-colors"
+                          title="Delete test order"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -312,8 +354,8 @@ export default function OrdersManager() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-400">Status:</span>
-                    <span className={`px-2 py-1 rounded text-xs font-medium border ${getStatusColor(selectedOrder.status)}`}>
-                      {selectedOrder.status.toUpperCase()}
+                    <span className={`px-2 py-1 rounded text-xs font-medium border ${getStatusColor(selectedOrder.status, isTestOrder(selectedOrder))}`}>
+                      {isTestOrder(selectedOrder) ? 'TEST' : selectedOrder.status.toUpperCase()}
                     </span>
                   </div>
                   

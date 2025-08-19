@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Star, Eye, EyeOff, Trash2, Check, X } from 'lucide-react';
+import { useMode } from '@/lib/contexts/ModeContext';
 
 interface Review {
   id: string;
@@ -16,6 +17,7 @@ interface Review {
 }
 
 export default function Reviews() {
+  const { mode } = useMode();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all'); // all, approved, pending, featured
@@ -208,7 +210,7 @@ export default function Reviews() {
             >
               Add Review
             </button>
-            <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border border-purple-500/20 rounded-xl px-6 py-3">
+            <div className={`rounded-xl px-6 py-3 ${mode === 'dev' ? 'bg-gradient-to-br from-orange-500/10 to-orange-600/5 border border-orange-500/20' : 'bg-gradient-to-br from-purple-500/10 to-purple-600/5 border border-purple-500/20'}`}>
               <span className="text-white text-lg font-semibold">{reviews.length}</span>
               <span className="text-slate-400 ml-2">Total Reviews</span>
             </div>

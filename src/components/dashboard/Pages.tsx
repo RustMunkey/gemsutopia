@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Edit, Save, X, Plus, Trash2, FileText, Mail, Clock, CircleAlert } from 'lucide-react';
+import { useMode } from '@/lib/contexts/ModeContext';
 
 interface PageContent {
   id: string;
@@ -1413,6 +1414,7 @@ const AVAILABLE_PAGES = [
 ];
 
 export default function Pages() {
+  const { mode } = useMode();
   const [selectedPage, setSelectedPage] = useState<string>('');
   const [pageContents, setPageContents] = useState<PageContent[]>([]);
   const [loading, setLoading] = useState(false);
@@ -1528,7 +1530,9 @@ export default function Pages() {
             onClick={() => setSelectedPage(page.id)}
             className={`p-6 rounded-2xl border text-left transition-all ${
               selectedPage === page.id
-                ? 'bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20 text-white'
+                ? mode === 'dev' 
+                  ? 'bg-gradient-to-br from-orange-500/10 to-orange-600/5 border-orange-500/20 text-white'
+                  : 'bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20 text-white'
                 : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:border-white/20'
             }`}
           >
@@ -1550,7 +1554,11 @@ export default function Pages() {
             </h2>
             <button
               onClick={() => setShowAddField(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors"
+              className={`flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors ${
+                mode === 'dev'
+                  ? 'bg-orange-600 hover:bg-orange-700'
+                  : 'bg-emerald-600 hover:bg-emerald-700'
+              }`}
             >
               <Plus className="h-4 w-4" />
               Add Field

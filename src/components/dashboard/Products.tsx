@@ -14,8 +14,10 @@ import {
 import Image from 'next/image';
 import { Product } from '@/lib/types/database';
 import ImageUpload from './ImageUpload';
+import { useMode } from '@/lib/contexts/ModeContext';
 
 export default function Products() {
+  const { mode } = useMode();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -27,6 +29,19 @@ export default function Products() {
   // Fetch products
   useEffect(() => {
     fetchProducts();
+  }, []);
+
+  // Listen for custom event to open add product modal
+  useEffect(() => {
+    const handleOpenAddModal = () => {
+      setShowAddModal(true);
+    };
+
+    window.addEventListener('openAddProductModal', handleOpenAddModal);
+    
+    return () => {
+      window.removeEventListener('openAddProductModal', handleOpenAddModal);
+    };
   }, []);
 
   const fetchProducts = async () => {
@@ -140,14 +155,14 @@ export default function Products() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/20 rounded-2xl p-6">
+        <div className={`rounded-2xl p-6 ${mode === 'dev' ? 'bg-gradient-to-br from-orange-500/10 to-orange-600/5 border border-orange-500/20' : 'bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/20'}`}>
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-blue-500/20 rounded-xl">
-              <Package className="h-6 w-6 text-blue-400" />
+            <div className={`p-3 rounded-xl ${mode === 'dev' ? 'bg-orange-500/20' : 'bg-blue-500/20'}`}>
+              <Package className={`h-6 w-6 ${mode === 'dev' ? 'text-orange-400' : 'text-blue-400'}`} />
             </div>
-            <div className="flex items-center text-sm text-blue-400">
+            <div className={`flex items-center text-sm ${mode === 'dev' ? 'text-orange-400' : 'text-blue-400'}`}>
               <Eye className="h-4 w-4" />
-              <span className="ml-1">Live</span>
+              <span className="ml-1">{mode === 'live' ? 'Live' : 'Dev'}</span>
             </div>
           </div>
           <div>
@@ -156,12 +171,12 @@ export default function Products() {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border border-emerald-500/20 rounded-2xl p-6">
+        <div className={`rounded-2xl p-6 ${mode === 'dev' ? 'bg-gradient-to-br from-orange-500/10 to-orange-600/5 border border-orange-500/20' : 'bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border border-emerald-500/20'}`}>
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-emerald-500/20 rounded-xl">
-              <Eye className="h-6 w-6 text-emerald-400" />
+            <div className={`p-3 rounded-xl ${mode === 'dev' ? 'bg-orange-500/20' : 'bg-emerald-500/20'}`}>
+              <Eye className={`h-6 w-6 ${mode === 'dev' ? 'text-orange-400' : 'text-emerald-400'}`} />
             </div>
-            <div className="flex items-center text-sm text-emerald-400">
+            <div className={`flex items-center text-sm ${mode === 'dev' ? 'text-orange-400' : 'text-emerald-400'}`}>
               <Package className="h-4 w-4" />
               <span className="ml-1">Active</span>
             </div>
@@ -172,12 +187,12 @@ export default function Products() {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 border border-yellow-500/20 rounded-2xl p-6">
+        <div className={`rounded-2xl p-6 ${mode === 'dev' ? 'bg-gradient-to-br from-orange-500/10 to-orange-600/5 border border-orange-500/20' : 'bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 border border-yellow-500/20'}`}>
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-yellow-500/20 rounded-xl">
-              <Star className="h-6 w-6 text-yellow-400" />
+            <div className={`p-3 rounded-xl ${mode === 'dev' ? 'bg-orange-500/20' : 'bg-yellow-500/20'}`}>
+              <Star className={`h-6 w-6 ${mode === 'dev' ? 'text-orange-400' : 'text-yellow-400'}`} />
             </div>
-            <div className="flex items-center text-sm text-yellow-400">
+            <div className={`flex items-center text-sm ${mode === 'dev' ? 'text-orange-400' : 'text-yellow-400'}`}>
               <Star className="h-4 w-4" />
               <span className="ml-1">Featured</span>
             </div>
@@ -188,12 +203,12 @@ export default function Products() {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-red-500/10 to-red-600/5 border border-red-500/20 rounded-2xl p-6">
+        <div className={`rounded-2xl p-6 ${mode === 'dev' ? 'bg-gradient-to-br from-orange-500/10 to-orange-600/5 border border-orange-500/20' : 'bg-gradient-to-br from-red-500/10 to-red-600/5 border border-red-500/20'}`}>
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-red-500/20 rounded-xl">
-              <Tag className="h-6 w-6 text-red-400" />
+            <div className={`p-3 rounded-xl ${mode === 'dev' ? 'bg-orange-500/20' : 'bg-red-500/20'}`}>
+              <Tag className={`h-6 w-6 ${mode === 'dev' ? 'text-orange-400' : 'text-red-400'}`} />
             </div>
-            <div className="flex items-center text-sm text-red-400">
+            <div className={`flex items-center text-sm ${mode === 'dev' ? 'text-orange-400' : 'text-red-400'}`}>
               <Tag className="h-4 w-4" />
               <span className="ml-1">Sale</span>
             </div>
@@ -305,12 +320,12 @@ export default function Products() {
                     </td>
                     <td className="p-4 text-slate-300">{product.category}</td>
                     <td className="p-4">
-                      <div>
-                        <p className="text-white font-medium">
+                      <div className="flex items-center gap-2">
+                        <span className="text-white font-medium">
                           ${product.on_sale && product.sale_price ? product.sale_price : product.price}
-                        </p>
+                        </span>
                         {product.on_sale && product.sale_price && (
-                          <p className="text-sm text-slate-400 line-through">${product.price}</p>
+                          <span className="text-sm text-slate-400 line-through">${product.price}</span>
                         )}
                       </div>
                     </td>

@@ -1,5 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { filterOrdersByMode } from '@/lib/utils/orderUtils';
+import { useMode } from '@/lib/contexts/ModeContext';
 import { 
   TrendingUp, 
   DollarSign, 
@@ -72,6 +74,7 @@ interface AnalyticsData {
 }
 
 export default function Analytics() {
+  const { mode } = useMode();
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('30days');
@@ -79,7 +82,7 @@ export default function Analytics() {
 
   useEffect(() => {
     fetchAnalytics();
-  }, [timeRange]);
+  }, [timeRange, mode]);
 
   const fetchAnalytics = async () => {
     try {
@@ -102,15 +105,18 @@ export default function Analytics() {
       const orders = ordersData.orders || [];
       const products = productsData.products || [];
 
-      // Calculate comprehensive analytics
-      const totalRevenue = orders.reduce((sum: number, order: any) => {
+      // Filter orders based on current mode
+      const filteredOrders = filterOrdersByMode(orders, mode);
+
+      // Calculate comprehensive analytics from filtered orders
+      const totalRevenue = filteredOrders.reduce((sum: number, order: any) => {
         const total = order.total || order.amount || '0';
         const amount = parseFloat(typeof total === 'string' ? total.replace(/[^0-9.-]+/g, '') : total.toString());
         return sum + (isNaN(amount) ? 0 : amount);
       }, 0);
 
-      const totalOrders = orders.length;
-      const uniqueCustomers = new Set(orders.map((order: any) => order.customer)).size;
+      const totalOrders = filteredOrders.length;
+      const uniqueCustomers = new Set(filteredOrders.map((order: any) => order.customer)).size;
       
       // Mock realistic analytics data based on real data
       const mockSessions = totalOrders * 15; // Realistic conversion rate of ~6.7%
@@ -313,10 +319,10 @@ export default function Analytics() {
       {/* Key Performance Indicators */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Revenue */}
-        <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border border-emerald-500/20 rounded-2xl p-6">
+        <div className={`rounded-2xl p-6 ${mode === 'dev' ? 'bg-gradient-to-br from-orange-500/10 to-orange-600/5 border border-orange-500/20' : 'bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border border-emerald-500/20'}`}>
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-emerald-500/20 rounded-xl">
-              <DollarSign className="h-6 w-6 text-emerald-400" />
+            <div className={`p-3 rounded-xl ${mode === 'dev' ? 'bg-orange-500/20' : 'bg-emerald-500/20'}`}>
+              <DollarSign className={`h-6 w-6 ${mode === 'dev' ? 'text-orange-400' : 'text-emerald-400'}`} />
             </div>
             <div className={`flex items-center text-sm ${TrendColor(analytics.revenueChange)}`}>
               <TrendIcon change={analytics.revenueChange} />
@@ -330,10 +336,10 @@ export default function Analytics() {
         </div>
 
         {/* Sessions */}
-        <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/20 rounded-2xl p-6">
+        <div className={`rounded-2xl p-6 ${mode === 'dev' ? 'bg-gradient-to-br from-orange-500/10 to-orange-600/5 border border-orange-500/20' : 'bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/20'}`}>
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-blue-500/20 rounded-xl">
-              <Users className="h-6 w-6 text-blue-400" />
+            <div className={`p-3 rounded-xl ${mode === 'dev' ? 'bg-orange-500/20' : 'bg-blue-500/20'}`}>
+              <Users className={`h-6 w-6 ${mode === 'dev' ? 'text-orange-400' : 'text-blue-400'}`} />
             </div>
             <div className={`flex items-center text-sm ${TrendColor(analytics.sessionsChange)}`}>
               <TrendIcon change={analytics.sessionsChange} />
@@ -347,10 +353,10 @@ export default function Analytics() {
         </div>
 
         {/* Conversion Rate */}
-        <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border border-purple-500/20 rounded-2xl p-6">
+        <div className={`rounded-2xl p-6 ${mode === 'dev' ? 'bg-gradient-to-br from-orange-500/10 to-orange-600/5 border border-orange-500/20' : 'bg-gradient-to-br from-purple-500/10 to-purple-600/5 border border-purple-500/20'}`}>
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-purple-500/20 rounded-xl">
-              <Target className="h-6 w-6 text-purple-400" />
+            <div className={`p-3 rounded-xl ${mode === 'dev' ? 'bg-orange-500/20' : 'bg-purple-500/20'}`}>
+              <Target className={`h-6 w-6 ${mode === 'dev' ? 'text-orange-400' : 'text-purple-400'}`} />
             </div>
             <div className={`flex items-center text-sm ${TrendColor(analytics.conversionChange)}`}>
               <TrendIcon change={analytics.conversionChange} />
@@ -364,10 +370,10 @@ export default function Analytics() {
         </div>
 
         {/* Average Order Value */}
-        <div className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 border border-yellow-500/20 rounded-2xl p-6">
+        <div className={`rounded-2xl p-6 ${mode === 'dev' ? 'bg-gradient-to-br from-orange-500/10 to-orange-600/5 border border-orange-500/20' : 'bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 border border-yellow-500/20'}`}>
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-yellow-500/20 rounded-xl">
-              <ShoppingCart className="h-6 w-6 text-yellow-400" />
+            <div className={`p-3 rounded-xl ${mode === 'dev' ? 'bg-orange-500/20' : 'bg-yellow-500/20'}`}>
+              <ShoppingCart className={`h-6 w-6 ${mode === 'dev' ? 'text-orange-400' : 'text-yellow-400'}`} />
             </div>
             <div className={`flex items-center text-sm ${TrendColor(analytics.aovChange)}`}>
               <TrendIcon change={analytics.aovChange} />
@@ -476,7 +482,7 @@ export default function Analytics() {
                   </div>
                   <div className="w-full bg-white/10 rounded-full h-2">
                     <div
-                      className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-500"
+                      className={`h-2 rounded-full transition-all duration-500 ${mode === 'dev' ? 'bg-gradient-to-r from-orange-500 to-orange-400' : 'bg-gradient-to-r from-blue-500 to-purple-500'}`}
                       style={{ width: `${percentage}%` }}
                     />
                   </div>
@@ -575,7 +581,7 @@ export default function Analytics() {
                     </div>
                     <div className="w-20 bg-white/10 rounded-full h-2">
                       <div
-                        className="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full"
+                        className={`h-2 rounded-full ${mode === 'dev' ? 'bg-gradient-to-r from-orange-500 to-orange-400' : 'bg-gradient-to-r from-green-500 to-blue-500'}`}
                         style={{ width: `${percentage}%` }}
                       />
                     </div>

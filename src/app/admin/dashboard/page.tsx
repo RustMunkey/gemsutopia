@@ -9,6 +9,7 @@ import SiteContent from '@/components/dashboard/SiteContent';
 import Pages from '@/components/dashboard/Pages';
 import Reviews from '@/components/dashboard/Reviews';
 import Analytics from '@/components/dashboard/Analytics';
+import { ModeProvider } from '@/lib/contexts/ModeContext';
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -66,10 +67,30 @@ export default function Dashboard() {
     return null;
   }
 
+  const handleNavigateToProducts = () => {
+    setActiveTab('products');
+    // Small delay to ensure Products component is mounted before triggering modal
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('openAddProductModal'));
+    }, 100);
+  };
+
+  const handleNavigateToAnalytics = () => {
+    setActiveTab('analytics');
+  };
+
+  const handleNavigateToOrders = () => {
+    setActiveTab('orders');
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'overview':
-        return <Overview />;
+        return <Overview 
+          onNavigateToProducts={handleNavigateToProducts}
+          onNavigateToAnalytics={handleNavigateToAnalytics}
+          onNavigateToOrders={handleNavigateToOrders}
+        />;
       case 'products':
         return <Products />;
       case 'orders':
@@ -83,17 +104,23 @@ export default function Dashboard() {
       case 'analytics':
         return <Analytics />;
       default:
-        return <Overview />;
+        return <Overview 
+          onNavigateToProducts={handleNavigateToProducts}
+          onNavigateToAnalytics={handleNavigateToAnalytics}
+          onNavigateToOrders={handleNavigateToOrders}
+        />;
     }
   };
 
   return (
-    <DashboardLayout 
-      activeTab={activeTab} 
-      onTabChange={setActiveTab}
-      onLogout={handleLogout}
-    >
-      {renderContent()}
-    </DashboardLayout>
+    <ModeProvider>
+      <DashboardLayout 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab}
+        onLogout={handleLogout}
+      >
+        {renderContent()}
+      </DashboardLayout>
+    </ModeProvider>
   );
 }
