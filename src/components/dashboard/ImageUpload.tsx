@@ -209,9 +209,9 @@ export default function ImageUpload({
     const newImages = images.filter((_, i) => i !== index);
     onImagesChange(newImages);
     
-    // Adjust featured image index if needed
-    if (onFeaturedImageChange && featured_image_index >= newImages.length) {
-      onFeaturedImageChange(Math.max(0, newImages.length - 1));
+    // Featured image is always index 0, so no need to adjust
+    if (onFeaturedImageChange && newImages.length > 0) {
+      onFeaturedImageChange(0);
     }
   };
 
@@ -287,11 +287,21 @@ export default function ImageUpload({
               <div key={`image-${index}`} className="relative group">
                 <div 
                   className={`relative cursor-pointer border-2 rounded-lg overflow-hidden transition-colors ${
-                    onFeaturedImageChange && featured_image_index === index 
+                    index === 0 
                       ? 'border-white' 
                       : 'border-transparent hover:border-white/40'
                   }`}
-                  onClick={() => onFeaturedImageChange && onFeaturedImageChange(index)}
+                  onClick={() => {
+                    if (onFeaturedImageChange && index !== 0) {
+                      // Reorder images array to move selected image to first position
+                      const newImages = [...images];
+                      const selectedImage = newImages[index];
+                      newImages.splice(index, 1);
+                      newImages.unshift(selectedImage);
+                      onImagesChange(newImages);
+                      onFeaturedImageChange(0);
+                    }
+                  }}
                 >
                   <Image
                     src={img}
@@ -300,7 +310,7 @@ export default function ImageUpload({
                     height={80}
                     className="w-full h-20 object-cover bg-slate-700"
                   />
-                  {onFeaturedImageChange && featured_image_index === index && (
+                  {index === 0 && (
                     <div className="absolute inset-0 bg-white/20 flex items-center justify-center">
                       <div className="bg-white text-black px-1 py-0.5 rounded text-xs font-medium">
                         Featured
@@ -344,7 +354,7 @@ export default function ImageUpload({
           
           {onFeaturedImageChange && images.length > 1 && (
             <p className="text-xs text-slate-400 mt-2">
-              Click an image to set it as the featured image for the shop page
+              Click an image to move it to first position (featured image). The first image is always the featured image.
             </p>
           )}
         </div>

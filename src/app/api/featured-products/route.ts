@@ -8,7 +8,7 @@ const supabase = createClient(
 
 export async function GET() {
   try {
-    const { data: products, error } = await supabase
+    const { data: allProducts, error } = await supabase
       .from('products')
       .select('*')
       .eq('featured', true)
@@ -19,6 +19,9 @@ export async function GET() {
       console.error('Error fetching featured products:', error);
       return NextResponse.json({ error: 'Failed to fetch featured products' }, { status: 500 });
     }
+
+    // Filter by frontend_visible
+    const products = allProducts?.filter(p => p.metadata?.frontend_visible !== false) || [];
 
     // Transform products to match the expected Featured component interface
     const featuredProducts = (products || []).map(product => ({

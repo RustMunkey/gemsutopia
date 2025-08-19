@@ -254,9 +254,9 @@ export default function Shop() {
             type: product.category,
             price: product.on_sale && product.sale_price ? product.sale_price : product.price,
             originalPrice: product.price,
-            image: product.images?.[product.featured_image_index || 0] || product.images?.[0] || '/images/placeholder.jpg',
+            image: product.images?.[0] || '/images/placeholder.jpg',
             images: product.images || [],
-            featuredImageIndex: product.featured_image_index || product.metadata?.featured_image_index || 0,
+            featuredImageIndex: 0,
             stock: product.inventory
           }));
           setProducts(transformedProducts);

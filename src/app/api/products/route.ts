@@ -36,11 +36,35 @@ export async function GET(request: NextRequest) {
     const featured = searchParams.get('featured') === 'true';
     const onSale = searchParams.get('onSale') === 'true';
 
+    // If includeInactive is requested, verify admin token
+    if (includeInactive && !verifyAdminToken(request)) {
+      return NextResponse.json(
+        { success: false, message: 'Admin access required to include inactive products' },
+        { status: 401 }
+      );
+    }
+
     let query = supabase.from('products').select('*');
+
+    console.log('GET /api/products - includeInactive:', includeInactive);
 
     // Apply filters
     if (!includeInactive) {
-      query = query.eq('is_active', true);
+      console.log('Filtering to only frontend visible products');
+      // For public API, filter by frontend_visible in metadata
+      const { data: allProducts, error: fetchError } = await query.order('created_at', { ascending: false });
+      if (fetchError) {
+        throw fetchError;
+      }
+      const visibleProducts = allProducts?.filter(p => p.metadata?.frontend_visible !== false) || [];
+      console.log(`Returning ${visibleProducts.length} frontend visible products out of ${allProducts?.length || 0} total`);
+      return NextResponse.json({
+        success: true,
+        products: visibleProducts,
+        count: visibleProducts.length
+      });
+    } else {
+      console.log('Including ALL products (admin view)');
     }
     if (category) {
       query = query.eq('category', category);
@@ -61,6 +85,8 @@ export async function GET(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    console.log(`Returning ${products?.length || 0} products. Active: ${products?.filter(p => p.is_active).length}, Inactive: ${products?.filter(p => !p.is_active).length}`);
 
     return NextResponse.json({
       success: true,

@@ -58,12 +58,12 @@ export default function ProductContent({ product: initialProduct }: ProductConte
     ? product.images[selectedImageIndex] || product.images[0] 
     : '/images/placeholder.jpg';
   
-  // Set the initial selected image to the featured image
+  // Set the initial selected image to the first image (always the featured image)
   useEffect(() => {
-    if (product.featured_image_index !== undefined && product.images?.length > product.featured_image_index) {
-      setSelectedImageIndex(product.featured_image_index);
+    if (product.images?.length > 0) {
+      setSelectedImageIndex(0);
     }
-  }, [product.featured_image_index, product.images]);
+  }, [product.images]);
 
   // Track product view on component mount
   useEffect(() => {

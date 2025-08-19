@@ -59,12 +59,15 @@ export default function Products() {
                          (filterStatus === 'featured' && product.featured) ||
                          (filterStatus === 'sale' && product.on_sale);
     
+    console.log(`Product ${product.name}: search=${matchesSearch}, category=${matchesCategory}, status=${matchesStatus}, filterStatus=${filterStatus}, is_active=${product.is_active}`);
+    
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
   const categories = [...new Set(products.map(p => p.category))];
 
   const toggleProductStatus = async (productId: string, currentStatus: boolean) => {
+    console.log('Toggling frontend visibility:', productId, 'from', currentStatus, 'to', !currentStatus);
     try {
       const token = localStorage.getItem('admin-token');
       const response = await fetch(`/api/products/${productId}`, {
@@ -73,11 +76,15 @@ export default function Products() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ is_active: !currentStatus })
+        body: JSON.stringify({ frontend_visible: !currentStatus })
       });
 
       if (response.ok) {
-        fetchProducts();
+        console.log('Product status updated successfully, refetching products...');
+        await fetchProducts();
+        console.log('Products refetched. Total products:', products.length);
+      } else {
+        console.error('Failed to update product status:', response.status);
       }
     } catch (error) {
       console.error('Error toggling product status:', error);
@@ -85,11 +92,11 @@ export default function Products() {
   };
 
   const deleteProduct = async (productId: string) => {
-    if (!confirm('Are you sure you want to delete this product?')) return;
+    if (!confirm('Are you sure you want to permanently delete this product? This cannot be undone.')) return;
 
     try {
       const token = localStorage.getItem('admin-token');
-      const response = await fetch(`/api/products/${productId}`, {
+      const response = await fetch(`/api/products/${productId}?permanent=true`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -328,11 +335,11 @@ export default function Products() {
                           <Edit2 className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => toggleProductStatus(product.id, product.is_active)}
+                          onClick={() => toggleProductStatus(product.id, product.metadata?.frontend_visible !== false)}
                           className="p-1 text-slate-400 hover:text-white"
-                          title={product.is_active ? 'Deactivate' : 'Activate'}
+                          title={(product.metadata?.frontend_visible !== false) ? 'Hide from frontend' : 'Show on frontend'}
                         >
-                          {product.is_active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          {(product.metadata?.frontend_visible !== false) ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                         </button>
                         <button
                           onClick={() => deleteProduct(product.id)}
@@ -386,11 +393,11 @@ function ProductModal({ product, onClose, onSave }: {
     inventory: product?.inventory?.toString() || '0',
     sku: product?.sku || '',
     weight: product?.weight?.toString() || '',
-    is_active: product?.is_active !== false,
+    is_active: true,
     featured: product?.featured || false,
     images: product?.images || [],
     video_url: product?.video_url || product?.metadata?.video_url || '',
-    featured_image_index: product?.featured_image_index || product?.metadata?.featured_image_index || 0,
+    featured_image_index: 0,
     tags: product?.tags?.join(', ') || '',
     // Product details
     details: (product?.metadata?.details || [
@@ -462,13 +469,16 @@ function ProductModal({ product, onClose, onSave }: {
         tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean),
         images: formData.images,
         video_url: formData.video_url || null,
-        featured_image_index: formData.featured_image_index,
+        featured_image_index: 0,
         metadata: {
           ...(product?.metadata || {}),
           details: formData.details.split('\n').map(item => item.trim()).filter(Boolean),
           shipping_info: formData.shipping_info
         }
       };
+      
+      console.log('Saving product with featured_image_index:', formData.featured_image_index);
+      console.log('Full productData:', productData);
 
       const url = product ? `/api/products/${product.id}` : '/api/products';
       const method = product ? 'PUT' : 'POST';
@@ -696,13 +706,14 @@ function ProductModal({ product, onClose, onSave }: {
             featured_image_index={formData.featured_image_index}
             onImagesChange={(images) => {
               setFormData(prev => ({...prev, images}));
-              // Reset featured image index if it's now out of bounds
-              if (formData.featured_image_index >= images.length) {
-                setFormData(prev => ({...prev, featured_image_index: 0}));
-              }
+              // Featured image is always the first image
+              setFormData(prev => ({...prev, featured_image_index: 0}));
             }}
             onVideoChange={(videoUrl) => setFormData(prev => ({...prev, video_url: videoUrl || ''}))}
-            onFeaturedImageChange={(index) => setFormData(prev => ({...prev, featured_image_index: index}))}
+            onFeaturedImageChange={(index) => {
+              console.log('Featured image changed to index:', index);
+              setFormData(prev => ({...prev, featured_image_index: 0}));
+            }}
             maxImages={8}
             folder="products"
             label="Product Media"
@@ -710,17 +721,7 @@ function ProductModal({ product, onClose, onSave }: {
           />
 
           {/* Status Options */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <label className="flex items-center gap-2 text-slate-300">
-              <input
-                type="checkbox"
-                checked={formData.is_active}
-                onChange={(e) => setFormData(prev => ({...prev, is_active: e.target.checked}))}
-                className="rounded"
-              />
-              Active Product
-            </label>
-
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <label className="flex items-center gap-2 text-slate-300">
               <input
                 type="checkbox"

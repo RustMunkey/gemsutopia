@@ -39,6 +39,7 @@ export interface Product {
     featured_image_index?: number;
     view_count?: number;
     wishlist_count?: number;
+    frontend_visible?: boolean;
   } | null;
 }
 

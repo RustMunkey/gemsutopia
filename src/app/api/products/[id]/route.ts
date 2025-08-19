@@ -71,6 +71,9 @@ export async function PUT(
     }
 
     const data = await request.json();
+    
+    console.log('API PUT received data.featured_image_index:', data.featured_image_index);
+    console.log('API PUT received full data:', data);
 
     // Prepare update data (only include fields that are provided)
     const updateData: Record<string, unknown> = {};
@@ -84,7 +87,14 @@ export async function PUT(
     if (data.images !== undefined) updateData.images = data.images;
     // Store video and featured image in metadata for now (until DB schema is updated)
     if (data.video_url !== undefined || data.featured_image_index !== undefined) {
-      const currentMetadata = updateData.metadata || {};
+      // Get current product metadata first
+      const { data: currentProduct } = await supabaseAdmin
+        .from('products')
+        .select('metadata')
+        .eq('id', resolvedParams.id)
+        .single();
+      
+      const currentMetadata = currentProduct?.metadata || {};
       updateData.metadata = {
         ...currentMetadata,
         ...(data.video_url !== undefined && { video_url: data.video_url || null }),
@@ -97,8 +107,28 @@ export async function PUT(
     if (data.weight !== undefined) updateData.weight = data.weight ? parseFloat(data.weight) : null;
     if (data.dimensions !== undefined) updateData.dimensions = data.dimensions;
     if (data.is_active !== undefined) updateData.is_active = data.is_active;
+    if (data.frontend_visible !== undefined) {
+      // Store frontend visibility in metadata to avoid database issues
+      const { data: currentProduct } = await supabaseAdmin
+        .from('products')
+        .select('metadata')
+        .eq('id', resolvedParams.id)
+        .single();
+      
+      const currentMetadata = currentProduct?.metadata || {};
+      updateData.metadata = {
+        ...currentMetadata,
+        frontend_visible: data.frontend_visible
+      };
+    }
     if (data.featured !== undefined) updateData.featured = data.featured;
-    if (data.metadata !== undefined) updateData.metadata = data.metadata;
+    if (data.metadata !== undefined) {
+      // Merge provided metadata with existing metadata (don't overwrite)
+      const existingMetadata = updateData.metadata || {};
+      updateData.metadata = { ...existingMetadata, ...data.metadata };
+    }
+
+    console.log('UPDATE DATA:', JSON.stringify(updateData, null, 2));
 
     const { data: updatedProduct, error } = await supabaseAdmin
       .from('products')
