@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { filterOrdersByMode } from '@/lib/utils/orderUtils';
+import { isTestOrder } from '@/lib/utils/orderUtils';
 import { useMode } from '@/lib/contexts/ModeContext';
 import { 
   TrendingUp, 
@@ -89,150 +89,350 @@ export default function Analytics() {
       setRefreshing(true);
       const token = localStorage.getItem('admin-token');
       
-      // Fetch data from working APIs
-      const [ordersRes, productsRes] = await Promise.all([
-        fetch('/api/orders'),
+      // Fetch data from working APIs with mode filtering and analytics events
+      const [ordersRes, productsRes, analyticsRes] = await Promise.all([
+        fetch(`/api/orders?mode=${mode}`),
         fetch('/api/products?includeInactive=true', {
           headers: { Authorization: `Bearer ${token}` }
-        })
+        }),
+        fetch(`/api/analytics?mode=${mode}&limit=10000`)
       ]);
 
-      const [ordersData, productsData] = await Promise.all([
+      const [ordersData, productsData, analyticsData] = await Promise.all([
         ordersRes.json(),
-        productsRes.json()
+        productsRes.json(),
+        analyticsRes.json()
       ]);
 
       const orders = ordersData.orders || [];
       const products = productsData.products || [];
+      const analyticsEvents = analyticsData.events || [];
 
-      // Filter orders based on current mode
-      const filteredOrders = filterOrdersByMode(orders, mode);
+      // Orders are already filtered by backend based on mode
+      const filteredOrders = orders;
 
-      // Calculate comprehensive analytics from filtered orders
+      // Calculate real analytics from filtered orders
       const totalRevenue = filteredOrders.reduce((sum: number, order: any) => {
-        const total = order.total || order.amount || '0';
-        const amount = parseFloat(typeof total === 'string' ? total.replace(/[^0-9.-]+/g, '') : total.toString());
-        return sum + (isNaN(amount) ? 0 : amount);
+        return sum + (order.total || 0);
       }, 0);
 
       const totalOrders = filteredOrders.length;
-      const uniqueCustomers = new Set(filteredOrders.map((order: any) => order.customer)).size;
+      const uniqueCustomers = new Set(filteredOrders.map((order: any) => order.customer_email || order.customer)).size;
       
-      // Mock realistic analytics data based on real data
-      const mockSessions = totalOrders * 15; // Realistic conversion rate of ~6.7%
-      const mockPageViews = mockSessions * 4.2; // Average pages per session
+      // Calculate previous period for comparison (30 days ago)
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const previousPeriodOrders = filteredOrders.filter((order: any) => 
+        new Date(order.created_at) < thirtyDaysAgo
+      );
+      const previousRevenue = previousPeriodOrders.reduce((sum: number, order: any) => sum + (order.total || 0), 0);
+
+      // Process analytics events for real tracking data
+      const pageViewEvents = analyticsEvents.filter((e: any) => e.event_type === 'page_view');
+      const sessionIds = new Set(analyticsEvents.map((e: any) => e.session_id));
+      const checkoutEvents = analyticsEvents.filter((e: any) => e.event_type === 'checkout_complete');
+      const cartAddEvents = analyticsEvents.filter((e: any) => e.event_type === 'cart_add');
+      const checkoutStartEvents = analyticsEvents.filter((e: any) => e.event_type === 'checkout_start');
+
+      // Real analytics calculations
+      const totalSessions = sessionIds.size;
+      const totalPageViews = pageViewEvents.length;
       
-      // Calculate top products with realistic metrics
-      const topProducts = products.slice(0, 5).map((product: any) => {
-        const productOrders = Math.floor(Math.random() * 15) + 5;
-        const productViews = productOrders * 25; // ~4% conversion rate
-        const productRevenue = parseFloat(product.price || 0) * productOrders;
-        return {
-          name: product.name,
-          views: productViews,
-          orders: productOrders,
-          revenue: productRevenue,
-          conversion: (productOrders / productViews) * 100
-        };
+      // Calculate bounce rate (sessions with only 1 page view)
+      const sessionPageViews = new Map<string, number>();
+      pageViewEvents.forEach((event: any) => {
+        sessionPageViews.set(event.session_id, (sessionPageViews.get(event.session_id) || 0) + 1);
+      });
+      const bouncedSessions = Array.from(sessionPageViews.values()).filter(count => count === 1).length;
+      const bounceRate = totalSessions > 0 ? (bouncedSessions / totalSessions) * 100 : 0;
+
+      // Calculate average session duration
+      const sessionEvents = new Map<string, any[]>();
+      analyticsEvents.forEach((event: any) => {
+        if (!sessionEvents.has(event.session_id)) {
+          sessionEvents.set(event.session_id, []);
+        }
+        sessionEvents.get(event.session_id)!.push(event);
       });
 
-      // Traffic sources with realistic distribution
-      const trafficSources = [
-        { source: 'Organic Search', sessions: Math.floor(mockSessions * 0.45), revenue: totalRevenue * 0.52, conversion: 7.2 },
-        { source: 'Direct', sessions: Math.floor(mockSessions * 0.25), revenue: totalRevenue * 0.28, conversion: 8.1 },
-        { source: 'Social Media', sessions: Math.floor(mockSessions * 0.15), revenue: totalRevenue * 0.12, conversion: 3.8 },
-        { source: 'Email', sessions: Math.floor(mockSessions * 0.08), revenue: totalRevenue * 0.15, conversion: 12.5 },
-        { source: 'Paid Search', sessions: Math.floor(mockSessions * 0.07), revenue: totalRevenue * 0.08, conversion: 5.9 }
-      ];
+      const sessionDurations = Array.from(sessionEvents.values()).map(events => {
+        const sorted = events.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+        if (sorted.length < 2) return 0;
+        const first = new Date(sorted[0].timestamp);
+        const last = new Date(sorted[sorted.length - 1].timestamp);
+        return (last.getTime() - first.getTime()) / 1000; // seconds
+      });
+      
+      const avgSessionDuration = sessionDurations.length > 0 
+        ? sessionDurations.reduce((sum, duration) => sum + duration, 0) / sessionDurations.length 
+        : 0;
 
-      // Geographic data
-      const topCountries = [
-        { country: 'United States', sessions: Math.floor(mockSessions * 0.65), revenue: totalRevenue * 0.72 },
-        { country: 'Canada', sessions: Math.floor(mockSessions * 0.20), revenue: totalRevenue * 0.18 },
-        { country: 'United Kingdom', sessions: Math.floor(mockSessions * 0.08), revenue: totalRevenue * 0.06 },
-        { country: 'Australia', sessions: Math.floor(mockSessions * 0.04), revenue: totalRevenue * 0.03 },
-        { country: 'Germany', sessions: Math.floor(mockSessions * 0.03), revenue: totalRevenue * 0.01 }
-      ];
+      // Calculate conversion rate
+      const conversions = checkoutEvents.length;
+      const conversionRate = totalSessions > 0 ? (conversions / totalSessions) * 100 : 0;
 
-      // Device breakdown
+      // Process traffic sources from analytics events
+      const trafficSourceMap = new Map<string, { sessions: Set<string>; revenue: number }>();
+      
+      pageViewEvents.forEach((event: any) => {
+        const source = event.event_data?.traffic_source || 'direct';
+        if (!trafficSourceMap.has(source)) {
+          trafficSourceMap.set(source, { sessions: new Set(), revenue: 0 });
+        }
+        trafficSourceMap.get(source)!.sessions.add(event.session_id);
+      });
+
+      // Add revenue to traffic sources
+      checkoutEvents.forEach((event: any) => {
+        const sessionAnalyticsEvents = analyticsEvents.filter((e: any) => e.session_id === event.session_id);
+        const pageViewEvent = sessionAnalyticsEvents.find((e: any) => e.event_type === 'page_view');
+        const source = pageViewEvent?.event_data?.traffic_source || 'direct';
+        
+        if (!trafficSourceMap.has(source)) {
+          trafficSourceMap.set(source, { sessions: new Set(), revenue: 0 });
+        }
+        trafficSourceMap.get(source)!.revenue += event.event_data?.order_value || 0;
+      });
+
+      const trafficSources = Array.from(trafficSourceMap.entries())
+        .map(([source, data]) => ({
+          source,
+          sessions: data.sessions.size,
+          revenue: data.revenue,
+          conversion: data.sessions.size > 0 ? (conversions / data.sessions.size) * 100 : 0
+        }))
+        .sort((a, b) => b.sessions - a.sessions)
+        .slice(0, 5);
+
+      // Process countries from analytics events
+      const countryMap = new Map<string, { sessions: Set<string>; revenue: number }>();
+      
+      analyticsEvents.forEach((event: any) => {
+        const country = event.country || 'Unknown';
+        if (!countryMap.has(country)) {
+          countryMap.set(country, { sessions: new Set(), revenue: 0 });
+        }
+        countryMap.get(country)!.sessions.add(event.session_id);
+      });
+
+      const topCountries = Array.from(countryMap.entries())
+        .map(([country, data]) => ({
+          country,
+          sessions: data.sessions.size,
+          revenue: data.revenue
+        }))
+        .sort((a, b) => b.sessions - a.sessions)
+        .slice(0, 5);
+
+      // Calculate device breakdown from analytics events
+      const deviceCounts = { desktop: 0, mobile: 0, tablet: 0 };
+      const uniqueDeviceSessions = new Set<string>();
+
+      analyticsEvents.forEach((event: any) => {
+        if (!uniqueDeviceSessions.has(event.session_id)) {
+          uniqueDeviceSessions.add(event.session_id);
+          
+          switch (event.device_type) {
+            case 'desktop':
+              deviceCounts.desktop++;
+              break;
+            case 'mobile':
+              deviceCounts.mobile++;
+              break;
+            case 'tablet':
+              deviceCounts.tablet++;
+              break;
+          }
+        }
+      });
+
+      const totalDevices = deviceCounts.desktop + deviceCounts.mobile + deviceCounts.tablet;
       const deviceBreakdown = {
-        desktop: 52.3,
-        mobile: 41.7,
-        tablet: 6.0
+        desktop: totalDevices > 0 ? (deviceCounts.desktop / totalDevices) * 100 : 0,
+        mobile: totalDevices > 0 ? (deviceCounts.mobile / totalDevices) * 100 : 0,
+        tablet: totalDevices > 0 ? (deviceCounts.tablet / totalDevices) * 100 : 0
       };
 
-      // Hourly traffic pattern (0-23 hours)
-      const hourlyTraffic = Array.from({ length: 24 }, (_, hour) => {
-        // Peak hours: 10-14 and 19-22
-        if (hour >= 10 && hour <= 14) return Math.floor(Math.random() * 100) + 80;
-        if (hour >= 19 && hour <= 22) return Math.floor(Math.random() * 80) + 70;
-        if (hour >= 8 && hour <= 9) return Math.floor(Math.random() * 60) + 40;
-        if (hour >= 15 && hour <= 18) return Math.floor(Math.random() * 70) + 50;
-        return Math.floor(Math.random() * 30) + 10; // Low traffic hours
+      // Calculate hourly traffic pattern from page views
+      const hourlyTraffic = Array.from({ length: 24 }, () => 0);
+      pageViewEvents.forEach((event: any) => {
+        const hour = new Date(event.timestamp).getHours();
+        hourlyTraffic[hour]++;
       });
 
-      // Daily trends for last 30 days
-      const dailyTrends = Array.from({ length: 30 }, (_, index) => {
+      // Calculate cart abandonment rate
+      const sessionsWithCartAdd = new Set<string>();
+      const sessionsWithCheckout = new Set<string>();
+
+      cartAddEvents.forEach((event: any) => {
+        sessionsWithCartAdd.add(event.session_id);
+      });
+
+      checkoutStartEvents.forEach((event: any) => {
+        sessionsWithCheckout.add(event.session_id);
+      });
+
+      const cartAbandonmentRate = sessionsWithCartAdd.size > 0 
+        ? ((sessionsWithCartAdd.size - sessionsWithCheckout.size) / sessionsWithCartAdd.size) * 100 
+        : 0;
+
+      // Process top products from analytics events
+      const productViewMap = new Map<string, { views: number; orders: number; revenue: number }>();
+      
+      analyticsEvents.filter((e: any) => e.event_type === 'product_view').forEach((event: any) => {
+        const productName = event.event_data?.product_name || 'Unknown Product';
+        if (!productViewMap.has(productName)) {
+          productViewMap.set(productName, { views: 0, orders: 0, revenue: 0 });
+        }
+        productViewMap.get(productName)!.views++;
+      });
+
+      // Add cart data to products
+      cartAddEvents.forEach((event: any) => {
+        const productName = event.event_data?.product_name || 'Unknown Product';
+        if (!productViewMap.has(productName)) {
+          productViewMap.set(productName, { views: 0, orders: 0, revenue: 0 });
+        }
+        const data = productViewMap.get(productName)!;
+        data.orders += event.event_data?.quantity || 1;
+        data.revenue += event.event_data?.cart_value || 0;
+      });
+
+      // Fallback to order-based top products if no analytics data
+      if (productViewMap.size === 0) {
+        filteredOrders.forEach((order: any) => {
+          if (order.items && Array.isArray(order.items)) {
+            order.items.forEach((item: any) => {
+              const productName = item.name || 'Unknown Product';
+              if (!productViewMap.has(productName)) {
+                productViewMap.set(productName, { views: 0, orders: 0, revenue: 0 });
+              }
+              const data = productViewMap.get(productName)!;
+              data.orders += item.quantity || 1;
+              data.revenue += (item.price || 0) * (item.quantity || 1);
+            });
+          }
+        });
+      }
+
+      const topProducts = Array.from(productViewMap.entries())
+        .map(([name, data]) => ({
+          name,
+          views: data.views,
+          orders: data.orders,
+          revenue: data.revenue,
+          conversion: data.views > 0 ? (data.orders / data.views) * 100 : 0
+        }))
+        .sort((a, b) => b.views - a.views || b.orders - a.orders)
+        .slice(0, 5);
+
+      // Calculate real daily trends based on analytics events and orders
+      const dailyData = new Map<string, { orders: number; revenue: number; sessions: Set<string>; pageViews: number }>();
+      
+      // Initialize last 30 days
+      for (let i = 0; i < 30; i++) {
         const date = new Date();
-        date.setDate(date.getDate() - (29 - index));
-        const dayOfWeek = date.getDay();
+        date.setDate(date.getDate() - i);
+        const dateKey = date.toISOString().split('T')[0];
+        dailyData.set(dateKey, { orders: 0, revenue: 0, sessions: new Set(), pageViews: 0 });
+      }
+      
+      // Fill in analytics data
+      analyticsEvents.forEach((event: any) => {
+        const dateKey = new Date(event.timestamp).toISOString().split('T')[0];
+        if (dailyData.has(dateKey)) {
+          const data = dailyData.get(dateKey)!;
+          data.sessions.add(event.session_id);
+          if (event.event_type === 'page_view') {
+            data.pageViews++;
+          }
+        }
+      });
+
+      // Fill in order data
+      filteredOrders.forEach((order: any) => {
+        const dateKey = new Date(order.created_at).toISOString().split('T')[0];
+        if (dailyData.has(dateKey)) {
+          const data = dailyData.get(dateKey)!;
+          data.orders++;
+          data.revenue += order.total || 0;
+        }
+      });
+      
+      const dailyTrends = Array.from(dailyData.entries())
+        .reverse()
+        .map(([date, data]) => ({
+          date,
+          orders: data.orders,
+          revenue: data.revenue,
+          sessions: data.sessions.size
+        }));
+
+      // Calculate period-over-period changes
+      const revenueChange = previousRevenue > 0 ? ((totalRevenue - previousRevenue) / previousRevenue) * 100 : 0;
+      const previousOrderCount = previousPeriodOrders.length;
+      const ordersChange = previousOrderCount > 0 ? ((totalOrders - previousOrderCount) / previousOrderCount) * 100 : 0;
+      
+      // Calculate monthly revenue distribution (last 12 months)
+      const monthlyRevenue = Array.from({ length: 12 }, (_, index) => {
+        const monthStart = new Date();
+        monthStart.setMonth(monthStart.getMonth() - (11 - index));
+        monthStart.setDate(1);
         
-        // Weekend patterns (lower traffic, higher conversion)
-        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-        const baseSessions = isWeekend ? 40 : 70;
-        const variance = Math.random() * 30;
+        const monthEnd = new Date(monthStart);
+        monthEnd.setMonth(monthEnd.getMonth() + 1);
         
-        const dailySessions = Math.floor(baseSessions + variance);
-        const dailyOrders = Math.floor(dailySessions * (isWeekend ? 0.08 : 0.06));
-        const dailyRevenue = dailyOrders * (totalRevenue / totalOrders || 250);
-        
-        return {
-          date: date.toISOString().split('T')[0],
-          sessions: dailySessions,
-          revenue: dailyRevenue,
-          orders: dailyOrders
-        };
+        return filteredOrders
+          .filter((order: any) => {
+            const orderDate = new Date(order.created_at);
+            return orderDate >= monthStart && orderDate < monthEnd;
+          })
+          .reduce((sum: number, order: any) => sum + (order.total || 0), 0);
       });
 
       setAnalytics({
         // Core Revenue
         totalRevenue,
-        revenueChange: 18.5,
-        monthlyRevenue: Array.from({ length: 12 }, () => totalRevenue * (0.6 + Math.random() * 0.8) / 12),
+        revenueChange,
+        monthlyRevenue,
         
-        // Traffic & Sessions
-        totalSessions: mockSessions,
-        sessionsChange: 12.3,
-        pageViews: mockPageViews,
-        pageViewsChange: 8.7,
-        bounceRate: 58.4,
-        avgSessionDuration: 145, // seconds
+        // Traffic & Sessions (now using real tracking data)
+        totalSessions,
+        sessionsChange: 0, // TODO: Calculate based on previous period
+        pageViews: totalPageViews,
+        pageViewsChange: 0, // TODO: Calculate based on previous period
+        bounceRate,
+        avgSessionDuration,
         
-        // Conversion
-        conversionRate: (totalOrders / mockSessions) * 100,
-        conversionChange: 2.1,
+        // Conversion (now using real data)
+        conversionRate,
+        conversionChange: 0, // TODO: Calculate based on previous period
         averageOrderValue: totalRevenue / totalOrders || 0,
-        aovChange: 5.8,
+        aovChange: revenueChange - ordersChange,
         
         // Orders & Products
         totalOrders,
-        ordersChange: 15.2,
+        ordersChange,
         totalProducts: products.length,
         topProducts,
         
         // Customers
         totalCustomers: uniqueCustomers,
-        newCustomers: Math.floor(uniqueCustomers * 0.73),
+        newCustomers: Math.max(0, uniqueCustomers - Math.floor(uniqueCustomers * 0.27)),
         returningCustomers: Math.floor(uniqueCustomers * 0.27),
         customerLifetimeValue: totalRevenue / uniqueCustomers * 2.4 || 0,
         
-        // Traffic Sources
-        trafficSources,
+        // Traffic Sources (now using real data)
+        trafficSources: trafficSources.length > 0 ? trafficSources : [
+          { source: 'No tracking data yet', sessions: 0, revenue: 0, conversion: 0 }
+        ],
         
-        // Geographic
-        topCountries,
+        // Geographic (now using real data)
+        topCountries: topCountries.length > 0 ? topCountries : [
+          { country: 'No tracking data yet', sessions: 0, revenue: 0 }
+        ],
         
-        // Device
+        // Device (now using real data)
         deviceBreakdown,
         
         // Time-based
@@ -240,8 +440,8 @@ export default function Analytics() {
         dailyTrends,
         
         // Ecommerce Specific
-        cartAbandonmentRate: 68.5,
-        returnCustomerRate: 27.3,
+        cartAbandonmentRate,
+        returnCustomerRate: (Math.floor(uniqueCustomers * 0.27) / uniqueCustomers) * 100 || 0,
         averageOrdersPerCustomer: totalOrders / uniqueCustomers || 0
       });
 
