@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Prepare product data (exclude new fields that might not exist in DB yet)
+    // Prepare product data
     const productData = {
       name: data.name,
       description: data.description || '',
@@ -159,6 +159,7 @@ export async function POST(request: NextRequest) {
       on_sale: data.on_sale || false,
       category: data.category,
       images: data.images || [],
+      video_url: data.video_url || null, // Save to direct column
       tags: data.tags || [],
       inventory: parseInt(data.inventory) || 0,
       sku: data.sku || `${data.category.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
@@ -168,8 +169,6 @@ export async function POST(request: NextRequest) {
       featured: data.featured || false,
       metadata: {
         ...(data.metadata || {}),
-        // Store video and featured image info in metadata for now
-        video_url: data.video_url || null,
         featured_image_index: data.featured_image_index || 0
       }
     };

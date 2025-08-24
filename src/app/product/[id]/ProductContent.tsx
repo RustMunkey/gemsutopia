@@ -87,10 +87,21 @@ export default function ProductContent({ product: initialProduct }: ProductConte
     trackView();
   }, [product.id]);
 
+  // Get video URL from metadata or direct property
+  const videoUrl = product.video_url || product.metadata?.video_url;
+  
+  // Debug logging
+  useEffect(() => {
+    console.log('Product data:', product);
+    console.log('Direct video_url column:', product.video_url);
+    console.log('Metadata video_url (legacy):', product.metadata?.video_url);
+    console.log('Final videoUrl:', videoUrl);
+  }, [product, videoUrl]);
+  
   // Get all available media (images + video)
   const allMedia = [
     ...product.images,
-    ...(product.video_url ? ['video'] : [])
+    ...(videoUrl ? ['video'] : [])
   ];
 
   // Navigation functions
@@ -294,17 +305,27 @@ export default function ProductContent({ product: initialProduct }: ProductConte
               onTouchEnd={handleTouchEnd}
             >
               <div 
-                className="w-full h-full bg-neutral-100 rounded-lg overflow-hidden relative cursor-zoom-in"
-                onClick={openZoomModal}
-                style={{ cursor: 'zoom-in' }}
+                className={`w-full h-full bg-neutral-100 rounded-lg overflow-hidden relative ${selectedImageIndex >= product.images.length && videoUrl ? 'cursor-default' : 'cursor-zoom-in'}`}
+                onClick={() => {
+                  // Only open zoom for images, not videos
+                  if (selectedImageIndex < product.images.length) {
+                    openZoomModal();
+                  }
+                }}
               >
-                {selectedImageIndex >= product.images.length && product.video_url ? (
+                {selectedImageIndex >= product.images.length && videoUrl ? (
                   <video 
                     controls
+                    autoPlay
+                    muted
+                    loop
                     className="w-full h-full object-cover"
                     preload="metadata"
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    <source src={product.video_url} type="video/mp4" />
+                    <source src={videoUrl} type="video/mp4" />
+                    <source src={videoUrl} type="video/webm" />
+                    <source src={videoUrl} type="video/ogg" />
                     Your browser does not support the video tag.
                   </video>
                 ) : (
@@ -322,15 +343,21 @@ export default function ProductContent({ product: initialProduct }: ProductConte
                 {allMedia.length > 1 && (
                   <>
                     <button
-                      onClick={goToPrevImage}
-                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hidden md:flex items-center justify-center"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        goToPrevImage();
+                      }}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hidden md:flex items-center justify-center z-10"
                       aria-label="Previous image"
                     >
                       <IconChevronLeft className="h-5 w-5" />
                     </button>
                     <button
-                      onClick={goToNextImage}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hidden md:flex items-center justify-center"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        goToNextImage();
+                      }}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hidden md:flex items-center justify-center z-10"
                       aria-label="Next image"
                     >
                       <IconChevronRight className="h-5 w-5" />
@@ -374,7 +401,7 @@ export default function ProductContent({ product: initialProduct }: ProductConte
                     />
                   </button>
                 ))}
-                {product.video_url && (
+                {videoUrl && (
                   <button
                     onClick={() => {
                       setSelectedImageIndex(product.images.length);
@@ -530,14 +557,19 @@ export default function ProductContent({ product: initialProduct }: ProductConte
 
             {/* Main zoom image */}
             <div className="flex-1 flex items-center justify-center relative">
-              {zoomImageIndex >= product.images.length && product.video_url ? (
+              {zoomImageIndex >= product.images.length && videoUrl ? (
                 <video 
                   controls
+                  autoPlay
+                  muted
+                  loop
                   className="max-w-full max-h-full object-contain"
                   preload="metadata"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <source src={product.video_url} type="video/mp4" />
+                  <source src={videoUrl} type="video/mp4" />
+                  <source src={videoUrl} type="video/webm" />
+                  <source src={videoUrl} type="video/ogg" />
                   Your browser does not support the video tag.
                 </video>
               ) : (
@@ -610,7 +642,7 @@ export default function ProductContent({ product: initialProduct }: ProductConte
                     />
                   </button>
                 ))}
-                {product.video_url && (
+                {videoUrl && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();

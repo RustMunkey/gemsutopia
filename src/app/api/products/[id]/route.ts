@@ -41,6 +41,11 @@ export async function GET(
       );
     }
 
+    console.log('GET API - Product retrieved from DB:', product);
+    console.log('GET API - Direct video_url column:', product?.video_url);
+    console.log('GET API - Metadata:', product?.metadata);
+    console.log('GET API - Metadata video_url (legacy):', product?.metadata?.video_url);
+
     return NextResponse.json({
       success: true,
       product
@@ -73,7 +78,18 @@ export async function PUT(
     const data = await request.json();
     
     console.log('API PUT received data.featured_image_index:', data.featured_image_index);
+    console.log('API PUT received data.video_url:', data.video_url);
     console.log('API PUT received full data:', data);
+
+    // Get current product metadata once to avoid race conditions
+    const { data: currentProduct } = await supabaseAdmin
+      .from('products')
+      .select('metadata')
+      .eq('id', resolvedParams.id)
+      .single();
+    
+    const currentMetadata = currentProduct?.metadata || {};
+    console.log('Current metadata from DB:', currentMetadata);
 
     // Prepare update data (only include fields that are provided)
     const updateData: Record<string, unknown> = {};
@@ -85,47 +101,40 @@ export async function PUT(
     if (data.on_sale !== undefined) updateData.on_sale = data.on_sale;
     if (data.category !== undefined) updateData.category = data.category;
     if (data.images !== undefined) updateData.images = data.images;
-    // Store video and featured image in metadata for now (until DB schema is updated)
-    if (data.video_url !== undefined || data.featured_image_index !== undefined) {
-      // Get current product metadata first
-      const { data: currentProduct } = await supabaseAdmin
-        .from('products')
-        .select('metadata')
-        .eq('id', resolvedParams.id)
-        .single();
-      
-      const currentMetadata = currentProduct?.metadata || {};
-      updateData.metadata = {
-        ...currentMetadata,
-        ...(data.video_url !== undefined && { video_url: data.video_url || null }),
-        ...(data.featured_image_index !== undefined && { featured_image_index: data.featured_image_index })
-      };
-    }
     if (data.tags !== undefined) updateData.tags = data.tags;
     if (data.inventory !== undefined) updateData.inventory = parseInt(data.inventory);
     if (data.sku !== undefined) updateData.sku = data.sku;
     if (data.weight !== undefined) updateData.weight = data.weight ? parseFloat(data.weight) : null;
     if (data.dimensions !== undefined) updateData.dimensions = data.dimensions;
     if (data.is_active !== undefined) updateData.is_active = data.is_active;
-    if (data.frontend_visible !== undefined) {
-      // Store frontend visibility in metadata to avoid database issues
-      const { data: currentProduct } = await supabaseAdmin
-        .from('products')
-        .select('metadata')
-        .eq('id', resolvedParams.id)
-        .single();
-      
-      const currentMetadata = currentProduct?.metadata || {};
-      updateData.metadata = {
-        ...currentMetadata,
-        frontend_visible: data.frontend_visible
-      };
-    }
     if (data.featured !== undefined) updateData.featured = data.featured;
+
+    // Handle video_url directly (not in metadata)
+    if (data.video_url !== undefined) {
+      updateData.video_url = data.video_url || null;
+      console.log('Setting direct video_url to:', data.video_url);
+    }
+
+    // Handle metadata updates (featured_image_index, frontend_visible, and custom metadata)
+    let newMetadata = { ...currentMetadata };
+    
+    if (data.featured_image_index !== undefined) {
+      newMetadata.featured_image_index = data.featured_image_index;
+    }
+    
+    if (data.frontend_visible !== undefined) {
+      newMetadata.frontend_visible = data.frontend_visible;
+    }
+    
     if (data.metadata !== undefined) {
-      // Merge provided metadata with existing metadata (don't overwrite)
-      const existingMetadata = updateData.metadata || {};
-      updateData.metadata = { ...existingMetadata, ...data.metadata };
+      newMetadata = { ...newMetadata, ...data.metadata };
+    }
+    
+    // Only update metadata if there are changes
+    if (data.featured_image_index !== undefined || 
+        data.frontend_visible !== undefined || data.metadata !== undefined) {
+      updateData.metadata = newMetadata;
+      console.log('Final metadata object:', updateData.metadata);
     }
 
     console.log('UPDATE DATA:', JSON.stringify(updateData, null, 2));

@@ -432,7 +432,7 @@ function ProductModal({ product, onClose, onSave }: {
     is_active: true,
     featured: product?.featured || false,
     images: product?.images || [],
-    video_url: product?.video_url || product?.metadata?.video_url || '',
+    video_url: product?.video_url || product?.metadata?.video_url || '', // Use direct column first, fallback to metadata
     featured_image_index: 0,
     tags: product?.tags?.join(', ') || '',
     // Product details
@@ -514,6 +514,9 @@ function ProductModal({ product, onClose, onSave }: {
       };
       
       console.log('Saving product with featured_image_index:', formData.featured_image_index);
+      console.log('Form video_url:', formData.video_url);
+      console.log('Product data video_url (direct column):', productData.video_url);
+      console.log('Product data video_url (metadata legacy):', productData.metadata?.video_url);
       console.log('Full productData:', productData);
 
       const url = product ? `/api/products/${product.id}` : '/api/products';
@@ -747,7 +750,10 @@ function ProductModal({ product, onClose, onSave }: {
               // Featured image is always the first image
               setFormData(prev => ({...prev, featured_image_index: 0}));
             }}
-            onVideoChange={(videoUrl) => setFormData(prev => ({...prev, video_url: videoUrl || ''}))}
+            onVideoChange={(videoUrl) => {
+              console.log('Products: Video URL changed to:', videoUrl);
+              setFormData(prev => ({...prev, video_url: videoUrl || ''}));
+            }}
             onFeaturedImageChange={(index) => {
               console.log('Featured image changed to index:', index);
               setFormData(prev => ({...prev, featured_image_index: 0}));
