@@ -5,7 +5,6 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import CurrencySwitcher from './CurrencySwitcher';
 
 interface DropdownProps {
   isOpen: boolean;
@@ -108,9 +107,6 @@ export default function Dropdown({ isOpen, onClose }: DropdownProps) {
               Support
             </a>
           </nav>
-          
-          <CurrencySwitcher variant="mobile" />
-          
           <div className="space-y-4 pb-8">
             {user ? (
               <div className="space-y-3">
@@ -142,5 +138,9 @@ export default function Dropdown({ isOpen, onClose }: DropdownProps) {
     </div>
   );
 
+  if (typeof document === 'undefined') {
+    return null;
+  }
+  
   return createPortal(dropdownContent, document.body);
 }

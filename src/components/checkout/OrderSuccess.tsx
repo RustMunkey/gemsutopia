@@ -40,7 +40,7 @@ export default function OrderSuccess({ orderId, customerEmail, customerName, amo
     
     // Calculate proper subtotal using actual quantities
     const itemsSubtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const shippingAmount = itemsSubtotal > 100 ? 0 : 15; // Free shipping over $100
+    const shippingAmount = 25; // Fixed $25 shipping rate
     
     // Tax calculation based on payment method and currency
     let taxRate = 0;
@@ -167,7 +167,7 @@ export default function OrderSuccess({ orderId, customerEmail, customerName, amo
         // Calculate proper amounts based on payment method (SAME LOGIC AS DISPLAY)
         const calculateAmounts = () => {
           const itemsSubtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-          const shippingAmount = itemsSubtotal > 100 ? 0 : 15; // Free shipping over $100
+          const shippingAmount = 25; // Fixed $25 shipping rate
           
           // Tax calculation based on payment method and currency
           let taxRate = 0;
@@ -451,6 +451,24 @@ export default function OrderSuccess({ orderId, customerEmail, customerName, amo
             </div>
           </div>
         </div>
+
+        {/* Shipping Address */}
+        {shippingAddress && (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-8">
+            <div className="flex items-center mb-3">
+              <Package className="h-6 w-6 text-gray-600 mr-3" />
+              <h3 className="font-semibold text-gray-900">Shipping Address</h3>
+            </div>
+            <div className="text-sm text-gray-700 space-y-1">
+              <p className="font-medium">{shippingAddress.firstName} {shippingAddress.lastName}</p>
+              <p>{shippingAddress.address}</p>
+              {shippingAddress.apartment && <p>Apt/Suite: {shippingAddress.apartment}</p>}
+              <p>{shippingAddress.city}, {shippingAddress.state} {shippingAddress.zipCode}</p>
+              <p>{shippingAddress.country}</p>
+              {shippingAddress.phone && <p>Phone: {shippingAddress.phone}</p>}
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <div className={`border rounded-lg p-6 ${

@@ -252,7 +252,8 @@ export default function ProductContent({ product: initialProduct }: ProductConte
         id: product.id,
         name: product.name,
         price: currentPrice,
-        image: productImage
+        image: productImage,
+        stock: product.inventory
       };
       
       addItem(productData);
@@ -266,7 +267,19 @@ export default function ProductContent({ product: initialProduct }: ProductConte
   };
 
   return (
-    <div className="flex-grow py-8 md:py-16">
+    <div className="flex-grow py-8 md:py-16 relative">
+      {/* Desktop Wishlist Button - Top Right Corner */}
+      <button
+        onClick={toggleWishlist}
+        className="hidden md:block absolute top-4 right-4 z-10 text-black hover:text-neutral-600 transition-colors p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-lg"
+      >
+        {isInWishlist(product.id) ? (
+          <IconStarFilled className="h-8 w-8 text-yellow-400" />
+        ) : (
+          <IconStar className="h-8 w-8" strokeWidth={2} />
+        )}
+      </button>
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
           {/* Product Image Gallery */}
@@ -384,40 +397,12 @@ export default function ProductContent({ product: initialProduct }: ProductConte
           
           {/* Product Details */}
           <div className="flex flex-col justify-center">
-            <div className="flex items-center justify-between mb-4 md:mb-6">
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-black">{product.name}</h1>
-              <div className="flex items-center gap-4">
-                {wishlistCount > 0 && (
-                  <div className="text-sm text-gray-600 flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
-                      <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd"/>
-                    </svg>
-                    <span>{wishlistCount} watching</span>
-                  </div>
-                )}
-                <button
-                  onClick={toggleWishlist}
-                  className="text-black hover:text-neutral-600 transition-colors p-2 relative"
-                >
-                  {isInWishlist(product.id) ? (
-                    <IconStarFilled className="h-8 w-8 text-yellow-400" />
-                  ) : (
-                    <IconStar className="h-8 w-8" strokeWidth={2} />
-                  )}
-                  {wishlistCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                      {wishlistCount}
-                    </span>
-                  )}
-                </button>
-              </div>
-            </div>
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-black mb-4 md:mb-6">{product.name}</h1>
             <p className="text-base md:text-lg text-neutral-600 mb-6 md:mb-8 leading-relaxed">
               {product.description || 'Premium quality gemstone from Alberta, Canada. This exceptional gemstone features clarity and natural beauty, ethically sourced with care.'}
             </p>
             
-            <div className="mb-6 md:mb-8">
+            <div className="mb-4 md:mb-6">
               <div className="flex items-center gap-4 mb-2">
                 {originalPrice && (
                   <span className="text-sm md:text-lg text-neutral-500 line-through">{formatPrice(originalPrice)}</span>
@@ -425,10 +410,20 @@ export default function ProductContent({ product: initialProduct }: ProductConte
                 <span className="text-2xl md:text-3xl font-bold text-black">{formatPrice(currentPrice)}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm md:text-lg text-neutral-500">Free shipping</span>
-                <span className="text-sm md:text-base text-neutral-700">
+                <span className="text-sm md:text-lg text-neutral-700">
                   <span className="font-semibold">{product.inventory}</span> in stock
                 </span>
+                <div className="text-sm md:text-lg text-neutral-500">
+                  {wishlistCount > 0 && (
+                    <div className="flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+                        <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd"/>
+                      </svg>
+                      <span><span className="font-semibold">{wishlistCount}</span> watching</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
             
@@ -468,6 +463,24 @@ export default function ProductContent({ product: initialProduct }: ProductConte
                 className="w-full border-2 border-black text-black py-3 md:py-4 px-6 md:px-8 rounded-full font-semibold text-base md:text-lg hover:bg-black hover:text-white transition-colors"
               >
                 Buy Now
+              </button>
+              
+              {/* Mobile Wishlist - Simple link style */}
+              <button
+                onClick={toggleWishlist}
+                className="md:hidden text-black hover:text-neutral-600 transition-colors flex items-center justify-center gap-2 py-2"
+              >
+                {isInWishlist(product.id) ? (
+                  <>
+                    <IconStarFilled className="h-5 w-5 text-yellow-400" />
+                    <span className="text-sm">Remove from Wishlist</span>
+                  </>
+                ) : (
+                  <>
+                    <IconStar className="h-5 w-5" strokeWidth={2} />
+                    <span className="text-sm">Add to Wishlist</span>
+                  </>
+                )}
               </button>
             </div>
             

@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useGemPouch } from '@/contexts/GemPouchContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useWallet } from '@/contexts/WalletContext';
@@ -11,6 +11,7 @@ import PaymentMethods from './PaymentMethods';
 import PaymentForm from './PaymentForm';
 import OrderSuccess from './OrderSuccess';
 import { ArrowLeft } from 'lucide-react';
+import { calculateTax } from '@/lib/utils/taxCalculation';
 
 interface CheckoutData {
   customer: {
@@ -54,6 +55,22 @@ export default function CheckoutFlow() {
     paymentMethod: null,
     orderTotal: 0
   });
+
+  // Load saved customer data on mount
+  useEffect(() => {
+    const savedCustomerData = localStorage.getItem('customerShippingInfo');
+    if (savedCustomerData) {
+      try {
+        const parsed = JSON.parse(savedCustomerData);
+        setCheckoutData(prev => ({
+          ...prev,
+          customer: parsed
+        }));
+      } catch (error) {
+        console.error('Error loading saved customer data:', error);
+      }
+    }
+  }, []);
   const [orderId, setOrderId] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [paymentInfo, setPaymentInfo] = useState<{
@@ -66,8 +83,17 @@ export default function CheckoutFlow() {
 
   // Calculate totals
   const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const tax = subtotal * 0.13; // 13% HST for Canada
-  const shipping = subtotal > 100 ? 0 : 15; // Free shipping over $100
+  const shipping = 25; // Fixed $25 shipping rate
+  
+  // Calculate tax based on customer location (after first step)
+  let tax = 0;
+  let taxLabel = 'Tax';
+  if (currentStep !== 'cart' && checkoutData.customer.country && checkoutData.customer.state) {
+    const taxCalculation = calculateTax(subtotal, checkoutData.customer.country, checkoutData.customer.state);
+    tax = taxCalculation.amount;
+    taxLabel = taxCalculation.rate.name;
+  }
+  
   const total = subtotal + tax + shipping;
 
   const updateCheckoutData = (updates: Partial<CheckoutData>) => {
@@ -174,7 +200,7 @@ export default function CheckoutFlow() {
           </h1>
           
           {currentStep !== 'success' && currentStep !== 'error' && (
-            <div className="mt-4 flex items-center space-x-4">
+            <div className="mt-4 flex items-center">
               {['cart', 'customer', 'payment-method', 'payment'].map((step, index) => (
                 <div key={step} className="flex items-center">
                   <div
@@ -190,7 +216,7 @@ export default function CheckoutFlow() {
                   </div>
                   {index < 3 && (
                     <div
-                      className={`w-12 h-0.5 mx-2 ${
+                      className={`w-16 h-0.5 ${
                         ['cart', 'customer', 'payment-method', 'payment'].indexOf(currentStep) > index
                           ? 'bg-black'
                           : 'bg-gray-300'
@@ -305,12 +331,14 @@ export default function CheckoutFlow() {
                   </div>
                   <div className="flex justify-between text-sm text-gray-600">
                     <span>Shipping</span>
-                    <span>{shipping === 0 ? 'Free' : formatPrice(shipping)}</span>
+                    <span>{formatPrice(shipping)}</span>
                   </div>
-                  <div className="flex justify-between text-sm text-gray-600">
-                    <span>Tax (HST)</span>
-                    <span>{formatPrice(tax)}</span>
-                  </div>
+                  {currentStep !== 'cart' && (
+                    <div className="flex justify-between text-sm text-gray-600">
+                      <span>{taxLabel}</span>
+                      <span>{formatPrice(tax)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-lg font-semibold text-gray-900 pt-2 border-t border-gray-200">
                     <span>Total</span>
                     <span>{formatPrice(total)}</span>

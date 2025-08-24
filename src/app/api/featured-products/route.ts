@@ -35,7 +35,8 @@ export async function GET() {
       original_price: product.price,
       product_id: product.id, // Keep UUID as string
       sort_order: 1,
-      is_active: product.is_active
+      is_active: product.is_active,
+      inventory: product.inventory || 0
     }));
 
     return NextResponse.json(featuredProducts);

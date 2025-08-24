@@ -7,6 +7,7 @@ interface GemPouchItem {
   price: number;
   image: string;
   quantity: number;
+  stock?: number;
 }
 
 interface GemPouchContextType {
@@ -51,10 +52,12 @@ export function GemPouchProvider({ children }: { children: ReactNode }) {
     setItems(prev => {
       const existingItem = prev.find(i => i.id === item.id);
       if (existingItem) {
-        // Increase quantity if item already exists
+        // Increase quantity if item already exists, but respect stock limit
+        const newQuantity = existingItem.quantity + 1;
+        const maxQuantity = item.stock ? Math.min(newQuantity, item.stock) : newQuantity;
         return prev.map(i => 
           i.id === item.id 
-            ? { ...i, quantity: i.quantity + 1 }
+            ? { ...i, quantity: maxQuantity }
             : i
         );
       } else {
@@ -74,11 +77,14 @@ export function GemPouchProvider({ children }: { children: ReactNode }) {
       return;
     }
     setItems(prev => 
-      prev.map(item => 
-        item.id === id 
-          ? { ...item, quantity }
-          : item
-      )
+      prev.map(item => {
+        if (item.id === id) {
+          // Respect stock limit if available
+          const maxQuantity = item.stock ? Math.min(quantity, item.stock) : quantity;
+          return { ...item, quantity: maxQuantity };
+        }
+        return item;
+      })
     );
   };
 

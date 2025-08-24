@@ -51,5 +51,5 @@ export async function GET() {
   }
 }
 
-// Enable caching for better performance
-export const revalidate = 60; // Revalidate every 60 seconds
+// Disable caching to always get fresh content
+export const dynamic = 'force-dynamic';

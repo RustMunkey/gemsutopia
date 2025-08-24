@@ -50,8 +50,7 @@ export default function SiteContentManager() {
     // Marquee Settings
     { section: 'marquee', key: 'enabled', label: 'Enable Marquee', type: 'checkbox' },
     { section: 'marquee', key: 'text', label: 'Marquee Text', type: 'text' },
-    { section: 'marquee', key: 'gradient_from', label: 'Gradient Start Color', type: 'color' },
-    { section: 'marquee', key: 'gradient_to', label: 'Gradient End Color', type: 'color' }
+    { section: 'marquee', key: 'gradient_colors', label: 'Marquee Color', type: 'gradient' }
   ];
 
   const [uploading, setUploading] = useState(false);
@@ -387,6 +386,12 @@ export default function SiteContentManager() {
   }, [content, getHeroImages]);
 
   const getContentValue = (section: string, key: string): string => {
+    if (section === 'marquee' && key === 'gradient_colors') {
+      // Combine the existing gradient_from and gradient_to values
+      const gradientFrom = content.find(c => c.section === 'marquee' && c.key === 'gradient_from')?.value || '#9333ea';
+      const gradientTo = content.find(c => c.section === 'marquee' && c.key === 'gradient_to')?.value || '#db2777';
+      return `${gradientFrom},${gradientTo}`;
+    }
     const item = content.find(c => c.section === section && c.key === key);
     return item?.value || '';
   };
@@ -588,8 +593,49 @@ export default function SiteContentManager() {
                   <FAQManager />
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {sectionItems.map((item) => {
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {sectionItems.filter(item => item.key !== 'gradient_colors').map((item) => {
+                      const currentValue = getContentValue(item.section, item.key);
+                      const ContentIcon = getContentTypeIcon(item.type);
+                      
+                      return (
+                        <div key={`${item.section}-${item.key}`} className="bg-white/5 rounded-lg border border-white/10 p-4">
+                          <div className="flex items-center gap-3 mb-3">
+                            <ContentIcon className="h-4 w-4 text-slate-400" />
+                            <div className="flex-1">
+                              <p className="font-medium text-white text-sm">{item.label}</p>
+                            </div>
+                            <button
+                              onClick={() => setEditingItem({ 
+                                id: content.find(c => c.section === item.section && c.key === item.key)?.id || '',
+                                section: item.section,
+                                key: item.key,
+                                content_type: item.type as SiteContent['content_type'],
+                                value: currentValue,
+                                metadata: {},
+                                is_active: true,
+                                created_at: '',
+                                updated_at: ''
+                              })}
+                              className="p-1 text-slate-400 hover:text-white"
+                              title={`Edit ${item.label}`}
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                          
+                          <div className="text-sm text-slate-300 bg-black/20 rounded p-2 border border-white/5">
+                            {currentValue || <span className="text-slate-500 italic">Not set</span>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  
+                  {/* Full width gradient color card */}
+                  {sectionItems.find(item => item.key === 'gradient_colors') && (() => {
+                    const item = sectionItems.find(item => item.key === 'gradient_colors')!;
                     const currentValue = getContentValue(item.section, item.key);
                     const ContentIcon = getContentTypeIcon(item.type);
                     
@@ -601,17 +647,20 @@ export default function SiteContentManager() {
                             <p className="font-medium text-white text-sm">{item.label}</p>
                           </div>
                           <button
-                            onClick={() => setEditingItem({ 
-                              id: content.find(c => c.section === item.section && c.key === item.key)?.id || '',
-                              section: item.section,
-                              key: item.key,
-                              content_type: item.type as SiteContent['content_type'],
-                              value: currentValue,
-                              metadata: {},
-                              is_active: true,
-                              created_at: '',
-                              updated_at: ''
-                            })}
+                            onClick={() => {
+                              const existingItem = content.find(c => c.section === item.section && c.key === item.key);
+                              setEditingItem({ 
+                                id: existingItem?.id || '',
+                                section: item.section,
+                                key: item.key,
+                                content_type: item.type as SiteContent['content_type'],
+                                value: existingItem?.value || (item.type === 'checkbox' ? 'false' : ''),
+                                metadata: {},
+                                is_active: true,
+                                created_at: '',
+                                updated_at: ''
+                              });
+                            }}
                             className="p-1 text-slate-400 hover:text-white"
                             title={`Edit ${item.label}`}
                           >
@@ -624,7 +673,7 @@ export default function SiteContentManager() {
                         </div>
                       </div>
                     );
-                  })}
+                  })()}
                 </div>
               )}
             </div>
@@ -667,21 +716,122 @@ function EditContentModal({ content, onClose, onSave }: {
 
     try {
       const token = localStorage.getItem('admin-token');
-      const response = await fetch(`/api/site-content/${content.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(formData)
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        onSave();
-        onClose();
+      
+      // Handle gradient colors specially - need to update both gradient_from and gradient_to
+      if (content.section === 'marquee' && content.key === 'gradient_colors') {
+        const colorValues = formData.value.split(',');
+        const gradientFrom = colorValues[0] || '#9333ea';
+        const gradientTo = colorValues[1] || colorValues[0] || '#db2777'; // Use same color if single color
+        
+        // Get existing content
+        const existingResponse = await fetch('/api/site-content?section=marquee', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const existingData = await existingResponse.json();
+        const fromItem = existingData.success ? existingData.content.find((c: any) => c.key === 'gradient_from') : null;
+        const toItem = existingData.success ? existingData.content.find((c: any) => c.key === 'gradient_to') : null;
+        
+        // Update or create gradient_from
+        if (fromItem) {
+          await fetch(`/api/site-content/${fromItem.id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ value: gradientFrom })
+          });
+        } else {
+          await fetch('/api/site-content', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              section: 'marquee',
+              key: 'gradient_from',
+              content_type: 'color',
+              value: gradientFrom,
+              is_active: true
+            })
+          });
+        }
+        
+        // Update or create gradient_to
+        if (toItem) {
+          await fetch(`/api/site-content/${toItem.id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ value: gradientTo })
+          });
+        } else {
+          await fetch('/api/site-content', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              section: 'marquee',
+              key: 'gradient_to',
+              content_type: 'color',
+              value: gradientTo,
+              is_active: true
+            })
+          });
+        }
       } else {
-        alert(data.message || 'Failed to update content');
+        // Regular content update or create
+        if (content.id) {
+          // Update existing content
+          const response = await fetch(`/api/site-content/${content.id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(formData)
+          });
+
+          const data = await response.json();
+          if (!data.success) {
+            alert(data.message || 'Failed to update content');
+            return;
+          }
+        } else {
+          // Create new content
+          const response = await fetch('/api/site-content', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              section: content.section,
+              key: content.key,
+              content_type: content.content_type,
+              ...formData
+            })
+          });
+
+          const data = await response.json();
+          if (!data.success) {
+            alert(data.message || 'Failed to create content');
+            return;
+          }
+        }
+      }
+      
+      onSave();
+      onClose();
+      
+      // Trigger content refresh for live updates
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('cms-content-updated'));
       }
     } catch (error) {
       console.error('Error updating content:', error);
@@ -746,15 +896,148 @@ function EditContentModal({ content, onClose, onSave }: {
               </div>
             ) : content.content_type === 'checkbox' ? (
               <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={formData.value === 'true'}
-                  onChange={(e) => setFormData(prev => ({...prev, value: e.target.checked ? 'true' : 'false'}))}
-                  className="w-5 h-5 rounded border-white/10 bg-white/5 text-white"
-                />
-                <span className="text-white">
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    id="toggle-switch"
+                    checked={formData.value === 'true'}
+                    onChange={(e) => setFormData(prev => ({...prev, value: e.target.checked ? 'true' : 'false'}))}
+                    className="sr-only"
+                  />
+                  <label
+                    htmlFor="toggle-switch"
+                    className={`flex items-center cursor-pointer relative w-12 h-6 rounded-full transition-colors duration-200 ${
+                      formData.value === 'true' ? 'bg-green-500' : 'bg-gray-600'
+                    }`}
+                  >
+                    <div
+                      className={`absolute w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-200 ${
+                        formData.value === 'true' ? 'translate-x-6' : 'translate-x-0.5'
+                      }`}
+                    />
+                  </label>
+                </div>
+                <span className="text-white font-medium">
                   {formData.value === 'true' ? 'Enabled' : 'Disabled'}
                 </span>
+              </div>
+            ) : (content as any).content_type === 'gradient' ? (
+              <div className="space-y-3">
+                {(() => {
+                  const colors = formData.value.split(',');
+                  const isSingleColor = colors.length === 1 || colors[0] === colors[1];
+                  
+                  return (
+                    <>
+                      {/* Color Mode Toggle */}
+                      <div className="flex items-center gap-4 mb-4">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const currentColor = colors[0] || '#9333ea';
+                            setFormData(prev => ({...prev, value: currentColor}));
+                          }}
+                          className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            isSingleColor 
+                              ? 'bg-white text-black' 
+                              : 'bg-white/10 text-white hover:bg-white/20'
+                          }`}
+                        >
+                          Single Color
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const currentColor = colors[0] || '#9333ea';
+                            const endColor = colors[1] || '#db2777';
+                            setFormData(prev => ({...prev, value: `${currentColor},${endColor}`}));
+                          }}
+                          className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            !isSingleColor 
+                              ? 'bg-white text-black' 
+                              : 'bg-white/10 text-white hover:bg-white/20'
+                          }`}
+                        >
+                          Gradient
+                        </button>
+                      </div>
+
+                      {/* Color Controls */}
+                      <div className="flex gap-3 items-center">
+                        <input
+                          type="color"
+                          value={colors[0] || '#9333ea'}
+                          onChange={(e) => {
+                            if (isSingleColor) {
+                              setFormData(prev => ({...prev, value: e.target.value}));
+                            } else {
+                              const newValue = `${e.target.value},${colors[1] || '#db2777'}`;
+                              setFormData(prev => ({...prev, value: newValue}));
+                            }
+                          }}
+                          className="w-16 h-10 rounded-lg border border-white/10 bg-white/5"
+                        />
+                        <div className="flex-1">
+                          <label className="text-sm text-slate-300">
+                            {isSingleColor ? 'Color' : 'Start Color'}
+                          </label>
+                          <input
+                            type="text"
+                            value={colors[0] || '#9333ea'}
+                            onChange={(e) => {
+                              if (isSingleColor) {
+                                setFormData(prev => ({...prev, value: e.target.value}));
+                              } else {
+                                const newValue = `${e.target.value},${colors[1] || '#db2777'}`;
+                                setFormData(prev => ({...prev, value: newValue}));
+                              }
+                            }}
+                            placeholder="#9333ea"
+                            className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-white"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Second Color (only for gradient) */}
+                      {!isSingleColor && (
+                        <div className="flex gap-3 items-center">
+                          <input
+                            type="color"
+                            value={colors[1] || '#db2777'}
+                            onChange={(e) => {
+                              const newValue = `${colors[0] || '#9333ea'},${e.target.value}`;
+                              setFormData(prev => ({...prev, value: newValue}));
+                            }}
+                            className="w-16 h-10 rounded-lg border border-white/10 bg-white/5"
+                          />
+                          <div className="flex-1">
+                            <label className="text-sm text-slate-300">End Color</label>
+                            <input
+                              type="text"
+                              value={colors[1] || '#db2777'}
+                              onChange={(e) => {
+                                const newValue = `${colors[0] || '#9333ea'},${e.target.value}`;
+                                setFormData(prev => ({...prev, value: newValue}));
+                              }}
+                              placeholder="#db2777"
+                              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-white"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Preview */}
+                      <div 
+                        className="h-12 rounded-lg border border-white/10"
+                        style={{
+                          background: isSingleColor 
+                            ? colors[0] || '#9333ea'
+                            : `linear-gradient(to right, ${colors[0] || '#9333ea'}, ${colors[1] || '#db2777'})`
+                        }}
+                      />
+                    </>
+                  );
+                })()}
               </div>
             ) : (
               <input

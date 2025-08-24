@@ -6,6 +6,7 @@ import Footer from '@/components/Footer';
 import FAQ from '@/components/FAQ';
 import Reviews from '@/components/Reviews';
 import ScrollToTop from '@/components/ScrollToTop';
+import Stats from '@/components/Stats';
 
 export default function Home() {
   return (
@@ -26,6 +27,9 @@ export default function Home() {
       </div>
       <div className="relative z-10">
         <Hero />
+      </div>
+      <div className="relative z-10">
+        <Stats />
       </div>
       <div className="relative z-10">
         <Featured />

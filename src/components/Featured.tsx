@@ -22,6 +22,7 @@ interface FeaturedProduct {
   product_id?: string;
   sort_order: number;
   is_active: boolean;
+  inventory?: number;
 }
 
 export default function Featured() {
@@ -63,7 +64,8 @@ export default function Featured() {
       id: product.product_id || product.id,
       name: product.name,
       price: product.price,
-      image: product.image_url
+      image: product.image_url,
+      stock: product.inventory
     };
     
     if (isInPouch(product.product_id || product.id)) {
@@ -87,11 +89,11 @@ export default function Featured() {
     const container = containerRef.current;
     
     // Calculate dimensions for featured cards
-    const cardWidth = window.innerWidth < 768 ? 
-      (window.innerWidth * 0.5 + 16) : // Mobile: 50vw + margins
-      window.innerWidth < 1024 ? 
+    const cardWidth = typeof window !== 'undefined' && window.innerWidth < 768 ? 
+      (window.innerWidth * 0.8 + 16) : // Mobile: 80vw + margins
+      typeof window !== 'undefined' && window.innerWidth < 1024 ? 
         (window.innerWidth * 0.3333 + 24) : // Medium: 33.33vw + margins
-        (window.innerWidth * 0.25 + 24); // Large: 25vw + margins
+        (typeof window !== 'undefined' ? window.innerWidth * 0.25 + 24 : 300); // Large: 25vw + margins, fallback to 300
     const oneSetWidth = featuredProducts.length * cardWidth;
     
     const animate = () => {
@@ -214,7 +216,9 @@ export default function Featured() {
                           e.stopPropagation();
                           const targetId = product.product_id || product.id;
                           router.push(`/product/${targetId}`);
-                          window.scrollTo(0, 0);
+                          if (typeof window !== 'undefined') {
+                            window.scrollTo(0, 0);
+                          }
                         }}
                       >
                         <div className="aspect-square bg-neutral-100 rounded-lg mb-2 overflow-hidden relative">
@@ -244,14 +248,8 @@ export default function Featured() {
                           </div>
                         </div>
                         <h3 className="text-base font-semibold text-black mb-1 text-center min-h-[3rem] flex items-center justify-center leading-tight">{product.name}</h3>
-                        <div className="mt-auto pt-2 text-center">
-                          <div className="flex items-center justify-center gap-2 mb-2">
-                            {product.price < product.original_price && (
-                              <span className="text-sm text-black line-through">{formatPriceNoSuffix(product.original_price)}</span>
-                            )}
-                            <span className="text-lg font-bold text-black">{formatPriceNoSuffix(product.price)}</span>
-                          </div>
-                          <div className="flex items-center justify-center gap-2">
+                        <div className="mt-auto pt-2">
+                          <div className="flex items-center justify-between relative">
                             <button
                               onClick={(e) => toggleWishlist(product.id, e)}
                               className="text-black hover:text-yellow-400 transition-colors p-1"
@@ -262,6 +260,14 @@ export default function Featured() {
                                 <IconStar className="h-6 w-6" />
                               )}
                             </button>
+                            
+                            <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-2">
+                              {product.price < product.original_price && (
+                                <span className="text-sm text-black line-through">{formatPriceNoSuffix(product.original_price)}</span>
+                              )}
+                              <span className="text-lg font-bold text-black">{formatPriceNoSuffix(product.price)}</span>
+                            </div>
+                            
                             <button
                               onClick={(e) => toggleGemPouch(product.id, e)}
                               className="text-black hover:text-neutral-600 transition-colors p-1 relative"
@@ -295,7 +301,7 @@ export default function Featured() {
                 >
                   {featuredProducts.concat(featuredProducts).concat(featuredProducts).map((product, index) => {
                     return (
-                      <div key={`${product.id}-${index}`} className="inline-block flex-shrink-0 w-[calc(50vw-0.75rem)] md:w-[calc(33.33vw-1rem)] lg:w-[calc(25vw-1rem)] mx-2 md:mx-3">
+                      <div key={`${product.id}-${index}`} className="inline-block flex-shrink-0 w-[calc(80vw-1rem)] md:w-[calc(33.33vw-1rem)] lg:w-[calc(25vw-1rem)] mx-2 md:mx-3">
                         <div 
                           className="rounded-2xl p-2 shadow-2xl shadow-white/20 border border-white/10 translate-x-1 translate-y-1 transition-all duration-200 ease-out cursor-pointer product-card select-none h-full flex flex-col"
                           style={{ backgroundColor: '#f0f0f0' }}
@@ -303,7 +309,9 @@ export default function Featured() {
                             e.stopPropagation();
                             const targetId = product.product_id || product.id;
                             router.push(`/product/${targetId}`);
+                            if (typeof window !== 'undefined') {
                             window.scrollTo(0, 0);
+                          }
                           }}
                         >
                           <div className="aspect-square bg-neutral-100 rounded-lg mb-2 overflow-hidden relative">
@@ -333,14 +341,8 @@ export default function Featured() {
                             </div>
                           </div>
                           <h3 className="text-base font-semibold text-black mb-1 text-center min-h-[3rem] flex items-center justify-center leading-tight">{product.name}</h3>
-                          <div className="mt-auto pt-2 text-center">
-                            <div className="flex items-center justify-center gap-2 mb-2">
-                              {product.price < product.original_price && (
-                                <span className="text-sm text-black line-through">{formatPriceNoSuffix(product.original_price)}</span>
-                              )}
-                              <span className="text-lg font-bold text-black">{formatPriceNoSuffix(product.price)}</span>
-                            </div>
-                            <div className="flex items-center justify-center gap-2">
+                          <div className="mt-auto pt-2">
+                            <div className="flex items-center justify-between relative">
                               <button
                                 onClick={(e) => toggleWishlist(product.id, e)}
                                 className="text-black hover:text-yellow-400 transition-colors p-1"
@@ -351,6 +353,14 @@ export default function Featured() {
                                   <IconStar className="h-6 w-6" />
                                 )}
                               </button>
+                              
+                              <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-2">
+                                {product.price < product.original_price && (
+                                  <span className="text-sm text-black line-through">{formatPriceNoSuffix(product.original_price)}</span>
+                                )}
+                                <span className="text-lg font-bold text-black">{formatPriceNoSuffix(product.price)}</span>
+                              </div>
+                              
                               <button
                                 onClick={(e) => toggleGemPouch(product.id, e)}
                                 className="text-black hover:text-neutral-600 transition-colors p-1 relative"

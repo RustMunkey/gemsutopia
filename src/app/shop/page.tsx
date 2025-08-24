@@ -203,7 +203,8 @@ export default function Shop() {
       id: product.id,
       name: product.name,
       price: product.price,
-      image: product.image
+      image: product.image,
+      stock: product.stock
     };
     
     if (isInWishlist(productId)) {
@@ -222,7 +223,8 @@ export default function Shop() {
       id: product.id,
       name: product.name,
       price: product.price,
-      image: product.image
+      image: product.image,
+      stock: product.stock
     };
     
     if (isInPouch(productId)) {
@@ -475,13 +477,13 @@ export default function Shop() {
         </div>
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">
             {filteredProducts.map((product) => {
               const discountPercent = Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
               return (
                 <div 
                   key={product.id} 
-                  className="rounded-2xl p-3 shadow-2xl shadow-white/20 border border-white/10 translate-x-1 translate-y-1 transition-all duration-200 ease-out cursor-pointer product-card select-none h-full flex flex-col"
+                  className="rounded-2xl p-2 md:p-3 shadow-2xl shadow-white/20 border border-white/10 translate-x-1 translate-y-1 transition-all duration-200 ease-out cursor-pointer product-card select-none h-full flex flex-col"
                   style={{ backgroundColor: '#f0f0f0' }}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -517,8 +519,8 @@ export default function Shop() {
                       />
                     </div>
                   </div>
-                  <h3 className="text-lg font-semibold text-black mb-1 text-center min-h-[2.5rem] flex items-center justify-center leading-tight">{product.name}</h3>
-                  <div className="mt-auto pt-3 flex items-center md:justify-between justify-center">
+                  <h3 className="text-sm md:text-lg font-semibold text-black mb-1 text-center min-h-[2rem] md:min-h-[2.5rem] flex items-center justify-center leading-tight">{product.name}</h3>
+                  <div className="mt-auto pt-2 md:pt-3 flex items-center md:justify-between justify-center">
                     <button
                       onClick={(e) => toggleWishlist(product.id, e)}
                       className="text-black hover:text-yellow-400 transition-colors p-1 hidden md:block"
@@ -529,34 +531,34 @@ export default function Shop() {
                         <IconStar className="h-6 w-6" />
                       )}
                     </button>
-                    <div className="flex items-center gap-3 md:gap-2">
+                    <div className="flex items-center gap-2 md:gap-2">
                       <button
                         onClick={(e) => toggleWishlist(product.id, e)}
-                        className="text-black hover:text-yellow-400 transition-colors p-1 md:hidden"
+                        className="text-black hover:text-yellow-400 transition-colors p-0.5 md:hidden"
                       >
                         {isInWishlist(product.id) ? (
-                          <IconStarFilled className="h-6 w-6 text-yellow-400" />
+                          <IconStarFilled className="h-5 w-5 text-yellow-400" />
                         ) : (
-                          <IconStar className="h-6 w-6" />
+                          <IconStar className="h-5 w-5" />
                         )}
                       </button>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 md:gap-2">
                         {product.price < product.originalPrice && (
                           <>
-                            <span className="text-sm text-black line-through md:hidden">{formatPriceNoSuffix(product.originalPrice)}</span>
+                            <span className="text-xs md:text-sm text-black line-through md:hidden">{formatPriceNoSuffix(product.originalPrice)}</span>
                             <span className="text-sm text-black line-through hidden md:inline">{formatPrice(product.originalPrice)}</span>
                           </>
                         )}
-                        <span className="text-lg font-bold text-black md:hidden">{formatPriceNoSuffix(product.price)}</span>
+                        <span className="text-sm md:text-lg font-bold text-black md:hidden">{formatPriceNoSuffix(product.price)}</span>
                         <span className="text-lg font-bold text-black hidden md:inline">{formatPrice(product.price)}</span>
                       </div>
                       <button
                         onClick={(e) => toggleGemPouch(product.id, e)}
-                        className="text-black hover:text-neutral-600 transition-colors p-1 relative md:hidden"
+                        className="text-black hover:text-neutral-600 transition-colors p-0.5 relative md:hidden"
                       >
-                        <ShoppingBag className="h-6 w-6" strokeWidth={2} />
+                        <ShoppingBag className="h-5 w-5" strokeWidth={2} />
                         {isInPouch(product.id) && (
-                          <Check className="absolute bottom-0 right-0 h-4 w-4 text-green-500" strokeWidth={4} />
+                          <Check className="absolute bottom-0 right-0 h-3 w-3 text-green-500" strokeWidth={4} />
                         )}
                       </button>
                     </div>

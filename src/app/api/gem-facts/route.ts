@@ -6,8 +6,11 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const random = searchParams.get('random');
+
     // Get all active gem facts
     const { data: gemFacts, error } = await supabase
       .from('gem_facts')
@@ -29,13 +32,21 @@ export async function GET() {
       });
     }
 
-    // Use current date to deterministically select fact of the day
-    const today = new Date();
-    const dayOfYear = Math.floor((today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
-    const factIndex = dayOfYear % gemFacts.length;
-    const factOfTheDay = gemFacts[factIndex];
+    let selectedFact;
+    
+    if (random === 'true') {
+      // Return a random fact
+      const randomIndex = Math.floor(Math.random() * gemFacts.length);
+      selectedFact = gemFacts[randomIndex];
+    } else {
+      // Use current date to deterministically select fact of the day
+      const today = new Date();
+      const dayOfYear = Math.floor((today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
+      const factIndex = dayOfYear % gemFacts.length;
+      selectedFact = gemFacts[factIndex];
+    }
 
-    return NextResponse.json(factOfTheDay);
+    return NextResponse.json(selectedFact);
   } catch (error) {
     console.error('Error in GET /api/gem-facts:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

@@ -1,5 +1,7 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+// import { validateAddress, AddressData } from '@/lib/utils/addressValidation'; // TODO: Re-enable when Google Maps API is set up
+// import GoogleAddressInput from './GoogleAddressInput'; // TODO: Re-enable when Google Maps API is set up
 
 interface CustomerData {
   email: string;
@@ -22,6 +24,26 @@ interface CustomerInfoProps {
 export default function CustomerInfo({ data, onContinue }: CustomerInfoProps) {
   const [formData, setFormData] = useState<CustomerData>(data);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  // const [isValidatingAddress, setIsValidatingAddress] = useState(false); // TODO: Re-enable when Google Maps API is set up
+  const [isClient, setIsClient] = useState(false);
+
+  // Load saved customer data from localStorage on mount
+  useEffect(() => {
+    setIsClient(true);
+    
+    const savedCustomerData = localStorage.getItem('customerShippingInfo');
+    if (savedCustomerData) {
+      try {
+        const parsed = JSON.parse(savedCustomerData);
+        // Only load if the current data is empty (first time on checkout)
+        if (!data.email && !data.firstName && !data.lastName) {
+          setFormData(parsed);
+        }
+      } catch (error) {
+        console.error('Error loading saved customer data:', error);
+      }
+    }
+  }, [data]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -31,6 +53,24 @@ export default function CustomerInfo({ data, onContinue }: CustomerInfoProps) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
+
+  // TODO: Re-enable when Google Maps API is set up
+  // const handleGooglePlaceSelect = (place: any) => {
+  //   if (place.parsedAddress) {
+  //     const parsed = place.parsedAddress;
+  //     setFormData(prev => ({
+  //       ...prev,
+  //       address: parsed.fullAddress || prev.address,
+  //       city: parsed.city || prev.city,
+  //       state: parsed.state || prev.state,
+  //       zipCode: parsed.zipCode || prev.zipCode,
+  //       country: parsed.country || prev.country
+  //     }));
+  //     
+  //     // Clear any previous errors
+  //     setErrors({});
+  //   }
+  // };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -45,6 +85,9 @@ export default function CustomerInfo({ data, onContinue }: CustomerInfoProps) {
     if (!formData.state) newErrors.state = 'Province/State is required';
     if (!formData.zipCode) newErrors.zipCode = 'Postal/Zip code is required';
 
+    // Skip Google address validation for now
+    // TODO: Re-enable when Google Maps API is set up
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -52,6 +95,15 @@ export default function CustomerInfo({ data, onContinue }: CustomerInfoProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
+      // Save customer data to localStorage for future use
+      if (isClient) {
+        try {
+          localStorage.setItem('customerShippingInfo', JSON.stringify(formData));
+        } catch (error) {
+          console.error('Error saving customer data:', error);
+        }
+      }
+      
       onContinue(formData);
     }
   };

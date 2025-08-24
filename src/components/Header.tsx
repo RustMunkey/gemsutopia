@@ -17,14 +17,14 @@ export default function Header() {
   const { itemCount } = useGemPouch();
   const { itemCount: wishlistCount } = useWishlist();
   const { user, signOut } = useAuth();
-  const { getContent } = useCMSContent();
+  const { getContent, loading } = useCMSContent();
   const pathname = usePathname();
   
-  // Get marquee settings
-  const marqueeEnabled = getContent('marquee', 'enabled') !== 'false'; // Show by default
+  // Get marquee settings - only show marquee after content loads and if enabled
+  const marqueeEnabled = !loading && getContent('marquee', 'enabled') !== 'false';
   const marqueeText = getContent('marquee', 'text') || 'Grand Opening Sale - Up to 25% Off All Items!';
-  const gradientFrom = getContent('marquee', 'gradient_from') || '#9333ea'; // purple-600
-  const gradientTo = getContent('marquee', 'gradient_to') || '#db2777'; // pink-600
+  const gradientFrom = getContent('marquee', 'gradient_from') || '#000000';
+  const gradientTo = getContent('marquee', 'gradient_to') || '#000000';
   
   // Add drop shadow to all pages except front page
   const isHomePage = pathname === '/';
@@ -89,6 +89,7 @@ export default function Header() {
             <div className="md:hidden flex items-center gap-4">
               {isProductPage ? (
                 <div className="flex items-center gap-4">
+                  <CurrencySwitcher variant="header" />
                   <a href="/wishlist" className="text-white hover:text-gray-300 flex items-center gap-2 relative">
                     {wishlistCount > 0 ? (
                       <Star fill="white" className="h-6 w-6" strokeWidth={2} />
@@ -106,11 +107,15 @@ export default function Header() {
                   </a>
                 </div>
               ) : !isShopPage ? (
-                <a href="/shop" className="border border-white text-white hover:bg-white hover:text-black active:bg-white active:text-black text-sm font-bold px-10 py-2 rounded-full transition-all">
-                  Shop
-                </a>
+                <>
+                  <CurrencySwitcher variant="header" />
+                  <a href="/shop" className="border border-white text-white md:bg-transparent md:text-white hover:bg-white hover:text-black active:bg-white active:text-black text-sm font-bold px-10 py-2 rounded-full transition-all">
+                    Shop
+                  </a>
+                </>
               ) : (
                 <div className="flex items-center gap-4">
+                  <CurrencySwitcher variant="header" />
                   <a href="/wishlist" className="text-white hover:text-gray-300 flex items-center gap-2 relative">
                     {wishlistCount > 0 ? (
                       <Star fill="white" className="h-6 w-6" strokeWidth={2} />

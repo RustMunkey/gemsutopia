@@ -92,7 +92,7 @@ export async function GET(request: NextRequest) {
     const section = searchParams.get('section');
 
     // Validate section parameter
-    const allowedSections = ['hero', 'featured', 'about', 'contact'];
+    const allowedSections = ['hero', 'featured', 'about', 'contact', 'marquee'];
     if (section && !allowedSections.includes(section)) {
       console.log(`[SECURITY] Invalid section requested: ${section} by ${authCheck.email}`);
       return NextResponse.json(

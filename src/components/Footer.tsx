@@ -154,7 +154,7 @@ export default function Footer() {
           </div>
         </div>
       </div>
-      <div className="w-full pb-8 bg-black px-4 sm:px-6 lg:px-8">
+      <div className="w-full pb-8 md:pb-0 bg-black px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto space-y-4 bg-black">
           <div className="mt-8 mb-4">
             <p className="text-white text-left text-sm">Sign up for exclusive promotions, new arrivals, and special offers delivered straight to your inbox!</p>
@@ -190,7 +190,7 @@ export default function Footer() {
               </button>
             </div>
           </form>
-          <div className="pt-4 bg-black -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
+          <div className="pt-4 pb-4 md:pb-6 bg-black -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
             <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:justify-between md:items-center space-y-4 md:space-y-0 bg-black">
               <p className="text-sm text-center md:text-left bg-black">© 2025 Gemsutopia. All rights reserved.</p>
               <div className="flex flex-wrap justify-center md:justify-end gap-4 bg-black">

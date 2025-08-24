@@ -1,5 +1,6 @@
 'use client';
 import { useGemPouch } from '@/contexts/GemPouchContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { Trash2 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -15,6 +16,7 @@ interface CartReviewProps {
 
 export default function CartReview({ items, onContinue }: CartReviewProps) {
   const { removeItem } = useGemPouch();
+  const { formatPrice } = useCurrency();
 
   // Group items by ID and count quantities
   const groupedItems = items.reduce((acc, item) => {
@@ -50,7 +52,7 @@ export default function CartReview({ items, onContinue }: CartReviewProps) {
               <h3 className="text-lg font-medium text-gray-900">{item.name}</h3>
               <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
               <p className="text-lg font-semibold text-gray-900">
-                ${(item.price * item.quantity).toFixed(2)} CAD
+                {formatPrice(item.price * item.quantity)}
               </p>
             </div>
             
@@ -68,7 +70,7 @@ export default function CartReview({ items, onContinue }: CartReviewProps) {
       <div className="border-t border-gray-200 pt-4 mb-6">
         <div className="flex justify-between text-lg font-semibold text-gray-900">
           <span>Subtotal ({items.length} items)</span>
-          <span>${subtotal.toFixed(2)} CAD</span>
+          <span>{formatPrice(subtotal)}</span>
         </div>
         <p className="text-sm text-gray-600 mt-1">
           Shipping and taxes calculated at next step

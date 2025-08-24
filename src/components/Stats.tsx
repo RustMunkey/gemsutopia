@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Users, Package, Calendar, Star, BarChart3, TrendingUp } from 'lucide-react';
 
 interface Stat {
@@ -26,74 +26,33 @@ const iconMap = {
 export default function Stats() {
   const [stats, setStats] = useState<Stat[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isClient, setIsClient] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  // Set client-side flag
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   useEffect(() => {
     fetchStats();
   }, []);
-
-  // Animation logic - EXACT copy of Reviews/Featured but reversed direction (right scroll)
-  useEffect(() => {
-    if (!isClient || stats.length <= 3 || !containerRef.current) return;
-    
-    let animationId: number;
-    const startTime = performance.now();
-    const container = containerRef.current;
-    
-    // Calculate dimensions
-    const cardWidth = 236; // w-[220px] + mx-2 (16px margin) = 236px total width per card
-    const oneSetWidth = stats.length * cardWidth;
-    
-    const animate = () => {
-      const now = performance.now();
-      const elapsed = (now - startTime) / 1000;
-      const speed = 45; // pixels per second - same as reviews/featured
-      const translateX = (elapsed * speed); // POSITIVE for rightward movement
-      
-      // Better normalization to prevent glitches - EXACT copy from reviews but reversed
-      let normalizedTranslateX = 0;
-      if (oneSetWidth > 0) {
-        const rawMod = translateX % oneSetWidth;
-        normalizedTranslateX = rawMod >= oneSetWidth ? rawMod - oneSetWidth : rawMod;
-      }
-      
-      // Directly update the transform without causing React re-renders
-      container.style.transform = `translate3d(${normalizedTranslateX}px, 0, 0)`;
-      
-      animationId = requestAnimationFrame(animate);
-    };
-
-    animationId = requestAnimationFrame(animate);
-
-    return () => {
-      if (animationId) {
-        cancelAnimationFrame(animationId);
-      }
-    };
-  }, [isClient, stats]);
 
   const fetchStats = async () => {
     try {
       const response = await fetch('/api/stats');
       if (response.ok) {
         const data = await response.json();
-        setStats(data);
+        // Use all stats from backend (up to 6 for optimal display)
+        setStats(data.slice(0, 6));
+      } else {
+        console.error('API response not ok:', response.status, response.statusText);
+        throw new Error('Failed to fetch from API');
       }
     } catch (error) {
       console.error('Error fetching stats:', error);
-      // Fallback to default stats if API fails
+      // Only use fallback stats if API completely fails
       setStats([
         { id: '1', title: 'Happy Customers', value: '1000+', description: 'Satisfied customers across Canada', icon: 'users', data_source: 'manual', is_real_time: false, sort_order: 1, is_active: true },
         { id: '2', title: 'Products Sold', value: '500+', description: 'Premium gemstones delivered', icon: 'package', data_source: 'analytics', is_real_time: true, sort_order: 2, is_active: true },
         { id: '3', title: 'Years of Experience', value: '10+', description: 'Expertise in gemstone sourcing', icon: 'calendar', data_source: 'manual', is_real_time: false, sort_order: 3, is_active: true },
-        { id: '4', title: 'Five Star Reviews', value: '98%', description: 'Customer satisfaction rating', icon: 'star', data_source: 'reviews', is_real_time: true, sort_order: 4, is_active: true }
-      ]);
+        { id: '4', title: 'Five Star Reviews', value: '98%', description: 'Customer satisfaction rating', icon: 'star', data_source: 'reviews', is_real_time: true, sort_order: 4, is_active: true },
+        { id: '5', title: 'Countries Served', value: '5+', description: 'International shipping', icon: 'trending-up', data_source: 'manual', is_real_time: false, sort_order: 5, is_active: true },
+        { id: '6', title: 'Gemstone Types', value: '25+', description: 'Variety of precious stones', icon: 'bar-chart', data_source: 'manual', is_real_time: false, sort_order: 6, is_active: true }
+      ].slice(0, 6));
     } finally {
       setLoading(false);
     }
@@ -101,7 +60,7 @@ export default function Stats() {
 
   if (loading) {
     return (
-      <div className="mt-16 overflow-hidden">
+      <div className="w-full py-8 bg-black">
         <div className="flex justify-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
         </div>
@@ -114,83 +73,57 @@ export default function Stats() {
   }
 
   return (
-    <div className="mt-16">
-      {/* Stats Display - EXACT copy of Featured.tsx layout logic */}
-      <div className="py-8">
-        {(() => {
-          const shouldCenter = stats.length <= 3;
-          
-          if (shouldCenter) {
-            // Centered layout for 3 or fewer items
+    <div className="w-full py-6 bg-black">
+      {/* Mobile: Card format */}
+      <div className="lg:hidden px-4">
+        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+          <div className="grid grid-cols-3 gap-x-4 gap-y-6">
+            {stats.slice(0, 6).map((stat) => {
+              const IconComponent = iconMap[stat.icon as keyof typeof iconMap];
+              
+              return (
+                <div key={stat.id} className="text-center">
+                  <div className="flex justify-center mb-2">
+                    {IconComponent && (
+                      <IconComponent className="h-5 w-5 text-white opacity-80" />
+                    )}
+                  </div>
+                  <div className="text-lg font-bold text-white mb-1 leading-none">
+                    {stat.value}
+                  </div>
+                  <div className="text-xs text-white/90 font-medium leading-tight">
+                    {stat.title}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop: Horizontal line format */}
+      <div className="hidden lg:block">
+        <div className="grid grid-cols-6 gap-4 px-12">
+          {stats.map((stat) => {
+            const IconComponent = iconMap[stat.icon as keyof typeof iconMap];
+            
             return (
-              <div className="flex justify-center items-stretch gap-4 flex-wrap max-w-6xl mx-auto px-4">
-                {stats.map((stat) => {
-                  const IconComponent = iconMap[stat.icon as keyof typeof iconMap];
-                  
-                  return (
-                    <div key={stat.id} className="flex-shrink-0 w-[220px]">
-                      <div className="bg-black rounded-2xl px-6 py-6 shadow-lg w-[180px] h-[140px] flex flex-col justify-center">
-                        <div className="text-center">
-                          {IconComponent && (
-                            <div className="flex justify-center mb-2">
-                              <IconComponent className="h-6 w-6 text-white opacity-70" />
-                            </div>
-                          )}
-                          <div className="text-2xl md:text-3xl font-bold text-white mb-2">
-                            {stat.value}
-                          </div>
-                          <div className="text-sm md:text-base text-white font-medium">
-                            {stat.title}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          } else {
-            // Scrolling layout for more than 3 items
-            return (
-              <div className="overflow-hidden py-8">
-                <div 
-                  ref={containerRef}
-                  className="flex"
-                  style={{
-                    willChange: 'transform',
-                    backfaceVisibility: 'hidden',
-                    WebkitBackfaceVisibility: 'hidden',
-                    transform: 'translateZ(0)'
-                  }}
-                >
-                  {stats.concat(stats).concat(stats).map((stat, index) => {
-                    const IconComponent = iconMap[stat.icon as keyof typeof iconMap];
-                    
-                    return (
-                      <div key={`${stat.id}-${index}`} className="inline-block flex-shrink-0 w-[220px] mx-2">
-                        <div className="bg-black rounded-2xl px-6 py-6 shadow-lg w-[180px] h-[140px] flex flex-col justify-center">
-                          <div className="text-center">
-                            {IconComponent && (
-                              <div className="flex justify-center mb-2">
-                                <IconComponent className="h-6 w-6 text-white opacity-70" />
-                              </div>
-                            )}
-                            <div className="text-2xl md:text-3xl font-bold text-white mb-2">
-                              {stat.value}
-                            </div>
-                            <div className="text-sm md:text-base text-white font-medium">
-                              {stat.title}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
+              <div key={stat.id} className="text-center">
+                <div className="flex justify-center mb-1">
+                  {IconComponent && (
+                    <IconComponent className="h-4 w-4 text-white opacity-80" />
+                  )}
+                </div>
+                <div className="text-lg font-bold text-white mb-0.5 leading-none">
+                  {stat.value}
+                </div>
+                <div className="text-xs text-white/90 font-medium leading-tight">
+                  {stat.title}
                 </div>
               </div>
             );
-          }
-        })()}
+          })}
+        </div>
       </div>
     </div>
   );
