@@ -23,6 +23,7 @@
     "@supabase/supabase-js": "^2.54.0",
     "@tabler/icons-react": "^3.34.1",
     "@types/nodemailer": "^6.4.17",
+    "@vercel/speed-insights": "^1.2.0",
     "@walletconnect/modal": "^2.7.0",
     "@walletconnect/utils": "^2.21.8",
     "@walletconnect/web3wallet": "^1.16.1",
@@ -42,7 +43,8 @@
     "react-dom": "19.1.0",
     "resend": "^6.0.1",
     "stripe": "^18.4.0",
-    "tailwind-merge": "^3.3.1"
+    "tailwind-merge": "^3.3.1",
+    "taxjar": "^4.1.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

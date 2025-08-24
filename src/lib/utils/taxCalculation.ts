@@ -1,102 +1,209 @@
-// Tax rates for different locations
+import TaxJar from 'taxjar';
+
 export interface TaxRate {
   federal: number;
   provincial?: number;
   state?: number;
+  local?: number;
   total: number;
   name: string;
 }
 
-// Canadian provincial tax rates (2024)
-const CANADIAN_TAX_RATES: Record<string, TaxRate> = {
-  'AB': { federal: 0.05, provincial: 0.00, total: 0.05, name: 'GST' }, // Alberta - GST only
-  'BC': { federal: 0.05, provincial: 0.07, total: 0.12, name: 'GST + PST' }, // British Columbia
-  'MB': { federal: 0.05, provincial: 0.07, total: 0.12, name: 'GST + PST' }, // Manitoba
-  'NB': { federal: 0.15, total: 0.15, name: 'HST' }, // New Brunswick - HST
-  'NL': { federal: 0.15, total: 0.15, name: 'HST' }, // Newfoundland and Labrador
-  'NT': { federal: 0.05, total: 0.05, name: 'GST' }, // Northwest Territories
-  'NS': { federal: 0.15, total: 0.15, name: 'HST' }, // Nova Scotia
-  'NU': { federal: 0.05, total: 0.05, name: 'GST' }, // Nunavut
-  'ON': { federal: 0.13, total: 0.13, name: 'HST' }, // Ontario - HST
-  'PE': { federal: 0.15, total: 0.15, name: 'HST' }, // Prince Edward Island
-  'QC': { federal: 0.05, provincial: 0.09975, total: 0.14975, name: 'GST + QST' }, // Quebec
-  'SK': { federal: 0.05, provincial: 0.06, total: 0.11, name: 'GST + PST' }, // Saskatchewan
-  'YT': { federal: 0.05, total: 0.05, name: 'GST' }, // Yukon
-};
+export interface TaxCalculationResult {
+  amount: number;
+  rate: TaxRate;
+}
 
-// US state tax rates (approximate averages - in practice you'd use a real tax API)
-const US_TAX_RATES: Record<string, TaxRate> = {
-  'AL': { federal: 0, state: 0.04, total: 0.04, name: 'State Sales Tax' }, // Alabama
-  'AK': { federal: 0, state: 0.00, total: 0.00, name: 'No Sales Tax' }, // Alaska
-  'AZ': { federal: 0, state: 0.056, total: 0.056, name: 'State Sales Tax' }, // Arizona
-  'AR': { federal: 0, state: 0.065, total: 0.065, name: 'State Sales Tax' }, // Arkansas
-  'CA': { federal: 0, state: 0.0725, total: 0.0725, name: 'State Sales Tax' }, // California
-  'CO': { federal: 0, state: 0.029, total: 0.029, name: 'State Sales Tax' }, // Colorado
-  'CT': { federal: 0, state: 0.0635, total: 0.0635, name: 'State Sales Tax' }, // Connecticut
-  'DE': { federal: 0, state: 0.00, total: 0.00, name: 'No Sales Tax' }, // Delaware
-  'FL': { federal: 0, state: 0.06, total: 0.06, name: 'State Sales Tax' }, // Florida
-  'GA': { federal: 0, state: 0.04, total: 0.04, name: 'State Sales Tax' }, // Georgia
-  'HI': { federal: 0, state: 0.04, total: 0.04, name: 'State Sales Tax' }, // Hawaii
-  'ID': { federal: 0, state: 0.06, total: 0.06, name: 'State Sales Tax' }, // Idaho
-  'IL': { federal: 0, state: 0.0625, total: 0.0625, name: 'State Sales Tax' }, // Illinois
-  'IN': { federal: 0, state: 0.07, total: 0.07, name: 'State Sales Tax' }, // Indiana
-  'IA': { federal: 0, state: 0.06, total: 0.06, name: 'State Sales Tax' }, // Iowa
-  'KS': { federal: 0, state: 0.065, total: 0.065, name: 'State Sales Tax' }, // Kansas
-  'KY': { federal: 0, state: 0.06, total: 0.06, name: 'State Sales Tax' }, // Kentucky
-  'LA': { federal: 0, state: 0.0445, total: 0.0445, name: 'State Sales Tax' }, // Louisiana
-  'ME': { federal: 0, state: 0.055, total: 0.055, name: 'State Sales Tax' }, // Maine
-  'MD': { federal: 0, state: 0.06, total: 0.06, name: 'State Sales Tax' }, // Maryland
-  'MA': { federal: 0, state: 0.0625, total: 0.0625, name: 'State Sales Tax' }, // Massachusetts
-  'MI': { federal: 0, state: 0.06, total: 0.06, name: 'State Sales Tax' }, // Michigan
-  'MN': { federal: 0, state: 0.06875, total: 0.06875, name: 'State Sales Tax' }, // Minnesota
-  'MS': { federal: 0, state: 0.07, total: 0.07, name: 'State Sales Tax' }, // Mississippi
-  'MO': { federal: 0, state: 0.0423, total: 0.0423, name: 'State Sales Tax' }, // Missouri
-  'MT': { federal: 0, state: 0.00, total: 0.00, name: 'No Sales Tax' }, // Montana
-  'NE': { federal: 0, state: 0.055, total: 0.055, name: 'State Sales Tax' }, // Nebraska
-  'NV': { federal: 0, state: 0.0685, total: 0.0685, name: 'State Sales Tax' }, // Nevada
-  'NH': { federal: 0, state: 0.00, total: 0.00, name: 'No Sales Tax' }, // New Hampshire
-  'NJ': { federal: 0, state: 0.06625, total: 0.06625, name: 'State Sales Tax' }, // New Jersey
-  'NM': { federal: 0, state: 0.05, total: 0.05, name: 'State Sales Tax' }, // New Mexico
-  'NY': { federal: 0, state: 0.04, total: 0.04, name: 'State Sales Tax' }, // New York (base rate)
-  'NC': { federal: 0, state: 0.0475, total: 0.0475, name: 'State Sales Tax' }, // North Carolina
-  'ND': { federal: 0, state: 0.05, total: 0.05, name: 'State Sales Tax' }, // North Dakota
-  'OH': { federal: 0, state: 0.0575, total: 0.0575, name: 'State Sales Tax' }, // Ohio
-  'OK': { federal: 0, state: 0.045, total: 0.045, name: 'State Sales Tax' }, // Oklahoma
-  'OR': { federal: 0, state: 0.00, total: 0.00, name: 'No Sales Tax' }, // Oregon
-  'PA': { federal: 0, state: 0.06, total: 0.06, name: 'State Sales Tax' }, // Pennsylvania
-  'RI': { federal: 0, state: 0.07, total: 0.07, name: 'State Sales Tax' }, // Rhode Island
-  'SC': { federal: 0, state: 0.06, total: 0.06, name: 'State Sales Tax' }, // South Carolina
-  'SD': { federal: 0, state: 0.045, total: 0.045, name: 'State Sales Tax' }, // South Dakota
-  'TN': { federal: 0, state: 0.07, total: 0.07, name: 'State Sales Tax' }, // Tennessee
-  'TX': { federal: 0, state: 0.0625, total: 0.0625, name: 'State Sales Tax' }, // Texas
-  'UT': { federal: 0, state: 0.047, total: 0.047, name: 'State Sales Tax' }, // Utah
-  'VT': { federal: 0, state: 0.06, total: 0.06, name: 'State Sales Tax' }, // Vermont
-  'VA': { federal: 0, state: 0.053, total: 0.053, name: 'State Sales Tax' }, // Virginia
-  'WA': { federal: 0, state: 0.065, total: 0.065, name: 'State Sales Tax' }, // Washington
-  'WV': { federal: 0, state: 0.06, total: 0.06, name: 'State Sales Tax' }, // West Virginia
-  'WI': { federal: 0, state: 0.05, total: 0.05, name: 'State Sales Tax' }, // Wisconsin
-  'WY': { federal: 0, state: 0.04, total: 0.04, name: 'State Sales Tax' }, // Wyoming
-};
+// Initialize TaxJar client
+const client = new TaxJar({
+  apiKey: process.env.TAXJAR_API_KEY || 'test',
+  apiUrl: process.env.NODE_ENV === 'production' 
+    ? TaxJar.DEFAULT_API_URL 
+    : TaxJar.SANDBOX_API_URL
+});
 
-export function calculateTaxRate(country: string, state: string): TaxRate {
-  // Normalize inputs
-  const normalizedCountry = country.toUpperCase();
+export async function calculateTaxRate(
+  country: string, 
+  state: string, 
+  city?: string,
+  zipCode?: string,
+  address?: string
+): Promise<TaxRate> {
+  const normalizedCountry = country.toLowerCase();
   const normalizedState = state.toUpperCase();
 
-  if (normalizedCountry === 'CA' || normalizedCountry === 'CANADA') {
-    return CANADIAN_TAX_RATES[normalizedState] || CANADIAN_TAX_RATES['ON']; // Default to Ontario
-  } else if (normalizedCountry === 'US' || normalizedCountry === 'USA' || normalizedCountry === 'UNITED STATES') {
-    return US_TAX_RATES[normalizedState] || { state: 0.06, total: 0.06, name: 'State Sales Tax' }; // Default 6%
-  } else {
-    // International - no tax for now
-    return { total: 0, name: 'International (Tax-free)' };
+  try {
+    if (normalizedCountry === 'canada' || normalizedCountry === 'ca') {
+      return await calculateCanadianTax(normalizedState, city, zipCode, address);
+    } else if (normalizedCountry === 'united states' || normalizedCountry === 'us' || normalizedCountry === 'usa') {
+      return await calculateUSTax(normalizedState, city, zipCode, address);
+    } else {
+      // Default to no tax for other countries
+      return {
+        federal: 0,
+        total: 0,
+        name: 'No Tax'
+      };
+    }
+  } catch (error) {
+    console.error('Error calculating tax rate:', error);
+    // Fallback to basic rates if API fails
+    return getFallbackTaxRate(normalizedCountry, normalizedState);
   }
 }
 
-export function calculateTax(subtotal: number, country: string, state: string): { amount: number; rate: TaxRate } {
-  const rate = calculateTaxRate(country, state);
+async function calculateCanadianTax(
+  province: string,
+  city?: string,
+  postalCode?: string,
+  address?: string
+): Promise<TaxRate> {
+  try {
+    // For Canada, we'll use TaxJar's rates endpoint
+    const params: any = {
+      country: 'CA',
+      state: province
+    };
+
+    if (city) params.city = city;
+    if (postalCode) params.zip = postalCode;
+    if (address) params.street = address;
+
+    const response = await client.ratesForLocation(postalCode || 'M5V3A8', params);
+    
+    const rate = response.rate;
+    const federal = parseFloat(rate.combined_rate?.toString() || '0') || 0;
+    
+    // Determine tax name based on province
+    let taxName = 'GST';
+    if (['ON', 'NB', 'NL', 'NS', 'PE'].includes(province)) {
+      taxName = 'HST';
+    } else if (['BC', 'SK', 'MB', 'QC'].includes(province)) {
+      taxName = 'GST + PST';
+    }
+
+    return {
+      federal,
+      total: federal,
+      name: taxName
+    };
+  } catch (error) {
+    console.error('Canadian tax calculation error:', error);
+    return getFallbackCanadianTax(province);
+  }
+}
+
+async function calculateUSTax(
+  state: string,
+  city?: string,
+  zipCode?: string,
+  address?: string
+): Promise<TaxRate> {
+  try {
+    const params: any = {
+      country: 'US',
+      state: state
+    };
+
+    if (city) params.city = city;
+    if (address) params.street = address;
+
+    const response = await client.ratesForLocation(zipCode || '90210', params);
+    
+    const rate = response.rate;
+    const stateRate = parseFloat(rate.state_rate?.toString() || '0') || 0;
+    const localRate = parseFloat(rate.combined_district_rate?.toString() || '0') || 0;
+    const totalRate = parseFloat(rate.combined_rate?.toString() || '0') || 0;
+
+    return {
+      federal: 0, // US doesn't have federal sales tax
+      state: stateRate,
+      local: localRate,
+      total: totalRate,
+      name: totalRate === 0 ? 'No Sales Tax' : 'Sales Tax'
+    };
+  } catch (error) {
+    console.error('US tax calculation error:', error);
+    return getFallbackUSTax(state);
+  }
+}
+
+// Fallback tax rates if API fails
+function getFallbackTaxRate(country: string, state: string): TaxRate {
+  if (country === 'canada' || country === 'ca') {
+    return getFallbackCanadianTax(state);
+  } else if (country === 'united states' || country === 'us' || country === 'usa') {
+    return getFallbackUSTax(state);
+  }
+  
+  return { federal: 0, total: 0, name: 'No Tax' };
+}
+
+function getFallbackCanadianTax(province: string): TaxRate {
+  const rates: Record<string, TaxRate> = {
+    'AB': { federal: 0.05, total: 0.05, name: 'GST' },
+    'BC': { federal: 0.05, provincial: 0.07, total: 0.12, name: 'GST + PST' },
+    'MB': { federal: 0.05, provincial: 0.07, total: 0.12, name: 'GST + PST' },
+    'NB': { federal: 0.15, total: 0.15, name: 'HST' },
+    'NL': { federal: 0.15, total: 0.15, name: 'HST' },
+    'NT': { federal: 0.05, total: 0.05, name: 'GST' },
+    'NS': { federal: 0.15, total: 0.15, name: 'HST' },
+    'NU': { federal: 0.05, total: 0.05, name: 'GST' },
+    'ON': { federal: 0.13, total: 0.13, name: 'HST' },
+    'PE': { federal: 0.15, total: 0.15, name: 'HST' },
+    'QC': { federal: 0.05, provincial: 0.09975, total: 0.14975, name: 'GST + QST' },
+    'SK': { federal: 0.05, provincial: 0.06, total: 0.11, name: 'GST + PST' },
+    'YT': { federal: 0.05, total: 0.05, name: 'GST' }
+  };
+
+  return rates[province] || { federal: 0.05, total: 0.05, name: 'GST' };
+}
+
+function getFallbackUSTax(state: string): TaxRate {
+  const rates: Record<string, TaxRate> = {
+    'AL': { federal: 0, state: 0.04, total: 0.04, name: 'State Sales Tax' },
+    'AK': { federal: 0, state: 0.00, total: 0.00, name: 'No Sales Tax' },
+    'AZ': { federal: 0, state: 0.056, total: 0.056, name: 'State Sales Tax' },
+    'AR': { federal: 0, state: 0.065, total: 0.065, name: 'State Sales Tax' },
+    'CA': { federal: 0, state: 0.0725, total: 0.0725, name: 'State Sales Tax' },
+    'CO': { federal: 0, state: 0.029, total: 0.029, name: 'State Sales Tax' },
+    'CT': { federal: 0, state: 0.0635, total: 0.0635, name: 'State Sales Tax' },
+    'DE': { federal: 0, state: 0.00, total: 0.00, name: 'No Sales Tax' },
+    'FL': { federal: 0, state: 0.06, total: 0.06, name: 'State Sales Tax' },
+    'GA': { federal: 0, state: 0.04, total: 0.04, name: 'State Sales Tax' },
+    // Add more states as needed...
+  };
+
+  return rates[state] || { federal: 0, state: 0.05, total: 0.05, name: 'State Sales Tax' };
+}
+
+export async function calculateTax(
+  subtotal: number, 
+  country: string, 
+  state: string,
+  city?: string,
+  zipCode?: string,
+  address?: string
+): Promise<TaxCalculationResult> {
+  const taxRate = await calculateTaxRate(country, state, city, zipCode, address);
+  const amount = subtotal * taxRate.total;
+  
   return {
-    amount: subtotal * rate.total,
-    rate
+    amount,
+    rate: taxRate
+  };
+}
+
+// Synchronous version for when we already have the rate
+export function calculateTaxSync(subtotal: number, taxRate: number): TaxCalculationResult {
+  const amount = subtotal * taxRate;
+  
+  return {
+    amount,
+    rate: {
+      federal: 0,
+      total: taxRate,
+      name: 'Tax'
+    }
   };
 }

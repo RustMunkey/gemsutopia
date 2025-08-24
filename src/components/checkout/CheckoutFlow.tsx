@@ -11,7 +11,7 @@ import PaymentMethods from './PaymentMethods';
 import PaymentForm from './PaymentForm';
 import OrderSuccess from './OrderSuccess';
 import { ArrowLeft } from 'lucide-react';
-import { calculateTax } from '@/lib/utils/taxCalculation';
+import { calculateTax, TaxCalculationResult } from '@/lib/utils/taxCalculation';
 
 interface CheckoutData {
   customer: {
@@ -80,21 +80,49 @@ export default function CheckoutFlow() {
     cryptoCurrency?: string;
     cryptoPrices?: any;
   } | null>(null);
+  const [taxCalculation, setTaxCalculation] = useState<TaxCalculationResult | null>(null);
+  const [calculatingTax, setCalculatingTax] = useState(false);
 
   // Calculate totals
   const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const shipping = 25; // Fixed $25 shipping rate
   
-  // Calculate tax based on customer location (after first step)
-  let tax = 0;
-  let taxLabel = 'Tax';
-  if (currentStep !== 'cart' && checkoutData.customer.country && checkoutData.customer.state) {
-    const taxCalculation = calculateTax(subtotal, checkoutData.customer.country, checkoutData.customer.state);
-    tax = taxCalculation.amount;
-    taxLabel = taxCalculation.rate.name;
-  }
+  // Calculate tax - use stored calculation or default to 0
+  const tax = taxCalculation?.amount || 0;
+  const taxLabel = taxCalculation?.rate.name || 'Tax';
   
   const total = subtotal + tax + shipping;
+
+  // Effect to calculate tax when customer data changes
+  useEffect(() => {
+    async function calculateTaxForCustomer() {
+      if (currentStep !== 'cart' && checkoutData.customer.country && checkoutData.customer.state && checkoutData.customer.city && checkoutData.customer.zipCode) {
+        setCalculatingTax(true);
+        try {
+          const result = await calculateTax(
+            subtotal,
+            checkoutData.customer.country,
+            checkoutData.customer.state,
+            checkoutData.customer.city,
+            checkoutData.customer.zipCode,
+            checkoutData.customer.address
+          );
+          setTaxCalculation(result);
+        } catch (error) {
+          console.error('Tax calculation error:', error);
+          // Fallback to 0 tax if calculation fails
+          setTaxCalculation({
+            amount: 0,
+            rate: { federal: 0, total: 0, name: 'Tax' }
+          });
+        } finally {
+          setCalculatingTax(false);
+        }
+      }
+    }
+
+    calculateTaxForCustomer();
+  }, [currentStep, checkoutData.customer, subtotal]);
 
   const updateCheckoutData = (updates: Partial<CheckoutData>) => {
     setCheckoutData(prev => ({ ...prev, ...updates }));
@@ -336,7 +364,13 @@ export default function CheckoutFlow() {
                   {currentStep !== 'cart' && (
                     <div className="flex justify-between text-sm text-gray-600">
                       <span>{taxLabel}</span>
-                      <span>{formatPrice(tax)}</span>
+                      <span>
+                        {calculatingTax ? (
+                          <span className="animate-pulse">Calculating...</span>
+                        ) : (
+                          formatPrice(tax)
+                        )}
+                      </span>
                     </div>
                   )}
                   <div className="flex justify-between text-lg font-semibold text-gray-900 pt-2 border-t border-gray-200">
