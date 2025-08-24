@@ -90,19 +90,12 @@ export default function ProductContent({ product: initialProduct }: ProductConte
   // Get video URL from metadata or direct property
   const videoUrl = product.video_url || product.metadata?.video_url;
   
-  // Debug logging
-  useEffect(() => {
-    console.log('Product data:', product);
-    console.log('Direct video_url column:', product.video_url);
-    console.log('Metadata video_url (legacy):', product.metadata?.video_url);
-    console.log('Final videoUrl:', videoUrl);
-  }, [product, videoUrl]);
-  
   // Get all available media (images + video)
   const allMedia = [
     ...product.images,
     ...(videoUrl ? ['video'] : [])
   ];
+
 
   // Navigation functions
   const goToNextImage = () => {
