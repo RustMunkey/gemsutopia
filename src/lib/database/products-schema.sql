@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS products (
   price DECIMAL(10,2) NOT NULL DEFAULT 0,
   sale_price DECIMAL(10,2),
   on_sale BOOLEAN DEFAULT false,
-  category VARCHAR(100),
+  category VARCOyiHAR(100),
   images TEXT[] DEFAULT '{}',
   video_url TEXT,
   tags TEXT[] DEFAULT '{}',

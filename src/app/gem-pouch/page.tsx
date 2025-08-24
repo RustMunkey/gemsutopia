@@ -5,13 +5,32 @@ import { IconTrash } from '@tabler/icons-react';
 import { ShoppingBag } from 'lucide-react';
 import { useGemPouch } from '@/contexts/GemPouchContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { useNotification } from '@/contexts/NotificationContext';
 import Image from 'next/image';
 import Link from 'next/link';
 
 export default function GemPouch() {
-  const { items, removeItem, updateQuantity } = useGemPouch();
+  const { items, removeItem, addItem, updateQuantity } = useGemPouch();
   const { formatPrice } = useCurrency();
+  const { showNotification } = useNotification();
   const totalPrice = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+  const handleRemoveItem = (item: any) => {
+    const originalQuantity = item.quantity;
+    removeItem(item.id);
+    showNotification('success', `${item.name} removed from gem pouch`, {
+      label: 'Undo',
+      onClick: () => {
+        // Restore the item with original quantity
+        addItem(item);
+        // Set the quantity back to what it was
+        if (originalQuantity > 1) {
+          setTimeout(() => updateQuantity(item.id, originalQuantity), 100);
+        }
+        showNotification('success', `${item.name} restored to gem pouch`);
+      }
+    });
+  };
   return (
     <div className="min-h-[200vh] flex flex-col relative">
       {/* Fixed Background */}
@@ -104,7 +123,7 @@ export default function GemPouch() {
                       )}
                     </div>
                     <button
-                      onClick={() => removeItem(item.id)}
+                      onClick={() => handleRemoveItem(item)}
                       className="text-red-600 hover:text-red-800 p-2"
                     >
                       <IconTrash className="h-5 w-5" />

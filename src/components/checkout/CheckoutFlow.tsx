@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useGemPouch } from '@/contexts/GemPouchContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useWallet } from '@/contexts/WalletContext';
@@ -33,6 +34,7 @@ interface CheckoutData {
 type CheckoutStep = 'cart' | 'customer' | 'payment-method' | 'payment' | 'success' | 'error';
 
 export default function CheckoutFlow() {
+  const router = useRouter();
   const { items, clearPouch } = useGemPouch();
   const { formatPrice } = useCurrency();
   const { isConnected, disconnectWallet } = useWallet();
@@ -175,6 +177,9 @@ export default function CheckoutFlow() {
     }
     
     switch (currentStep) {
+      case 'cart':
+        router.push('/shop');
+        break;
       case 'customer':
         setCurrentStep('cart');
         break;
@@ -215,8 +220,7 @@ export default function CheckoutFlow() {
           {currentStep !== 'success' && (
             <button
               onClick={goBack}
-              disabled={currentStep === 'cart'}
-              className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-4 disabled:opacity-50 disabled:cursor-not-allowed relative z-20 bg-white/80 backdrop-blur-sm px-3 py-2 rounded-lg border border-gray-200"
+              className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-4 relative z-20 bg-white/80 backdrop-blur-sm px-3 py-2 rounded-lg border border-gray-200"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back

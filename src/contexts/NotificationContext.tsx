@@ -2,15 +2,25 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { CheckCircle, AlertCircle, X } from 'lucide-react';
 
+interface NotificationAction {
+  label: string;
+  onClick: () => void;
+}
+
 interface Notification {
   id: string;
   type: 'success' | 'error' | 'info';
   message: string;
+  action?: NotificationAction;
 }
 
 interface NotificationContextType {
   notifications: Notification[];
-  showNotification: (type: 'success' | 'error' | 'info', message: string) => void;
+  showNotification: (
+    type: 'success' | 'error' | 'info', 
+    message: string, 
+    action?: NotificationAction
+  ) => void;
   removeNotification: (id: string) => void;
 }
 
@@ -19,14 +29,19 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
-  const showNotification = useCallback((type: 'success' | 'error' | 'info', message: string) => {
+  const showNotification = useCallback((
+    type: 'success' | 'error' | 'info', 
+    message: string, 
+    action?: NotificationAction
+  ) => {
     const id = Date.now().toString();
-    setNotifications(prev => [...prev, { id, type, message }]);
+    setNotifications(prev => [...prev, { id, type, message, action }]);
     
-    // Auto remove after 4 seconds
+    // Auto remove after 6 seconds if there's an action, 4 seconds otherwise
+    const timeout = action ? 6000 : 4000;
     setTimeout(() => {
       setNotifications(prev => prev.filter(n => n.id !== id));
-    }, 4000);
+    }, timeout);
   }, []);
 
   const removeNotification = useCallback((id: string) => {
@@ -51,7 +66,7 @@ function NotificationContainer({
   if (notifications.length === 0) return null;
 
   return (
-    <div className="fixed top-24 right-4 z-50 space-y-2">
+    <div className="fixed top-18 right-4 z-[9999] space-y-2" style={{position: 'fixed'}}>
       {notifications.map((notification) => (
         <div
           key={notification.id}
@@ -73,6 +88,17 @@ function NotificationContainer({
           </div>
           <div className="flex-1">
             <p className="text-sm font-medium">{notification.message}</p>
+            {notification.action && (
+              <button
+                onClick={() => {
+                  notification.action!.onClick();
+                  onRemove(notification.id);
+                }}
+                className="mt-2 text-xs font-semibold underline hover:no-underline transition-all"
+              >
+                {notification.action.label}
+              </button>
+            )}
           </div>
           <button
             onClick={() => onRemove(notification.id)}

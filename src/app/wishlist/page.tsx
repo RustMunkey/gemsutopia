@@ -6,13 +6,15 @@ import { Star, ShoppingBag, Check } from 'lucide-react';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useGemPouch } from '@/contexts/GemPouchContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { useNotification } from '@/contexts/NotificationContext';
 import Image from 'next/image';
 import Link from 'next/link';
 
 export default function Wishlist() {
-  const { items, removeItem, clearWishlist } = useWishlist();
+  const { items, removeItem, addItem: addToWishlist, clearWishlist } = useWishlist();
   const { addItem: addToGemPouch, removeItem: removeFromGemPouch, isInPouch } = useGemPouch();
   const { formatPrice } = useCurrency();
+  const { showNotification } = useNotification();
   
   const addAllToCart = () => {
     items.forEach(item => {
@@ -22,9 +24,31 @@ export default function Wishlist() {
     });
   };
 
+  const handleRemoveFromWishlist = (item: any) => {
+    removeItem(item.id);
+    showNotification('success', `${item.name} removed from wishlist`, {
+      label: 'Undo',
+      onClick: () => {
+        addToWishlist(item);
+        showNotification('success', `${item.name} restored to wishlist`);
+      }
+    });
+  };
+
+  const handleRemoveFromGemPouch = (item: any) => {
+    removeFromGemPouch(item.id);
+    showNotification('success', `${item.name} removed from gem pouch`, {
+      label: 'Undo',
+      onClick: () => {
+        addToGemPouch(item);
+        showNotification('success', `${item.name} restored to gem pouch`);
+      }
+    });
+  };
+
   const toggleGemPouch = (item: any) => {
     if (isInPouch(item.id)) {
-      removeFromGemPouch(item.id);
+      handleRemoveFromGemPouch(item);
     } else {
       addToGemPouch(item);
     }
@@ -122,7 +146,7 @@ export default function Wishlist() {
                       )}
                     </button>
                     <button
-                      onClick={() => removeItem(item.id)}
+                      onClick={() => handleRemoveFromWishlist(item)}
                       className="text-red-600 hover:text-red-800 p-2"
                       title="Remove from wishlist"
                     >

@@ -118,15 +118,21 @@ export default function ProductContent({ product: initialProduct }: ProductConte
   const openZoomModal = () => {
     setZoomImageIndex(selectedImageIndex);
     setShowZoomModal(true);
+    // Prevent background scrolling
+    document.body.style.overflow = 'hidden';
   };
 
   const openZoomModalAtIndex = (index: number) => {
     setZoomImageIndex(index);
     setShowZoomModal(true);
+    // Prevent background scrolling
+    document.body.style.overflow = 'hidden';
   };
 
   const closeZoomModal = () => {
     setShowZoomModal(false);
+    // Restore background scrolling
+    document.body.style.overflow = 'unset';
   };
 
   // Touch handlers for mobile swipe
@@ -210,6 +216,13 @@ export default function ProductContent({ product: initialProduct }: ProductConte
     }
   }, [productRefreshTrigger, product.id]);
 
+  // Cleanup effect to restore scrolling if component unmounts while modal is open
+  useEffect(() => {
+    return () => {
+      // Restore body scrolling when component unmounts
+      document.body.style.overflow = 'unset';
+    };
+  }, []);
 
   const toggleWishlist = async () => {
     const productData = {
