@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: false,
   },
   images: {
+    unoptimized: true, // Bypass Vercel image optimization to avoid 402 errors
     remotePatterns: [
       {
         protocol: 'https',
