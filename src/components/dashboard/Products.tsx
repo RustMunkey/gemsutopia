@@ -692,22 +692,6 @@ function ProductModal({ product, onClose, onSave }: {
           </div>
 
           {/* Shipping */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Shipping Cost ($)
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              value={formData.shipping}
-              onChange={(e) => setFormData(prev => ({...prev, shipping: e.target.value}))}
-              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-white"
-              placeholder="25.00"
-            />
-            <p className="text-xs text-slate-400 mt-1">
-              This shipping cost will be added to the product price and included in crypto payments
-            </p>
-          </div>
 
           {/* Tags */}
           <div>
