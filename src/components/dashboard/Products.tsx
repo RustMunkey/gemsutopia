@@ -429,7 +429,6 @@ function ProductModal({ product, onClose, onSave }: {
     inventory: product?.inventory?.toString() || '0',
     sku: product?.sku || '',
     weight: product?.weight?.toString() || '',
-    shipping: product?.shipping?.toString() || '25',
     is_active: true,
     featured: product?.featured || false,
     images: product?.images || [],
