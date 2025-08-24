@@ -13,7 +13,7 @@ interface GoogleAddressInputProps {
 declare global {
   interface Window {
     google: any;
-    initGoogleMaps: () => void;
+    initGoogleMaps?: () => void;
   }
 }
 
