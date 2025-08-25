@@ -87,18 +87,24 @@ export default function CheckoutFlow() {
 
   // Calculate totals
   const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const shipping = 25; // Fixed $25 shipping rate
   
   // Calculate tax - use stored calculation or default to 0
   const tax = taxCalculation?.amount || 0;
   const taxLabel = taxCalculation?.rate.name || 'Tax';
   
-  const total = subtotal + tax + shipping;
+  const total = subtotal + tax;
 
-  // Effect to calculate tax when customer data changes
+  // Effect to calculate tax when payment method is selected (after customer info)
   useEffect(() => {
-    async function calculateTaxForCustomer() {
-      if (currentStep !== 'cart' && checkoutData.customer.country && checkoutData.customer.state && checkoutData.customer.city && checkoutData.customer.zipCode) {
+    async function calculateTaxForOrder() {
+      // Only calculate tax if we have customer info AND payment method selected
+      if (
+        checkoutData.paymentMethod && 
+        checkoutData.customer.country && 
+        checkoutData.customer.state && 
+        checkoutData.customer.city && 
+        checkoutData.customer.zipCode
+      ) {
         setCalculatingTax(true);
         try {
           const result = await calculateTax(
@@ -107,7 +113,8 @@ export default function CheckoutFlow() {
             checkoutData.customer.state,
             checkoutData.customer.city,
             checkoutData.customer.zipCode,
-            checkoutData.customer.address
+            checkoutData.customer.address,
+            checkoutData.paymentMethod === 'wallet' ? 'crypto' : 'card' // Crypto vs regular payment
           );
           setTaxCalculation(result);
         } catch (error) {
@@ -120,11 +127,14 @@ export default function CheckoutFlow() {
         } finally {
           setCalculatingTax(false);
         }
+      } else {
+        // Reset tax calculation if payment method not selected
+        setTaxCalculation(null);
       }
     }
 
-    calculateTaxForCustomer();
-  }, [currentStep, checkoutData.customer, subtotal]);
+    calculateTaxForOrder();
+  }, [checkoutData.paymentMethod, checkoutData.customer, subtotal]);
 
   const updateCheckoutData = (updates: Partial<CheckoutData>) => {
     setCheckoutData(prev => ({ ...prev, ...updates }));
@@ -310,7 +320,6 @@ export default function CheckoutFlow() {
                     items={items}
                     subtotal={subtotal}
                     tax={tax}
-                    shipping={shipping}
                     shippingAddress={checkoutData.customer}
                   />
                 </div>
@@ -360,10 +369,6 @@ export default function CheckoutFlow() {
                   <div className="flex justify-between text-sm text-gray-600">
                     <span>Subtotal</span>
                     <span>{formatPrice(subtotal)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm text-gray-600">
-                    <span>Shipping</span>
-                    <span>{formatPrice(shipping)}</span>
                   </div>
                   {currentStep !== 'cart' && (
                     <div className="flex justify-between text-sm text-gray-600">

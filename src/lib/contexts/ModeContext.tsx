@@ -1,5 +1,5 @@
 'use client';
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 export type DashboardMode = 'live' | 'dev';
 
@@ -14,12 +14,26 @@ const ModeContext = createContext<ModeContextType | undefined>(undefined);
 export function ModeProvider({ children }: { children: ReactNode }) {
   const [mode, setMode] = useState<DashboardMode>('live');
 
+  // Check mode from localStorage on mount
+  useEffect(() => {
+    const savedMode = localStorage.getItem('dashboard-mode') as DashboardMode;
+    if (savedMode === 'dev' || savedMode === 'live') {
+      setMode(savedMode);
+    }
+  }, []);
+
+  const handleSetMode = (newMode: DashboardMode) => {
+    setMode(newMode);
+    localStorage.setItem('dashboard-mode', newMode);
+  };
+
   const toggleMode = () => {
-    setMode(current => current === 'live' ? 'dev' : 'live');
+    const newMode = mode === 'live' ? 'dev' : 'live';
+    handleSetMode(newMode);
   };
 
   return (
-    <ModeContext.Provider value={{ mode, setMode, toggleMode }}>
+    <ModeContext.Provider value={{ mode, setMode: handleSetMode, toggleMode }}>
       {children}
     </ModeContext.Provider>
   );

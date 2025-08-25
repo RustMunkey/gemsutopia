@@ -156,7 +156,7 @@ export default function Featured() {
               {getContent('featured', 'section_title') || 'Featured Gems'}
             </h2>
             <p className="text-lg text-neutral-300 max-w-2xl mx-auto">
-              {getContent('featured', 'section_subtitle') || 'Discover our curated collection of premium gemstones'}
+              {getContent('featured', 'section_description') || 'Discover our curated collection of premium gemstones'}
             </p>
           </div>
           <div className="flex justify-center">
@@ -192,7 +192,7 @@ export default function Featured() {
             {getContent('featured', 'section_title') || 'Featured Gems'}
           </h2>
           <p className="text-lg text-neutral-300 max-w-2xl mx-auto">
-            {getContent('featured', 'section_subtitle') || 'Discover our curated collection of premium gemstones'}
+            {getContent('featured', 'section_description') || 'Discover our curated collection of premium gemstones'}
           </p>
         </div>
       </div>

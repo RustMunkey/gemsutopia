@@ -152,10 +152,6 @@ function generateReceiptHTML(order: OrderData): string {
             <span style="font-weight: 500;">${order.subtotal.toFixed(8)} ${order.cryptoCurrency}</span>
           </div>
           <div class="total-row" style="display: flex; justify-content: space-between; margin: 8px 0; padding: 8px 0;">
-            <span style="color: #666;">Shipping:</span>
-            <span style="font-weight: 500; color: #28a745;">${order.shipping === 0 || order.shipping.toFixed(8) === '0.00000000' ? 'FREE' : `${order.shipping.toFixed(8)} ${order.cryptoCurrency}`}</span>
-          </div>
-          <div class="total-row" style="display: flex; justify-content: space-between; margin: 8px 0; padding: 8px 0;">
             <span style="color: #666;">Tax:</span>
             <span style="font-weight: 500; color: #28a745;">${order.tax === 0 || order.tax.toFixed(8) === '0.00000000' ? 'TAX FREE (Crypto)' : `${order.tax.toFixed(8)} ${order.cryptoCurrency}`}</span>
           </div>
@@ -167,10 +163,6 @@ function generateReceiptHTML(order: OrderData): string {
           <div class="total-row" style="display: flex; justify-content: space-between; margin: 8px 0; padding: 8px 0;">
             <span style="color: #666;">Subtotal:</span>
             <span style="font-weight: 500;">$${order.subtotal.toFixed(2)} ${order.currency}</span>
-          </div>
-          <div class="total-row" style="display: flex; justify-content: space-between; margin: 8px 0; padding: 8px 0;">
-            <span style="color: #666;">Shipping:</span>
-            <span style="font-weight: 500; color: #28a745;">${order.shipping === 0 ? 'FREE' : `$${order.shipping.toFixed(2)} ${order.currency}`}</span>
           </div>
           <div class="total-row" style="display: flex; justify-content: space-between; margin: 8px 0; padding: 8px 0;">
             <span style="color: #666;">Tax (${order.currency === 'CAD' ? 'HST' : 'Sales Tax'}):</span>

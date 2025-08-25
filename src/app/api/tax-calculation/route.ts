@@ -3,14 +3,12 @@ import TaxJar from 'taxjar';
 
 const client = new TaxJar({
   apiKey: process.env.TAXJAR_API_KEY || 'test',
-  apiUrl: process.env.NODE_ENV === 'production' 
-    ? TaxJar.DEFAULT_API_URL 
-    : TaxJar.SANDBOX_API_URL
+  apiUrl: TaxJar.DEFAULT_API_URL // Always use live production data
 });
 
 export async function POST(request: NextRequest) {
   try {
-    const { subtotal, country, state, city, zipCode, address } = await request.json();
+    const { subtotal, country, state, city, zipCode, address, paymentMethod, currency } = await request.json();
 
     if (!subtotal || !country || !state) {
       return NextResponse.json(
@@ -19,15 +17,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Crypto payments are tax-free
+    if (paymentMethod && ['bitcoin', 'ethereum', 'solana', 'crypto'].includes(paymentMethod.toLowerCase())) {
+      return NextResponse.json({
+        amount: 0,
+        rate: {
+          federal: 0,
+          total: 0,
+          name: 'Tax Free (Crypto)'
+        }
+      });
+    }
+
     const normalizedCountry = country.toLowerCase();
     const normalizedState = state.toUpperCase();
+
+    // Currency-aware country detection
+    // If USD currency is selected, prioritize US tax rules
+    // If CAD currency is selected, prioritize Canadian tax rules
+    let effectiveCountry = normalizedCountry;
+    if (currency === 'USD' && (normalizedCountry === 'canada' || normalizedCountry === 'ca')) {
+      // User has Canadian address but wants USD pricing - still use Canadian taxes
+      effectiveCountry = 'canada';
+    } else if (currency === 'CAD' && (normalizedCountry === 'united states' || normalizedCountry === 'us' || normalizedCountry === 'usa')) {
+      // User has US address but wants CAD pricing - still use US taxes
+      effectiveCountry = 'united states';
+    }
 
     let taxRate;
     
     try {
-      if (normalizedCountry === 'canada' || normalizedCountry === 'ca') {
+      if (effectiveCountry === 'canada' || effectiveCountry === 'ca') {
         taxRate = await calculateCanadianTax(normalizedState, city, zipCode, address);
-      } else if (normalizedCountry === 'united states' || normalizedCountry === 'us' || normalizedCountry === 'usa') {
+      } else if (effectiveCountry === 'united states' || effectiveCountry === 'us' || effectiveCountry === 'usa') {
         taxRate = await calculateUSTax(normalizedState, city, zipCode, address);
       } else {
         // Default to no tax for other countries
@@ -40,7 +62,7 @@ export async function POST(request: NextRequest) {
     } catch (error) {
       console.error('Tax API error:', error);
       // Fallback to basic rates if API fails
-      taxRate = getFallbackTaxRate(normalizedCountry, normalizedState);
+      taxRate = getFallbackTaxRate(effectiveCountry, normalizedState);
     }
 
     const amount = subtotal * taxRate.total;
@@ -166,6 +188,7 @@ function getFallbackCanadianTax(province: string) {
 
 function getFallbackUSTax(state: string) {
   const rates: Record<string, any> = {
+    // All 50 US States + DC + Territories with 2024 tax rates
     'AL': { federal: 0, state: 0.04, total: 0.04, name: 'State Sales Tax' },
     'AK': { federal: 0, state: 0.00, total: 0.00, name: 'No Sales Tax' },
     'AZ': { federal: 0, state: 0.056, total: 0.056, name: 'State Sales Tax' },
@@ -175,8 +198,54 @@ function getFallbackUSTax(state: string) {
     'CT': { federal: 0, state: 0.0635, total: 0.0635, name: 'State Sales Tax' },
     'DE': { federal: 0, state: 0.00, total: 0.00, name: 'No Sales Tax' },
     'FL': { federal: 0, state: 0.06, total: 0.06, name: 'State Sales Tax' },
-    'GA': { federal: 0, state: 0.04, total: 0.04, name: 'State Sales Tax' }
-    // Add more states as needed...
+    'GA': { federal: 0, state: 0.04, total: 0.04, name: 'State Sales Tax' },
+    'HI': { federal: 0, state: 0.04, total: 0.04, name: 'State Sales Tax' },
+    'ID': { federal: 0, state: 0.06, total: 0.06, name: 'State Sales Tax' },
+    'IL': { federal: 0, state: 0.0625, total: 0.0625, name: 'State Sales Tax' },
+    'IN': { federal: 0, state: 0.07, total: 0.07, name: 'State Sales Tax' },
+    'IA': { federal: 0, state: 0.06, total: 0.06, name: 'State Sales Tax' },
+    'KS': { federal: 0, state: 0.065, total: 0.065, name: 'State Sales Tax' },
+    'KY': { federal: 0, state: 0.06, total: 0.06, name: 'State Sales Tax' },
+    'LA': { federal: 0, state: 0.0445, total: 0.0445, name: 'State Sales Tax' },
+    'ME': { federal: 0, state: 0.055, total: 0.055, name: 'State Sales Tax' },
+    'MD': { federal: 0, state: 0.06, total: 0.06, name: 'State Sales Tax' },
+    'MA': { federal: 0, state: 0.0625, total: 0.0625, name: 'State Sales Tax' },
+    'MI': { federal: 0, state: 0.06, total: 0.06, name: 'State Sales Tax' },
+    'MN': { federal: 0, state: 0.06875, total: 0.06875, name: 'State Sales Tax' },
+    'MS': { federal: 0, state: 0.07, total: 0.07, name: 'State Sales Tax' },
+    'MO': { federal: 0, state: 0.04225, total: 0.04225, name: 'State Sales Tax' },
+    'MT': { federal: 0, state: 0.00, total: 0.00, name: 'No Sales Tax' },
+    'NE': { federal: 0, state: 0.055, total: 0.055, name: 'State Sales Tax' },
+    'NV': { federal: 0, state: 0.0685, total: 0.0685, name: 'State Sales Tax' },
+    'NH': { federal: 0, state: 0.00, total: 0.00, name: 'No Sales Tax' },
+    'NJ': { federal: 0, state: 0.06625, total: 0.06625, name: 'State Sales Tax' },
+    'NM': { federal: 0, state: 0.05125, total: 0.05125, name: 'State Sales Tax' },
+    'NY': { federal: 0, state: 0.08, total: 0.08, name: 'State Sales Tax' },
+    'NC': { federal: 0, state: 0.0475, total: 0.0475, name: 'State Sales Tax' },
+    'ND': { federal: 0, state: 0.05, total: 0.05, name: 'State Sales Tax' },
+    'OH': { federal: 0, state: 0.0575, total: 0.0575, name: 'State Sales Tax' },
+    'OK': { federal: 0, state: 0.045, total: 0.045, name: 'State Sales Tax' },
+    'OR': { federal: 0, state: 0.00, total: 0.00, name: 'No Sales Tax' },
+    'PA': { federal: 0, state: 0.06, total: 0.06, name: 'State Sales Tax' },
+    'RI': { federal: 0, state: 0.07, total: 0.07, name: 'State Sales Tax' },
+    'SC': { federal: 0, state: 0.06, total: 0.06, name: 'State Sales Tax' },
+    'SD': { federal: 0, state: 0.045, total: 0.045, name: 'State Sales Tax' },
+    'TN': { federal: 0, state: 0.07, total: 0.07, name: 'State Sales Tax' },
+    'TX': { federal: 0, state: 0.0625, total: 0.0625, name: 'State Sales Tax' },
+    'UT': { federal: 0, state: 0.061, total: 0.061, name: 'State Sales Tax' },
+    'VT': { federal: 0, state: 0.06, total: 0.06, name: 'State Sales Tax' },
+    'VA': { federal: 0, state: 0.053, total: 0.053, name: 'State Sales Tax' },
+    'WA': { federal: 0, state: 0.065, total: 0.065, name: 'State Sales Tax' },
+    'WV': { federal: 0, state: 0.06, total: 0.06, name: 'State Sales Tax' },
+    'WI': { federal: 0, state: 0.05, total: 0.05, name: 'State Sales Tax' },
+    'WY': { federal: 0, state: 0.04, total: 0.04, name: 'State Sales Tax' },
+    'DC': { federal: 0, state: 0.06, total: 0.06, name: 'District Sales Tax' },
+    // US Territories
+    'PR': { federal: 0, state: 0.105, total: 0.105, name: 'Sales Tax' },
+    'VI': { federal: 0, state: 0.04, total: 0.04, name: 'Sales Tax' },
+    'GU': { federal: 0, state: 0.04, total: 0.04, name: 'Sales Tax' },
+    'AS': { federal: 0, state: 0.00, total: 0.00, name: 'No Sales Tax' },
+    'MP': { federal: 0, state: 0.00, total: 0.00, name: 'No Sales Tax' }
   };
 
   return rates[state] || { federal: 0, state: 0.05, total: 0.05, name: 'State Sales Tax' };

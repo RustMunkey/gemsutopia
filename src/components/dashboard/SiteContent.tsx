@@ -38,6 +38,10 @@ export default function SiteContentManager() {
   };
 
   const contentItems = [
+    // Featured Section
+    { section: 'featured', key: 'section_title', label: 'Featured Title', type: 'text' },
+    { section: 'featured', key: 'section_description', label: 'Featured Description', type: 'text' },
+    
     // About Section
     { section: 'about', key: 'section_title', label: 'About Title', type: 'text' },
     { section: 'about', key: 'section_content', label: 'About Content', type: 'html' },
@@ -529,9 +533,10 @@ export default function SiteContentManager() {
         </div>
 
         {/* Other Sections */}
-        {['about', 'contact', 'marquee'].map((sectionId) => {
+        {['featured', 'about', 'contact', 'marquee'].map((sectionId) => {
           const sectionItems = contentItems.filter(item => item.section === sectionId);
           const sectionTitles = {
+            featured: 'Featured Section',
             about: 'About Section',
             contact: 'Contact Information',
             marquee: 'Marquee Banner'
@@ -541,7 +546,49 @@ export default function SiteContentManager() {
             <div key={sectionId} className="bg-black rounded-2xl border border-white/20 p-6">
               <h3 className="text-xl font-semibold text-white mb-4">{sectionTitles[sectionId as keyof typeof sectionTitles]}</h3>
               
-              {sectionId === 'about' ? (
+              {sectionId === 'featured' ? (
+                <div className="space-y-6">
+                  {/* Featured Section Text Content */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {sectionItems.map((item) => {
+                      const currentValue = getContentValue(item.section, item.key);
+                      const ContentIcon = getContentTypeIcon(item.type);
+                      
+                      return (
+                        <div key={`${item.section}-${item.key}`} className="bg-white/5 rounded-lg border border-white/10 p-4">
+                          <div className="flex items-center gap-3 mb-3">
+                            <ContentIcon className="h-4 w-4 text-slate-400" />
+                            <div className="flex-1">
+                              <p className="font-medium text-white text-sm">{item.label}</p>
+                            </div>
+                            <button
+                              onClick={() => setEditingItem({ 
+                                id: content.find(c => c.section === item.section && c.key === item.key)?.id || '',
+                                section: item.section,
+                                key: item.key,
+                                content_type: item.type as SiteContent['content_type'],
+                                value: currentValue,
+                                metadata: {},
+                                is_active: true,
+                                created_at: '',
+                                updated_at: ''
+                              })}
+                              className="p-1 text-slate-400 hover:text-white"
+                              title={`Edit ${item.label}`}
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                          
+                          <div className="text-sm text-slate-300 bg-black/20 rounded p-2 border border-white/5">
+                            {currentValue || <span className="text-slate-500 italic">Not set</span>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : sectionId === 'about' ? (
                 <div className="space-y-6">
                   {/* About Section Text Content */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

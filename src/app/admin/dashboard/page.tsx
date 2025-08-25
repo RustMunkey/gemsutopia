@@ -9,6 +9,8 @@ import SiteContent from '@/components/dashboard/SiteContent';
 import Pages from '@/components/dashboard/Pages';
 import Reviews from '@/components/dashboard/Reviews';
 import Analytics from '@/components/dashboard/Analytics';
+import Settings from '@/components/dashboard/Settings';
+import MediaManager from '@/components/dashboard/MediaManager';
 import { ModeProvider } from '@/lib/contexts/ModeContext';
 
 export default function Dashboard() {
@@ -103,6 +105,10 @@ export default function Dashboard() {
         return <Reviews />;
       case 'analytics':
         return <Analytics />;
+      case 'media':
+        return <MediaManager />;
+      case 'settings':
+        return <Settings />;
       default:
         return <Overview 
           onNavigateToProducts={handleNavigateToProducts}

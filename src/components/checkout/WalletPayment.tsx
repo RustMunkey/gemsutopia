@@ -657,7 +657,7 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
         // Use cart calculation if items are present
         actualSubtotal = subtotal;
         tax = actualSubtotal * 0.13;
-        shipping = actualSubtotal >= 100 ? 0 : 15;
+        shipping = 0;
       } else {
         // ERROR: Cart is empty but payment was made - this shouldn't happen in production
         console.error('🚨 CRITICAL: Cart is empty but payment processed! This indicates a data flow problem.');
@@ -666,17 +666,9 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
         
         // Emergency fallback for business records (but this needs to be fixed)
         // Try to guess reasonable breakdown, but log as data integrity issue
-        const hasShipping = amount > 50; // Assume shipping if over $50
-        if (hasShipping) {
-          const totalMinusShipping = amount - 15;
-          actualSubtotal = totalMinusShipping / 1.13;
-          tax = actualSubtotal * 0.13;
-          shipping = 15;
-        } else {
-          actualSubtotal = amount / 1.13;
-          tax = actualSubtotal * 0.13;
-          shipping = 0;
-        }
+        actualSubtotal = amount / 1.13;
+        tax = actualSubtotal * 0.13;
+        shipping = 0;
         
         console.error('🚨 Using emergency fallback calculation - MUST FIX CART DATA FLOW');
       }

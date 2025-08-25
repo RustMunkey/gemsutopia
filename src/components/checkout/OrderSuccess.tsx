@@ -1,7 +1,6 @@
 'use client';
 import { CheckCircle, Package, Mail, ArrowRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useCurrency } from '@/contexts/CurrencyContext';
 import { initEmailJS, sendOrderReceiptEmail } from '@/lib/emailjs';
 
 interface OrderSuccessProps {
@@ -15,7 +14,6 @@ interface OrderSuccessProps {
   items?: Array<{ name: string; price: number; quantity: number }>;
   subtotal?: number;
   tax?: number;
-  shipping?: number;
   cryptoPrices?: any; // For converting individual amounts to crypto
   shippingAddress?: {
     firstName: string;
@@ -30,17 +28,16 @@ interface OrderSuccessProps {
   };
 }
 
-export default function OrderSuccess({ orderId, customerEmail, customerName, amount, cryptoAmount, currency = 'CAD', cryptoCurrency, items = [], subtotal, tax, shipping, cryptoPrices, shippingAddress }: OrderSuccessProps) {
+export default function OrderSuccess({ orderId, customerEmail, customerName, amount, cryptoAmount, currency = 'CAD', cryptoCurrency, items = [], subtotal, tax, cryptoPrices, shippingAddress }: OrderSuccessProps) {
   
   // Calculate proper amounts for display
   const calculateDisplayAmounts = () => {
     if (!items || items.length === 0) {
-      return { subtotal: 0, tax: 0, shipping: 0 };
+      return { subtotal: 0, tax: 0 };
     }
     
     // Calculate proper subtotal using actual quantities
     const itemsSubtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const shippingAmount = 25; // Fixed $25 shipping rate
     
     // Tax calculation based on payment method and currency
     let taxRate = 0;
@@ -55,7 +52,7 @@ export default function OrderSuccess({ orderId, customerEmail, customerName, amo
     // Crypto payments are tax-free (taxRate remains 0)
     
     const taxAmount = itemsSubtotal * taxRate;
-    const fiatTotal = itemsSubtotal + shippingAmount + taxAmount;
+    const fiatTotal = itemsSubtotal + taxAmount;
     
     if (cryptoCurrency && cryptoAmount) {
       // For crypto payments: convert all amounts to crypto
@@ -63,14 +60,12 @@ export default function OrderSuccess({ orderId, customerEmail, customerName, amo
       return {
         subtotal: itemsSubtotal * conversionRate,
         tax: 0, // Crypto is tax-free
-        shipping: shippingAmount * conversionRate,
       };
     } else {
       // For fiat payments: use fiat amounts
       return {
         subtotal: itemsSubtotal,
         tax: taxAmount,
-        shipping: shippingAmount,
       };
     }
   };
@@ -81,47 +76,7 @@ export default function OrderSuccess({ orderId, customerEmail, customerName, amo
   const [emailSent, setEmailSent] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
 
-  // Helper function to convert fiat amount to crypto equivalent
-  const convertToCrypto = (fiatAmount: number) => {
-    if (!cryptoCurrency || !cryptoPrices) return null;
-    
-    const cryptoKey = cryptoCurrency.toLowerCase() as 'bitcoin' | 'ethereum' | 'solana';
-    const currencyKey = currency.toLowerCase() as 'usd' | 'cad';
-    const cryptoPrice = cryptoPrices[cryptoKey]?.[currencyKey];
-    
-    if (!cryptoPrice) return null;
-    
-    return fiatAmount / cryptoPrice;
-  };
 
-  // Helper function to format dual currency display
-  const formatDualCurrency = (fiatAmount: number, label: string) => {
-    const cryptoEquivalent = convertToCrypto(fiatAmount);
-    const isShipping = label.toLowerCase().includes('shipping');
-    
-    if (cryptoCurrency && cryptoEquivalent) {
-      return (
-        <div className="flex justify-between">
-          <span className="text-gray-600">{label}:</span>
-          <div className="text-right">
-            <div className="text-sm font-medium">
-              {(fiatAmount === 0 && isShipping) ? 'Free' : `$${fiatAmount.toFixed(2)} ${currency}`}
-            </div>
-            <div className="text-xs text-gray-500">
-              {cryptoEquivalent.toFixed(8)} {cryptoCurrency}
-            </div>
-          </div>
-        </div>
-      );
-    }
-    
-    return (
-      <div className="flex justify-between">
-        <span className="text-gray-600">{label}:</span>
-        <span>{(fiatAmount === 0 && isShipping) ? 'Free' : `$${fiatAmount.toFixed(2)}`}</span>
-      </div>
-    );
-  };
 
   useEffect(() => {
     // Fetch order details to get transaction ID
@@ -167,7 +122,6 @@ export default function OrderSuccess({ orderId, customerEmail, customerName, amo
         // Calculate proper amounts based on payment method (SAME LOGIC AS DISPLAY)
         const calculateAmounts = () => {
           const itemsSubtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-          const shippingAmount = 25; // Fixed $25 shipping rate
           
           // Tax calculation based on payment method and currency
           let taxRate = 0;
@@ -182,7 +136,7 @@ export default function OrderSuccess({ orderId, customerEmail, customerName, amo
           // Crypto payments are tax-free (taxRate remains 0)
           
           const taxAmount = itemsSubtotal * taxRate;
-          const fiatTotal = itemsSubtotal + shippingAmount + taxAmount;
+          const fiatTotal = itemsSubtotal + taxAmount;
           
           if (cryptoCurrency && cryptoAmount) {
             // For crypto payments: convert all amounts to crypto
@@ -190,7 +144,6 @@ export default function OrderSuccess({ orderId, customerEmail, customerName, amo
             return {
               subtotal: itemsSubtotal * conversionRate,
               tax: 0, // Crypto is tax-free
-              shipping: shippingAmount * conversionRate,
               total: cryptoAmount,
               currency: cryptoCurrency
             };
@@ -199,7 +152,6 @@ export default function OrderSuccess({ orderId, customerEmail, customerName, amo
             return {
               subtotal: itemsSubtotal,
               tax: taxAmount,
-              shipping: shippingAmount,
               total: fiatTotal,
               currency: currency || 'CAD'
             };
@@ -235,7 +187,6 @@ export default function OrderSuccess({ orderId, customerEmail, customerName, amo
           }),
           subtotal: amounts.subtotal,
           tax: amounts.tax,
-          shipping: amounts.shipping,
           total: amounts.total,
           paymentMethod: cryptoCurrency ? 'crypto' : 'standard',
           cryptoAmount,
@@ -269,7 +220,7 @@ export default function OrderSuccess({ orderId, customerEmail, customerName, amo
     };
 
     sendReceiptEmails();
-  }, [orderId, customerEmail, customerName, amount, items, subtotal, tax, shipping, cryptoAmount, cryptoCurrency, currency, shippingAddress]);
+  }, [orderId, customerEmail, customerName, amount, items, subtotal, tax, cryptoAmount, cryptoCurrency, currency, shippingAddress]);
 
   // Helper function to get network name for crypto currencies
   const getNetworkName = (crypto: string) => {
@@ -373,7 +324,7 @@ export default function OrderSuccess({ orderId, customerEmail, customerName, amo
                       {items.map((item, index) => {
                         const itemTotal = item.price * item.quantity;
                         const itemCryptoTotal = cryptoCurrency && cryptoAmount ? 
-                          (itemTotal * (cryptoAmount / (displayAmounts.subtotal + displayAmounts.tax + displayAmounts.shipping))) : 
+                          (itemTotal * (cryptoAmount / (displayAmounts.subtotal + displayAmounts.tax))) : 
                           itemTotal;
                         
                         return (
@@ -401,16 +352,6 @@ export default function OrderSuccess({ orderId, customerEmail, customerName, amo
                         {cryptoCurrency ? 
                           `${displayAmounts.subtotal.toFixed(8)} ${cryptoCurrency}` : 
                           `$${displayAmounts.subtotal.toFixed(2)} ${currency}`
-                        }
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Shipping:</span>
-                      <span>
-                        {displayAmounts.shipping === 0 ? 'Free' : 
-                          cryptoCurrency ? 
-                            `${displayAmounts.shipping.toFixed(8)} ${cryptoCurrency}` : 
-                            `$${displayAmounts.shipping.toFixed(2)} ${currency}`
                         }
                       </span>
                     </div>

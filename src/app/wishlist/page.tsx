@@ -46,6 +46,18 @@ export default function Wishlist() {
     });
   };
 
+  const handleClearWishlist = () => {
+    const itemsToRestore = [...items]; // Store current items
+    clearWishlist();
+    showNotification('success', `Cleared ${itemsToRestore.length} items from wishlist`, {
+      label: 'Undo',
+      onClick: () => {
+        itemsToRestore.forEach(item => addToWishlist(item));
+        showNotification('success', `Restored ${itemsToRestore.length} items to wishlist`);
+      }
+    });
+  };
+
   const toggleGemPouch = (item: any) => {
     if (isInPouch(item.id)) {
       handleRemoveFromGemPouch(item);
@@ -90,7 +102,7 @@ export default function Wishlist() {
                     </button>
                   )}
                   <button
-                    onClick={clearWishlist}
+                    onClick={handleClearWishlist}
                     className="inline-flex items-center justify-center border border-red-500 text-red-500 py-3 px-6 rounded-full font-semibold hover:bg-red-500 hover:text-white transition-colors"
                   >
                     <IconTrash className="h-5 w-5 mr-2" />

@@ -133,7 +133,6 @@ function StripeForm({ amount, customerData, items, onSuccess, onError }: Omit<Pa
         // Calculate totals properly
         const subtotal = items.reduce((sum, item) => sum + item.price, 0);
         const tax = subtotal * 0.13; // 13% HST for Canada
-        const shipping = 25; // Fixed $25 shipping rate
         
         const orderData = {
           items,
@@ -147,7 +146,6 @@ function StripeForm({ amount, customerData, items, onSuccess, onError }: Omit<Pa
           totals: { 
             subtotal,
             tax,
-            shipping,
             total: amount 
           },
           timestamp: new Date().toISOString()
@@ -353,7 +351,6 @@ function PayPalForm({ amount, customerData, items, onSuccess, onError }: Omit<Pa
       // Calculate totals properly
       const subtotal = items.reduce((sum, item) => sum + item.price, 0);
       const tax = subtotal * 0.13; // 13% HST for Canada
-      const shipping = subtotal > 100 ? 0 : 15; // Free shipping over $100
       
       const orderData = {
         items,
@@ -368,7 +365,6 @@ function PayPalForm({ amount, customerData, items, onSuccess, onError }: Omit<Pa
         totals: { 
           subtotal,
           tax,
-          shipping,
           total: amount 
         },
         timestamp: new Date().toISOString()

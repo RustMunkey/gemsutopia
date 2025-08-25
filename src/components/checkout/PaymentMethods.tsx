@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
-import { CreditCard, Wallet, Shield } from 'lucide-react';
+import { CreditCard, Wallet, Shield, AlertTriangle } from 'lucide-react';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 interface PaymentMethodsProps {
   onSelect: (method: 'stripe' | 'paypal' | 'wallet') => void;
@@ -8,28 +9,37 @@ interface PaymentMethodsProps {
 
 export default function PaymentMethods({ onSelect }: PaymentMethodsProps) {
   const [selectedMethod, setSelectedMethod] = useState<'stripe' | 'paypal' | 'wallet' | null>(null);
-
+  const { currency } = useCurrency();
+  
+  // PayPal only accepts USD, Stripe accepts CAD/USD, Crypto is currency-free
   const paymentMethods = [
     {
       id: 'stripe' as const,
       name: 'Credit or Debit Card',
       description: 'Visa, Mastercard, American Express, and more',
+      currencyNote: 'Accepts CAD and USD',
       icon: CreditCard,
-      available: true
+      available: true,
+      currencyCompatible: true
     },
     {
       id: 'paypal' as const,
       name: 'PayPal',
       description: 'Pay with your PayPal account or credit card',
+      currencyNote: 'USD only - Reese\'s PayPal accepts USD payments only',
       icon: Wallet,
-      available: true
+      available: currency === 'USD', // Only available for USD
+      currencyCompatible: currency === 'USD',
+      restrictionMessage: currency !== 'USD' ? 'PayPal only available for USD payments. Switch to USD or use another payment method.' : undefined
     },
     {
       id: 'wallet' as const,
       name: 'Connect Wallet',
       description: 'Pay with cryptocurrency using WalletConnect',
+      currencyNote: 'Tax-free crypto payments (Bitcoin, Ethereum, Solana)',
       icon: Wallet,
-      available: true
+      available: true,
+      currencyCompatible: true
     }
   ];
 
@@ -69,13 +79,24 @@ export default function PaymentMethods({ onSelect }: PaymentMethodsProps) {
                   <div className={`p-3 rounded-lg ${isSelected ? 'bg-black text-white' : 'bg-gray-100 text-gray-600'}`}>
                     <Icon className="h-6 w-6" />
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <h3 className={`text-lg font-semibold ${method.available ? 'text-gray-900' : 'text-gray-500'}`}>
                       {method.name}
                     </h3>
                     <p className={`text-sm ${method.available ? 'text-gray-600' : 'text-gray-400'}`}>
                       {method.description}
                     </p>
+                    <p className={`text-xs mt-1 font-medium ${method.currencyCompatible ? 'text-green-600' : 'text-orange-600'}`}>
+                      {method.currencyNote}
+                    </p>
+                    {method.restrictionMessage && (
+                      <div className="flex items-start gap-1 mt-2">
+                        <AlertTriangle className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" />
+                        <p className="text-xs text-orange-700 font-medium">
+                          {method.restrictionMessage}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
                 
@@ -92,14 +113,30 @@ export default function PaymentMethods({ onSelect }: PaymentMethodsProps) {
         })}
       </div>
 
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-        <div className="flex items-start">
-          <Shield className="h-5 w-5 text-blue-500 mt-0.5 mr-3 flex-shrink-0" />
-          <div>
-            <h4 className="text-sm font-semibold text-blue-900">Secure Payment</h4>
-            <p className="text-sm text-blue-800">
-              Your payment information is encrypted and secure. We never store your card details.
-            </p>
+      {/* Currency and Tax Info */}
+      <div className="space-y-3 mb-6">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-start">
+            <Shield className="h-5 w-5 text-blue-500 mt-0.5 mr-3 flex-shrink-0" />
+            <div>
+              <h4 className="text-sm font-semibold text-blue-900">Secure Payment</h4>
+              <p className="text-sm text-blue-800">
+                Your payment information is encrypted and secure. We never store your card details.
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <div className="flex items-start">
+            <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5 mr-3 flex-shrink-0" />
+            <div>
+              <h4 className="text-sm font-semibold text-amber-900">Tax Calculation</h4>
+              <p className="text-sm text-amber-800">
+                Taxes will be calculated after you select your payment method. 
+                <span className="font-medium"> Crypto payments are tax-free!</span>
+              </p>
+            </div>
           </div>
         </div>
       </div>

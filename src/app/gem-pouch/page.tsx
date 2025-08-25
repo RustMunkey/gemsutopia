@@ -10,7 +10,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 export default function GemPouch() {
-  const { items, removeItem, addItem, updateQuantity } = useGemPouch();
+  const { items, removeItem, addItem, updateQuantity, clearPouch } = useGemPouch();
   const { formatPrice } = useCurrency();
   const { showNotification } = useNotification();
   const totalPrice = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -31,6 +31,25 @@ export default function GemPouch() {
       }
     });
   };
+
+  const handleClearGemPouch = () => {
+    const itemsToRestore = [...items]; // Store current items with quantities
+    clearPouch();
+    const totalItemCount = itemsToRestore.reduce((sum, item) => sum + item.quantity, 0);
+    showNotification('success', `Cleared ${totalItemCount} items from gem pouch`, {
+      label: 'Undo',
+      onClick: () => {
+        itemsToRestore.forEach(item => {
+          addItem(item);
+          if (item.quantity > 1) {
+            setTimeout(() => updateQuantity(item.id, item.quantity), 100);
+          }
+        });
+        showNotification('success', `Restored ${totalItemCount} items to gem pouch`);
+      }
+    });
+  };
+
   return (
     <div className="min-h-[200vh] flex flex-col relative">
       {/* Fixed Background */}
@@ -138,9 +157,15 @@ export default function GemPouch() {
                   <span className="text-xl font-semibold text-black">Total:</span>
                   <span className="text-2xl font-bold text-black">{formatPrice(totalPrice)}</span>
                 </div>
-                <Link href="/checkout" className="block w-full bg-black text-white py-3 px-8 rounded-full font-semibold hover:bg-neutral-800 transition-colors text-center">
+                <Link href="/checkout" className="block w-full bg-black text-white py-3 px-8 rounded-full font-semibold hover:bg-neutral-800 transition-colors text-center mb-3">
                   Proceed to Checkout
                 </Link>
+                <button
+                  onClick={handleClearGemPouch}
+                  className="w-full border border-red-500 text-red-500 py-3 px-8 rounded-full font-semibold hover:bg-red-500 hover:text-white transition-colors"
+                >
+                  Clear Gem Pouch
+                </button>
               </div>
             </div>
           )}

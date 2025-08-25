@@ -18,9 +18,23 @@ export async function calculateTax(
   state: string,
   city?: string,
   zipCode?: string,
-  address?: string
+  address?: string,
+  paymentMethod?: string,
+  currency?: 'CAD' | 'USD'
 ): Promise<TaxCalculationResult> {
   try {
+    // Crypto payments are tax-free
+    if (paymentMethod && ['bitcoin', 'ethereum', 'solana', 'crypto'].includes(paymentMethod.toLowerCase())) {
+      return {
+        amount: 0,
+        rate: {
+          federal: 0,
+          total: 0,
+          name: 'Tax Free (Crypto)'
+        }
+      };
+    }
+
     const response = await fetch('/api/tax-calculation', {
       method: 'POST',
       headers: {
@@ -32,7 +46,9 @@ export async function calculateTax(
         state,
         city,
         zipCode,
-        address
+        address,
+        paymentMethod,
+        currency
       })
     });
 
@@ -68,4 +84,47 @@ export function calculateTaxSync(subtotal: number, taxRate: number): TaxCalculat
       name: 'Tax'
     }
   };
+}
+
+// Helper for product creation - adds tax-inclusive pricing
+export async function addTaxToProduct(
+  basePrice: number,
+  currency: 'CAD' | 'USD' = 'CAD',
+  defaultLocation?: { country: string; state: string; }
+): Promise<{ priceWithTax: number; taxAmount: number; taxRate: TaxRate }> {
+  try {
+    // Default locations for tax calculation
+    const location = defaultLocation || (currency === 'CAD' 
+      ? { country: 'Canada', state: 'ON' } // Ontario for CAD
+      : { country: 'United States', state: 'CA' }); // California for USD
+
+    const taxResult = await calculateTax(
+      basePrice,
+      location.country,
+      location.state,
+      undefined,
+      undefined,
+      undefined,
+      'card', // Assume card payment (not crypto)
+      currency
+    );
+
+    return {
+      priceWithTax: basePrice + taxResult.amount,
+      taxAmount: taxResult.amount,
+      taxRate: taxResult.rate
+    };
+  } catch (error) {
+    console.error('Error adding tax to product:', error);
+    return {
+      priceWithTax: basePrice,
+      taxAmount: 0,
+      taxRate: { federal: 0, total: 0, name: 'No Tax' }
+    };
+  }
+}
+
+// Quick check if crypto payment should be tax-free
+export function isCryptoPayment(paymentMethod?: string): boolean {
+  return paymentMethod ? ['bitcoin', 'ethereum', 'solana', 'crypto'].includes(paymentMethod.toLowerCase()) : false;
 }

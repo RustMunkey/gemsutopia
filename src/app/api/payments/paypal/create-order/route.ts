@@ -52,9 +52,8 @@ export async function POST(request: NextRequest) {
       sum + (item.price * item.quantity), 0
     );
 
-    // Calculate tax and shipping (matching the frontend calculation)
+    // Calculate tax (matching the frontend calculation)
     const tax = itemTotal * 0.13; // 13% HST for Canada
-    const shipping = itemTotal > 100 ? 0 : 15; // Free shipping over $100
     
     const orderData = {
       intent: 'CAPTURE',
@@ -71,10 +70,6 @@ export async function POST(request: NextRequest) {
               tax_total: {
                 currency_code: currency,
                 value: tax.toFixed(2),
-              },
-              shipping: {
-                currency_code: currency,
-                value: shipping.toFixed(2),
               },
             },
           },

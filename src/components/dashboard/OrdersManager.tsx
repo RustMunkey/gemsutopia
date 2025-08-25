@@ -460,12 +460,6 @@ export default function OrdersManager() {
                     <span className="text-white">${selectedOrder.subtotal?.toFixed(2) || '0.00'}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-400">Shipping:</span>
-                    <span className="text-white">
-                      {selectedOrder.shipping === 0 ? 'Free' : `$${selectedOrder.shipping?.toFixed(2) || '0.00'}`}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
                     <span className="text-slate-400">Tax (HST):</span>
                     <span className="text-white">${selectedOrder.tax?.toFixed(2) || '0.00'}</span>
                   </div>

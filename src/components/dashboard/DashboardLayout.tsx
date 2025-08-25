@@ -81,6 +81,12 @@ export default function DashboardLayout({
       label: 'Media', 
       icon: ImageIcon,
       description: 'Image Management'
+    },
+    { 
+      id: 'settings', 
+      label: 'Settings', 
+      icon: Settings,
+      description: 'Site Configuration'
     }
   ];
 
@@ -128,7 +134,7 @@ export default function DashboardLayout({
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-2">
+          <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
             {menuItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
