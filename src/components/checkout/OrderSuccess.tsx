@@ -67,42 +67,25 @@ export default function OrderSuccess({
   shippingAddress 
 }: OrderSuccessProps) {
   
-  // Calculate proper amounts for display
+  // Calculate proper amounts for display using passed values
   const calculateDisplayAmounts = () => {
-    if (!items || items.length === 0) {
-      return { subtotal: 0, tax: 0 };
-    }
-    
-    // Calculate proper subtotal using actual quantities
-    const itemsSubtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    
-    // Tax calculation based on payment method and currency
-    let taxRate = 0;
-    if (!cryptoCurrency) {
-      // Fiat payments: apply proper tax based on currency/country
-      if (currency === 'CAD') {
-        taxRate = 0.13; // 13% HST for Canada (matches CheckoutFlow)
-      } else if (currency === 'USD') {
-        taxRate = 0.08; // 8% average US sales tax
-      }
-    }
-    // Crypto payments are tax-free (taxRate remains 0)
-    
-    const taxAmount = itemsSubtotal * taxRate;
-    const fiatTotal = itemsSubtotal + taxAmount;
+    // Use the actual values passed from CheckoutFlow
+    const actualSubtotal = subtotal || (items ? items.reduce((sum, item) => sum + (item.price * item.quantity), 0) : 0);
+    const actualTax = tax || 0;
     
     if (cryptoCurrency && cryptoAmount) {
-      // For crypto payments: convert all amounts to crypto
-      const conversionRate = cryptoAmount / fiatTotal;
+      // For crypto payments: convert amounts to crypto using the conversion ratio
+      const fiatTotal = actualSubtotal + actualTax + (shipping || 0);
+      const conversionRate = cryptoAmount / (fiatTotal || cryptoAmount);
       return {
-        subtotal: itemsSubtotal * conversionRate,
-        tax: 0, // Crypto is tax-free
+        subtotal: actualSubtotal * conversionRate,
+        tax: actualTax * conversionRate,
       };
     } else {
-      // For fiat payments: use fiat amounts
+      // For fiat payments: use actual values directly
       return {
-        subtotal: itemsSubtotal,
-        tax: taxAmount,
+        subtotal: actualSubtotal,
+        tax: actualTax,
       };
     }
   };
@@ -156,39 +139,29 @@ export default function OrderSuccess({
 
         const emailJSResult = await sendOrderReceiptEmail(emailJSData);
         
-        // Calculate proper amounts based on payment method (SAME LOGIC AS DISPLAY)
+        // Calculate proper amounts based on actual passed values
         const calculateAmounts = () => {
-          const itemsSubtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-          
-          // Tax calculation based on payment method and currency
-          let taxRate = 0;
-          if (!cryptoCurrency) {
-            // Fiat payments: apply proper tax based on currency/country
-            if (currency === 'CAD') {
-              taxRate = 0.13; // 13% HST for Canada (matches CheckoutFlow)
-            } else if (currency === 'USD') {
-              taxRate = 0.08; // 8% average US sales tax
-            }
-          }
-          // Crypto payments are tax-free (taxRate remains 0)
-          
-          const taxAmount = itemsSubtotal * taxRate;
-          const fiatTotal = itemsSubtotal + taxAmount;
+          const actualSubtotal = subtotal || (items.reduce((sum, item) => sum + (item.price * item.quantity), 0));
+          const actualTax = tax || 0;
+          const actualShipping = shipping || 0;
+          const fiatTotal = actualSubtotal + actualTax + actualShipping;
           
           if (cryptoCurrency && cryptoAmount) {
-            // For crypto payments: convert all amounts to crypto
+            // For crypto payments: convert all amounts to crypto using the conversion ratio
             const conversionRate = cryptoAmount / fiatTotal;
             return {
-              subtotal: itemsSubtotal * conversionRate,
-              tax: 0, // Crypto is tax-free
+              subtotal: actualSubtotal * conversionRate,
+              tax: actualTax * conversionRate,
+              shipping: actualShipping * conversionRate,
               total: cryptoAmount,
               currency: cryptoCurrency
             };
           } else {
-            // For fiat payments: use fiat amounts
+            // For fiat payments: use actual amounts
             return {
-              subtotal: itemsSubtotal,
-              tax: taxAmount,
+              subtotal: actualSubtotal,
+              tax: actualTax,
+              shipping: actualShipping,
               total: fiatTotal,
               currency: currency || 'CAD'
             };
@@ -224,6 +197,7 @@ export default function OrderSuccess({
           }),
           subtotal: amounts.subtotal,
           tax: amounts.tax,
+          shipping: amounts.shipping,
           total: amounts.total,
           paymentMethod: cryptoCurrency ? 'crypto' : 'standard',
           cryptoAmount,
@@ -445,10 +419,10 @@ export default function OrderSuccess({
                       <span>
                         {appliedDiscount?.free_shipping ? (
                           <span className="text-green-600">FREE</span>
-                        ) : shipping === 0 ? (
+                        ) : (shipping || 0) === 0 ? (
                           <span className="text-green-600">FREE</span>
                         ) : cryptoCurrency ? 
-                          `${((shipping || 0) * (cryptoAmount || 1) / amount).toFixed(8)} ${cryptoCurrency}` : 
+                          `${(((shipping || 0) * (cryptoAmount || 1)) / amount).toFixed(8)} ${cryptoCurrency}` : 
                           `$${(shipping || 0).toFixed(2)} ${currency}`
                         }
                       </span>
@@ -461,8 +435,8 @@ export default function OrderSuccess({
                       </span>
                       <span>
                         {cryptoCurrency ? 
-                          (displayAmounts.tax === 0 ? 'Tax Free (Crypto)' : `${displayAmounts.tax.toFixed(8)} ${cryptoCurrency}`) :
-                          `$${displayAmounts.tax.toFixed(2)} ${currency}`
+                          ((tax || 0) === 0 ? 'Tax Free (Crypto)' : `${(((tax || 0) * (cryptoAmount || 1)) / amount).toFixed(8)} ${cryptoCurrency}`) :
+                          `$${(tax || 0).toFixed(2)} ${currency}`
                         }
                       </span>
                     </div>

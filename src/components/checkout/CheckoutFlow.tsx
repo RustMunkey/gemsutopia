@@ -112,6 +112,7 @@ export default function CheckoutFlow() {
   } | null>(null);
   const [discountError, setDiscountError] = useState<string>('');
   const [shippingSettings, setShippingSettings] = useState<ShippingSettings | null>(null);
+  const [useCombinedShipping, setUseCombinedShipping] = useState<boolean>(true); // Default to combined shipping
 
   // Calculate totals
   const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -136,10 +137,17 @@ export default function CheckoutFlow() {
 
     // Get current currency from context
     const currentCurrency = localStorage.getItem('currency') as 'CAD' | 'USD' || 'CAD';
-    const calculation = calculateShipping(items.length, currentCurrency, shippingSettings);
+    
+    // Create modified shipping settings based on user choice
+    const modifiedSettings = {
+      ...shippingSettings,
+      combinedShippingEnabled: useCombinedShipping && shippingSettings.combinedShippingEnabled
+    };
+    
+    const calculation = calculateShipping(items.length, currentCurrency, modifiedSettings);
     
     return calculation.shippingCost;
-  }, [appliedDiscount?.free_shipping, shippingSettings, items.length]);
+  }, [appliedDiscount?.free_shipping, shippingSettings, items.length, useCombinedShipping]);
   
   const total = subtotalAfterDiscount + tax + shipping;
 
@@ -435,7 +443,7 @@ export default function CheckoutFlow() {
                     tax={tax}
                     shipping={shipping}
                     paymentMethod={checkoutData.paymentMethod || undefined}
-                    shippingMethod={'flat'}
+                    shippingMethod={useCombinedShipping ? 'combined' : 'flat'}
                     appliedDiscount={appliedDiscount || undefined}
                     taxRate={taxCalculation?.rate?.total || undefined}
                     taxLabel={taxCalculation?.rate?.name}
@@ -493,6 +501,30 @@ export default function CheckoutFlow() {
                     <div className="flex justify-between text-sm text-green-600">
                       <span>Discount ({appliedDiscount.code})</span>
                       <span>-{formatPrice(discount)}</span>
+                    </div>
+                  )}
+                  
+                  {/* Shipping Option Selection */}
+                  {currentStep !== 'cart' && shippingSettings?.combinedShippingEnabled && items.length >= (shippingSettings?.combinedShippingThreshold || 2) && (
+                    <div className="border-t border-gray-200 pt-3 mb-3">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <input
+                          type="checkbox"
+                          id="combined-shipping"
+                          checked={useCombinedShipping}
+                          onChange={(e) => setUseCombinedShipping(e.target.checked)}
+                          className="rounded border-gray-300 text-black focus:ring-black"
+                        />
+                        <label htmlFor="combined-shipping" className="text-sm text-gray-600">
+                          Use Combined Shipping (Save money!)
+                        </label>
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        {useCombinedShipping 
+                          ? `Pay one flat rate for all ${items.length} items` 
+                          : `Pay shipping for each item individually (${formatPrice(items.length * (localStorage.getItem('currency') === 'USD' ? shippingSettings.singleItemShippingUSD : shippingSettings.singleItemShippingCAD))})`
+                        }
+                      </p>
                     </div>
                   )}
                   {currentStep !== 'cart' && (

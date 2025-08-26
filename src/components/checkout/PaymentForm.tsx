@@ -67,10 +67,13 @@ function StripeForm({ amount, customerData, items, appliedDiscount, subtotal, ta
   useEffect(() => {
     const createPaymentIntent = async () => {
       try {
+        // Get current currency from localStorage
+        const currentCurrency = localStorage.getItem('currency') || 'CAD';
+        
         const response = await fetch('/api/payments/stripe/create-payment-intent', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ amount, currency: 'cad' }),
+          body: JSON.stringify({ amount, currency: currentCurrency.toLowerCase() }),
         });
 
         const data = await response.json();
@@ -140,6 +143,9 @@ function StripeForm({ amount, customerData, items, appliedDiscount, subtotal, ta
     } else if (paymentIntent?.status === 'succeeded') {
       // Save order
       try {
+        // Get current currency for order data
+        const currentCurrency = localStorage.getItem('currency') || 'CAD';
+        
         const orderData = {
           items,
           customerInfo: customerData,
@@ -147,7 +153,7 @@ function StripeForm({ amount, customerData, items, appliedDiscount, subtotal, ta
             paymentIntentId: paymentIntent.id,
             paymentMethod: 'stripe',
             amount,
-            currency: 'CAD'
+            currency: currentCurrency
           },
           totals: { 
             subtotal,
@@ -176,7 +182,7 @@ function StripeForm({ amount, customerData, items, appliedDiscount, subtotal, ta
 
         if (response.ok) {
           const orderResult = await response.json();
-          onSuccess({ orderId: orderResult.order.id, actualAmount: amount, currency: 'CAD' });
+          onSuccess({ orderId: orderResult.order.id, actualAmount: amount, currency: currentCurrency });
         } else {
           const responseText = await response.text();
           console.error('Order save failed - Response status:', response.status);
@@ -375,6 +381,9 @@ function PayPalForm({ amount, customerData, items, appliedDiscount, subtotal, ta
     try {
       setLoading(true);
       
+      // Get current currency for PayPal order
+      const currentCurrency = localStorage.getItem('currency') || 'CAD';
+      
       const orderData = {
         items,
         customerInfo: customerData,
@@ -382,7 +391,7 @@ function PayPalForm({ amount, customerData, items, appliedDiscount, subtotal, ta
           captureID: details.captureID,
           paymentMethod: 'paypal',
           amount,
-          currency: 'USD',
+          currency: currentCurrency,
           status: details.status
         },
         totals: { 
@@ -412,7 +421,7 @@ function PayPalForm({ amount, customerData, items, appliedDiscount, subtotal, ta
 
       if (response.ok) {
         const orderResult = await response.json();
-        onSuccess({ orderId: orderResult.order.id, actualAmount: amount, currency: 'CAD' });
+        onSuccess({ orderId: orderResult.order.id, actualAmount: amount, currency: currentCurrency });
       } else {
         const responseText = await response.text();
         console.error('Order save failed - Response status:', response.status);
@@ -462,7 +471,7 @@ function PayPalForm({ amount, customerData, items, appliedDiscount, subtotal, ta
       <div className="mb-6">
         <div className="flex justify-between items-center text-lg font-semibold text-gray-900 mb-4">
           <span>Total Amount:</span>
-          <span>${amount.toFixed(2)} CAD</span>
+          <span>${amount.toFixed(2)} {localStorage.getItem('currency') || 'CAD'}</span>
         </div>
         
         {loading ? (
@@ -473,7 +482,7 @@ function PayPalForm({ amount, customerData, items, appliedDiscount, subtotal, ta
         ) : (
           <PayPalPayment
             amount={amount}
-            currency="USD"
+            currency={localStorage.getItem('currency') || 'CAD'}
             items={items.map(item => ({
               name: item.name || 'Gemstone',
               quantity: 1,

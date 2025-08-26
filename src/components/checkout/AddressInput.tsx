@@ -19,7 +19,7 @@ export default function AddressInput({
   onChange,
   onAddressSelect,
   onValidationResult,
-  placeholder = "Start typing your address...",
+  placeholder = "Enter your address (suggestions optional)...",
   className = "",
   error,
   country = 'Canada'
@@ -308,14 +308,28 @@ export default function AddressInput({
         <p className="mt-1 text-sm text-red-600">{error}</p>
       )}
       
-      {/* Validation status */}
+      {/* Validation status - Optional helper message */}
       {validationStatus === 'valid' && validatedAddress && (
         <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-md">
           <div className="flex items-start gap-2">
             <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
             <div>
-              <p className="text-sm font-medium text-green-800">Address Verified</p>
+              <p className="text-sm font-medium text-green-800">Address Suggestion Selected</p>
               <p className="text-xs text-green-700">{validatedAddress}</p>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Helper text for address input */}
+      {!loading && suggestions.length === 0 && value.trim().length >= 3 && (
+        <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
+          <div className="flex items-start gap-2">
+            <MapPin className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-xs text-blue-700">
+                No address suggestions found. You can continue with your manually entered address.
+              </p>
             </div>
           </div>
         </div>

@@ -19,6 +19,7 @@ interface Order {
     name: string;
     price: number;
     quantity: number;
+    image?: string;
   }>;
   payment_details: {
     method: string;
@@ -30,6 +31,17 @@ interface Order {
     crypto_currency?: string;
     wallet_address?: string;
     network?: string;
+  };
+  shipping_address?: {
+    firstName: string;
+    lastName: string;
+    address: string;
+    apartment?: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+    phone?: string;
   };
 }
 
@@ -368,6 +380,21 @@ export default function OrdersManager() {
                     </div>
                   </div>
 
+                  {/* Shipping Address */}
+                  {selectedOrder.shipping_address && (
+                    <div className="border-t border-white/20 pt-3 mt-4">
+                      <h4 className="text-white font-medium mb-2">Shipping Address</h4>
+                      <div className="text-sm text-slate-300 space-y-1">
+                        <p className="font-medium text-white">{selectedOrder.shipping_address.firstName} {selectedOrder.shipping_address.lastName}</p>
+                        <p>{selectedOrder.shipping_address.address}</p>
+                        {selectedOrder.shipping_address.apartment && <p>Apt/Suite: {selectedOrder.shipping_address.apartment}</p>}
+                        <p>{selectedOrder.shipping_address.city}, {selectedOrder.shipping_address.state} {selectedOrder.shipping_address.zipCode}</p>
+                        <p>{selectedOrder.shipping_address.country}</p>
+                        {selectedOrder.shipping_address.phone && <p>Phone: {selectedOrder.shipping_address.phone}</p>}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Payment Info */}
                   <div className="border-t border-white/20 pt-3 mt-4">
                     <h4 className="text-white font-medium mb-2">Payment Information</h4>
@@ -441,14 +468,31 @@ export default function OrdersManager() {
               <div className="bg-white/5 rounded-lg p-6">
                 <h3 className="text-lg font-semibold text-white mb-4">Order Breakdown</h3>
                 
-                {/* Items */}
-                <div className="space-y-2 mb-4">
+                {/* Items with Images */}
+                <div className="space-y-3 mb-4">
+                  <h4 className="text-sm font-medium text-white mb-2">Products Ordered:</h4>
                   {selectedOrder.items.map((item, index) => (
-                    <div key={index} className="flex justify-between text-sm">
-                      <span className="text-slate-400">
-                        {item.name} {item.quantity > 1 && `(×${item.quantity})`}
-                      </span>
-                      <span className="text-white">${(item.price * item.quantity).toFixed(2)}</span>
+                    <div key={index} className="flex items-center gap-3 p-2 bg-white/10 rounded border border-white/20">
+                      {item.image && (
+                        <div className="w-12 h-12 bg-white/10 rounded flex-shrink-0">
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="w-full h-full object-cover rounded"
+                          />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="text-sm font-medium text-white truncate">{item.name}</p>
+                            <p className="text-xs text-slate-400">Qty: {item.quantity}</p>
+                          </div>
+                          <span className="text-sm font-medium text-white">
+                            ${(item.price * item.quantity).toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -457,11 +501,33 @@ export default function OrdersManager() {
                 <div className="space-y-2 text-sm border-t border-white/20 pt-4">
                   <div className="flex justify-between">
                     <span className="text-slate-400">Subtotal:</span>
-                    <span className="text-white">${selectedOrder.subtotal?.toFixed(2) || '0.00'}</span>
+                    <span className="text-white">${selectedOrder.subtotal?.toFixed(2) || '0.00'} {selectedOrder.payment_details.currency || 'CAD'}</span>
                   </div>
+                  
+                  {/* Shipping */}
                   <div className="flex justify-between">
-                    <span className="text-slate-400">Tax (HST):</span>
-                    <span className="text-white">${selectedOrder.tax?.toFixed(2) || '0.00'}</span>
+                    <span className="text-slate-400">Shipping:</span>
+                    <span className="text-white">
+                      {(selectedOrder.shipping || 0) === 0 ? (
+                        <span className="text-green-400">FREE</span>
+                      ) : (
+                        `$${selectedOrder.shipping?.toFixed(2) || '0.00'} ${selectedOrder.payment_details.currency || 'CAD'}`
+                      )}
+                    </span>
+                  </div>
+                  
+                  {/* Tax */}
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">
+                      Tax {selectedOrder.payment_details.method === 'crypto' ? '(Tax Free)' : '(HST/Sales Tax)'}:
+                    </span>
+                    <span className="text-white">
+                      {selectedOrder.payment_details.method === 'crypto' ? (
+                        <span className="text-green-400">Tax Free (Crypto)</span>
+                      ) : (
+                        `$${selectedOrder.tax?.toFixed(2) || '0.00'} ${selectedOrder.payment_details.currency || 'CAD'}`
+                      )}
+                    </span>
                   </div>
                 </div>
 
