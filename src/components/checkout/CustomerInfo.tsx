@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
-// import { validateAddress, AddressData } from '@/lib/utils/addressValidation'; // TODO: Re-enable when Google Maps API is set up
-// import GoogleAddressInput from './GoogleAddressInput'; // TODO: Re-enable when Google Maps API is set up
+import { validateAddress, AddressData } from '@/lib/utils/addressValidation';
+import AddressInput from './AddressInput';
 
 interface CustomerData {
   email: string;
@@ -24,8 +24,11 @@ interface CustomerInfoProps {
 export default function CustomerInfo({ data, onContinue }: CustomerInfoProps) {
   const [formData, setFormData] = useState<CustomerData>(data);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  // const [isValidatingAddress, setIsValidatingAddress] = useState(false); // TODO: Re-enable when Google Maps API is set up
+  const [isValidatingAddress, setIsValidatingAddress] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [addressSuggestions, setAddressSuggestions] = useState<string[]>([]);
+  const [addressValidated, setAddressValidated] = useState(false);
+  const [validatedAddressInfo, setValidatedAddressInfo] = useState<string>('');
 
   // Load saved customer data from localStorage on mount
   useEffect(() => {
@@ -54,25 +57,44 @@ export default function CustomerInfo({ data, onContinue }: CustomerInfoProps) {
     }
   };
 
-  // TODO: Re-enable when Google Maps API is set up
-  // const handleGooglePlaceSelect = (place: any) => {
-  //   if (place.parsedAddress) {
-  //     const parsed = place.parsedAddress;
-  //     setFormData(prev => ({
-  //       ...prev,
-  //       address: parsed.fullAddress || prev.address,
-  //       city: parsed.city || prev.city,
-  //       state: parsed.state || prev.state,
-  //       zipCode: parsed.zipCode || prev.zipCode,
-  //       country: parsed.country || prev.country
-  //     }));
-  //     
-  //     // Clear any previous errors
-  //     setErrors({});
-  //   }
-  // };
+  const handleAddressSelect = (addressComponents: any) => {
+    if (addressComponents) {
+      setFormData(prev => ({
+        ...prev,
+        address: addressComponents.address || prev.address,
+        city: addressComponents.city || prev.city,
+        state: addressComponents.state || prev.state,
+        zipCode: addressComponents.zipCode || prev.zipCode,
+        country: addressComponents.country || prev.country
+      }));
+      
+      // Clear address-related errors
+      setErrors(prev => ({
+        ...prev,
+        address: '',
+        city: '',
+        state: '',
+        zipCode: ''
+      }));
+    }
+  };
 
-  const validateForm = () => {
+  const handleAddressValidation = (result: { isValid: boolean; formattedAddress?: string; error?: string }) => {
+    if (result.isValid && result.formattedAddress) {
+      setAddressValidated(true);
+      setValidatedAddressInfo(result.formattedAddress);
+      // Clear any address errors
+      setErrors(prev => ({
+        ...prev,
+        address: ''
+      }));
+    } else {
+      setAddressValidated(false);
+      setValidatedAddressInfo('');
+    }
+  };
+
+  const validateForm = async () => {
     const newErrors: Record<string, string> = {};
 
     if (!formData.email) newErrors.email = 'Email is required';
@@ -85,16 +107,40 @@ export default function CustomerInfo({ data, onContinue }: CustomerInfoProps) {
     if (!formData.state) newErrors.state = 'Province/State is required';
     if (!formData.zipCode) newErrors.zipCode = 'Postal/Zip code is required';
 
-    // Skip Google address validation for now
-    // TODO: Re-enable when Google Maps API is set up
+    // Validate address using free OpenStreetMap validation
+    if (formData.address && formData.city && formData.state && formData.zipCode) {
+      setIsValidatingAddress(true);
+      try {
+        const addressValidation = await validateAddress({
+          address: formData.address,
+          apartment: formData.apartment,
+          city: formData.city,
+          state: formData.state,
+          zipCode: formData.zipCode,
+          country: formData.country
+        });
+        
+        if (!addressValidation.isValid) {
+          newErrors.address = addressValidation.error || 'Address validation failed';
+          if (addressValidation.suggestions && addressValidation.suggestions.length > 0) {
+            setAddressSuggestions(addressValidation.suggestions);
+          }
+        }
+      } catch (error) {
+        console.error('Address validation error:', error);
+        // Don't block submission if validation service fails
+      } finally {
+        setIsValidatingAddress(false);
+      }
+    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validateForm()) {
+    if (await validateForm()) {
       // Save customer data to localStorage for future use
       if (isClient) {
         try {
@@ -179,16 +225,40 @@ export default function CustomerInfo({ data, onContinue }: CustomerInfoProps) {
               <label htmlFor="address" className="block text-sm font-medium text-gray-700">
                 Street Address *
               </label>
-              <input
-                type="text"
-                id="address"
-                name="address"
+              <AddressInput
                 value={formData.address}
-                onChange={handleChange}
+                onChange={(value) => setFormData(prev => ({ ...prev, address: value }))}
+                onAddressSelect={handleAddressSelect}
+                onValidationResult={handleAddressValidation}
                 className={`${inputClasses} ${errors.address ? errorClasses : ''}`}
-                placeholder="123 Main Street"
+                placeholder="Start typing your address..."
+                error={errors.address}
+                country={formData.country as 'Canada' | 'United States'}
               />
-              {errors.address && <p className="mt-1 text-sm text-red-600">{errors.address}</p>}
+              {addressSuggestions.length > 0 && (
+                <div className="mt-2">
+                  <p className="text-xs text-gray-600 mb-1">Did you mean:</p>
+                  {addressSuggestions.map((suggestion, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => {
+                        const components = suggestion.split(', ');
+                        if (components.length >= 2) {
+                          setFormData(prev => ({
+                            ...prev,
+                            city: components[1] || prev.city
+                          }));
+                        }
+                        setAddressSuggestions([]);
+                      }}
+                      className="block text-xs text-blue-600 hover:text-blue-800 underline mb-1"
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div>
@@ -301,11 +371,38 @@ export default function CustomerInfo({ data, onContinue }: CustomerInfoProps) {
           </div>
         </div>
 
+        {/* Address Validation Summary */}
+        {addressValidated && validatedAddressInfo && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0">
+                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              </div>
+              <div className="flex-1">
+                <h4 className="text-sm font-medium text-green-800 mb-1">
+                  ✅ Shipping Address Verified
+                </h4>
+                <p className="text-sm text-green-700">
+                  Your address has been validated and confirmed for delivery
+                </p>
+                <div className="mt-2 p-2 bg-white rounded border border-green-200">
+                  <p className="text-xs font-mono text-gray-700">{validatedAddressInfo}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <button
           type="submit"
-          className="w-full bg-black text-white py-3 px-6 rounded-lg font-medium hover:bg-gray-800 transition-colors"
+          disabled={isValidatingAddress}
+          className="w-full bg-black text-white py-3 px-6 rounded-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Continue to Payment Method
+          {isValidatingAddress ? 'Validating Address...' : 'Continue to Payment Method'}
         </button>
       </form>
     </div>

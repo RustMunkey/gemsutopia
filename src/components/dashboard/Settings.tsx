@@ -1,7 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Settings as SettingsIcon, Save, RefreshCw, Truck, DollarSign, CreditCard, Search, Share2, Eye, Globe, Upload, Image as ImageIcon } from 'lucide-react';
+import { Settings as SettingsIcon, Save, RefreshCw, Truck, DollarSign, CreditCard, Search, Share2, Eye, Globe, Upload, Image as ImageIcon, Tag, Plus, Edit2, Trash2, Copy } from 'lucide-react';
 import { useNotification } from '@/contexts/NotificationContext';
+import DiscountCodes from './DiscountCodes';
 
 export default function Settings() {
   const [loading, setLoading] = useState(false);
@@ -864,6 +865,9 @@ export default function Settings() {
           </div>
         </div>
       </div>
+
+      {/* Discount Codes */}
+      <DiscountCodes />
 
       {/* Shipping Settings */}
       <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6">

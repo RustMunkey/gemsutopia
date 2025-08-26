@@ -49,7 +49,13 @@ export default function Dashboard() {
     });
   }, [router]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/admin/logout', { method: 'POST' });
+    } catch (error) {
+      console.error('Logout API error:', error);
+    }
+    
     localStorage.removeItem('admin-token');
     router.push('/admin');
   };

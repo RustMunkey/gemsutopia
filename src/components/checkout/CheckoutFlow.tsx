@@ -84,15 +84,32 @@ export default function CheckoutFlow() {
   } | null>(null);
   const [taxCalculation, setTaxCalculation] = useState<TaxCalculationResult | null>(null);
   const [calculatingTax, setCalculatingTax] = useState(false);
+  const [discountCode, setDiscountCode] = useState<string>('');
+  const [appliedDiscount, setAppliedDiscount] = useState<{
+    code: string;
+    type: 'percentage' | 'fixed_amount';
+    value: number;
+    amount: number;
+    free_shipping: boolean;
+  } | null>(null);
+  const [discountError, setDiscountError] = useState<string>('');
 
   // Calculate totals
   const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  
+  // Calculate discount
+  const discount = appliedDiscount?.amount || 0;
+  const subtotalAfterDiscount = subtotal - discount;
   
   // Calculate tax - use stored calculation or default to 0
   const tax = taxCalculation?.amount || 0;
   const taxLabel = taxCalculation?.rate.name || 'Tax';
   
-  const total = subtotal + tax;
+  // Calculate shipping (free if discount includes free shipping)
+  const baseShippingCost = 15; // Default shipping cost
+  const shipping = appliedDiscount?.free_shipping ? 0 : baseShippingCost;
+  
+  const total = subtotalAfterDiscount + tax + shipping;
 
   // Effect to calculate tax when payment method is selected (after customer info)
   useEffect(() => {
@@ -108,7 +125,7 @@ export default function CheckoutFlow() {
         setCalculatingTax(true);
         try {
           const result = await calculateTax(
-            subtotal,
+            subtotalAfterDiscount, // Tax calculated on discounted amount
             checkoutData.customer.country,
             checkoutData.customer.state,
             checkoutData.customer.city,
@@ -134,10 +151,51 @@ export default function CheckoutFlow() {
     }
 
     calculateTaxForOrder();
-  }, [checkoutData.paymentMethod, checkoutData.customer, subtotal]);
+  }, [checkoutData.paymentMethod, checkoutData.customer, subtotalAfterDiscount]);
 
   const updateCheckoutData = (updates: Partial<CheckoutData>) => {
     setCheckoutData(prev => ({ ...prev, ...updates }));
+  };
+
+  const validateDiscountCode = async () => {
+    if (!discountCode.trim()) {
+      setDiscountError('Please enter a discount code');
+      return;
+    }
+
+    setDiscountError('');
+    
+    try {
+      const response = await fetch('/api/discount-codes/validate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          code: discountCode.trim(),
+          orderTotal: subtotal
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.valid && result.discount) {
+        setAppliedDiscount(result.discount);
+        setDiscountCode('');
+        showNotification('success', result.message);
+      } else {
+        setDiscountError(result.message || 'Invalid discount code');
+      }
+    } catch (error) {
+      console.error('Error validating discount code:', error);
+      setDiscountError('Error validating discount code');
+    }
+  };
+
+  const removeDiscount = () => {
+    setAppliedDiscount(null);
+    setDiscountCode('');
+    setDiscountError('');
   };
 
   const handleStepComplete = (step: CheckoutStep, data?: any) => {
@@ -278,6 +336,12 @@ export default function CheckoutFlow() {
               <CartReview
                 items={items}
                 onContinue={() => handleStepComplete('cart')}
+                discountCode={discountCode}
+                setDiscountCode={setDiscountCode}
+                appliedDiscount={appliedDiscount}
+                discountError={discountError}
+                validateDiscountCode={validateDiscountCode}
+                removeDiscount={removeDiscount}
               />
             )}
             
@@ -300,6 +364,10 @@ export default function CheckoutFlow() {
                 amount={total}
                 customerData={checkoutData.customer}
                 items={items}
+                appliedDiscount={appliedDiscount}
+                subtotal={subtotal}
+                tax={tax}
+                shipping={shipping}
                 onSuccess={(data) => handleStepComplete('payment', data)}
                 onError={handleError}
               />
@@ -370,21 +438,33 @@ export default function CheckoutFlow() {
                     <span>Subtotal</span>
                     <span>{formatPrice(subtotal)}</span>
                   </div>
-                  {currentStep !== 'cart' && (
-                    <div className="flex justify-between text-sm text-gray-600">
-                      <span>{taxLabel}</span>
-                      <span>
-                        {calculatingTax ? (
-                          <span className="animate-pulse">Calculating...</span>
-                        ) : (
-                          formatPrice(tax)
-                        )}
-                      </span>
+                  {appliedDiscount && (
+                    <div className="flex justify-between text-sm text-green-600">
+                      <span>Discount ({appliedDiscount.code})</span>
+                      <span>-{formatPrice(discount)}</span>
                     </div>
+                  )}
+                  {currentStep !== 'cart' && (
+                    <>
+                      <div className="flex justify-between text-sm text-gray-600">
+                        <span>Shipping</span>
+                        <span>{shipping === 0 ? 'Free' : formatPrice(shipping)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm text-gray-600">
+                        <span>{taxLabel}</span>
+                        <span>
+                          {calculatingTax ? (
+                            <span className="animate-pulse">Calculating...</span>
+                          ) : (
+                            formatPrice(tax)
+                          )}
+                        </span>
+                      </div>
+                    </>
                   )}
                   <div className="flex justify-between text-lg font-semibold text-gray-900 pt-2 border-t border-gray-200">
                     <span>Total</span>
-                    <span>{formatPrice(total)}</span>
+                    <span>{formatPrice(currentStep === 'cart' ? subtotalAfterDiscount : total)}</span>
                   </div>
                 </div>
               </div>

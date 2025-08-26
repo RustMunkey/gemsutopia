@@ -1,7 +1,7 @@
 'use client';
 import { useGemPouch } from '@/contexts/GemPouchContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import { Trash2, Plus, Minus } from 'lucide-react';
+import { Trash2, Plus, Minus, Tag, X, Check, Percent } from 'lucide-react';
 import Image from 'next/image';
 
 interface CartReviewProps {
@@ -14,14 +14,39 @@ interface CartReviewProps {
     stock?: number;
   }>;
   onContinue: () => void;
+  discountCode: string;
+  setDiscountCode: (code: string) => void;
+  appliedDiscount: {
+    code: string;
+    type: 'percentage' | 'fixed_amount';
+    value: number;
+    amount: number;
+    free_shipping: boolean;
+  } | null;
+  discountError: string;
+  validateDiscountCode: () => void;
+  removeDiscount: () => void;
 }
 
-export default function CartReview({ items, onContinue }: CartReviewProps) {
+export default function CartReview({ 
+  items, 
+  onContinue,
+  discountCode,
+  setDiscountCode,
+  appliedDiscount,
+  discountError,
+  validateDiscountCode,
+  removeDiscount
+}: CartReviewProps) {
   const { removeItem, updateQuantity } = useGemPouch();
   const { formatPrice } = useCurrency();
 
   const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const totalItemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+  
+  // Calculate totals with discount
+  const discount = appliedDiscount?.amount || 0;
+  const subtotalAfterDiscount = subtotal - discount;
 
   return (
     <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 p-6">
@@ -85,10 +110,82 @@ export default function CartReview({ items, onContinue }: CartReviewProps) {
         ))}
       </div>
 
+      {/* Discount Code Section */}
+      <div className="border-t border-gray-200 pt-6 mb-6">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">Discount Code</h3>
+        
+        {appliedDiscount ? (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Check className="h-5 w-5 text-green-600" />
+                <div>
+                  <p className="text-sm font-medium text-green-800">
+                    Code "{appliedDiscount.code}" applied
+                  </p>
+                  <p className="text-xs text-green-600">
+                    {appliedDiscount.type === 'percentage' 
+                      ? `${appliedDiscount.value}% off`
+                      : `${formatPrice(appliedDiscount.value)} off`
+                    }
+                    {appliedDiscount.free_shipping && ' + Free shipping'}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={removeDiscount}
+                className="p-1 text-green-600 hover:text-green-800 transition-colors"
+                title="Remove discount"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <div className="flex space-x-2">
+              <div className="flex-1">
+                <input
+                  type="text"
+                  value={discountCode}
+                  onChange={(e) => setDiscountCode(e.target.value)}
+                  placeholder="Enter discount code"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                  onKeyDown={(e) => e.key === 'Enter' && validateDiscountCode()}
+                />
+              </div>
+              <button
+                onClick={validateDiscountCode}
+                disabled={!discountCode.trim()}
+                className="px-4 py-2 bg-black text-white rounded-lg font-medium hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+              >
+                <Tag className="h-4 w-4" />
+                <span>Apply</span>
+              </button>
+            </div>
+            {discountError && (
+              <p className="text-sm text-red-600">{discountError}</p>
+            )}
+          </div>
+        )}
+      </div>
+
       <div className="border-t border-gray-200 pt-4 mb-6">
-        <div className="flex justify-between text-lg font-semibold text-gray-900">
-          <span>Subtotal ({totalItemCount} items)</span>
-          <span>{formatPrice(subtotal)}</span>
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm text-gray-600">
+            <span>Subtotal ({totalItemCount} items)</span>
+            <span>{formatPrice(subtotal)}</span>
+          </div>
+          {appliedDiscount && (
+            <div className="flex justify-between text-sm text-green-600">
+              <span>Discount ({appliedDiscount.code})</span>
+              <span>-{formatPrice(discount)}</span>
+            </div>
+          )}
+          <div className="flex justify-between text-lg font-semibold text-gray-900 pt-2 border-t border-gray-200">
+            <span>Order Total</span>
+            <span>{formatPrice(subtotalAfterDiscount)}</span>
+          </div>
         </div>
         <p className="text-sm text-gray-600 mt-1">
           Shipping and taxes calculated at next step

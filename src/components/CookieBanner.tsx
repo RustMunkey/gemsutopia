@@ -1,13 +1,18 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useCookies } from '@/contexts/CookieContext';
 import { X, Cookie } from 'lucide-react';
 
 export default function CookieBanner() {
   const { showBanner, acceptAll, rejectAll, dismissBanner } = useCookies();
   const [showDetails, setShowDetails] = useState(false);
+  const pathname = usePathname();
 
+  // Hide cookie banner on all admin pages
+  if (pathname.startsWith('/admin')) return null;
+  
   if (!showBanner) return null;
 
   return (

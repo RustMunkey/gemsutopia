@@ -1,9 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Initialize Supabase client
+// ⚠️ This file should only be used for client-side validation
+// All actual database operations should go through secure API routes
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
 export interface DiscountCode {
@@ -208,12 +209,9 @@ export async function recordDiscountUsage(discountCodeId: number, orderId: strin
     }
 
     // Increment used count
-    const { error: updateError } = await supabase
-      .from('discount_codes')
-      .update({ 
-        used_count: supabase.rpc('increment_used_count', { discount_id: discountCodeId })
-      })
-      .eq('id', discountCodeId);
+    const { error: updateError } = await supabase.rpc('increment_discount_usage', {
+      discount_id: discountCodeId
+    });
 
     if (updateError) {
       console.error('Error updating discount usage count:', updateError);

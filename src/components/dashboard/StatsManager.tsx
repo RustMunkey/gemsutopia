@@ -45,8 +45,19 @@ export default function StatsManager() {
       });
       
       if (response.ok) {
-        const data = await response.json();
-        setStats(data);
+        const result = await response.json();
+        // Handle both old format (direct array) and new secure format (with data property)
+        const data = result.data || result;
+        const statsArray = Array.isArray(data) ? data : [];
+        
+        // Debug: Check for duplicate IDs
+        const ids = statsArray.map(stat => stat.id);
+        const duplicateIds = ids.filter((id, index) => ids.indexOf(id) !== index);
+        if (duplicateIds.length > 0) {
+          console.warn('Duplicate stat IDs found:', duplicateIds);
+        }
+        
+        setStats(statsArray);
       }
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -134,11 +145,11 @@ export default function StatsManager() {
       </div>
 
       <div className="space-y-4">
-        {stats.map((stat) => {
+        {stats.map((stat, index) => {
           const IconComponent = iconMap[stat.icon as keyof typeof iconMap] || BarChart3;
           
           return (
-            <div key={stat.id} className="bg-white/5 border border-white/10 rounded-lg p-4">
+            <div key={`stat-${stat.id}-${index}`} className="bg-white/5 border border-white/10 rounded-lg p-4">
               <div className="flex items-center gap-4">
                 <div className="flex-shrink-0">
                   <div className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center">

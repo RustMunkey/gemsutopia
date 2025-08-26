@@ -15,6 +15,16 @@ interface WalletPaymentProps {
   amount: number;
   customerData: any;
   items: any[];
+  appliedDiscount?: {
+    code: string;
+    type: 'percentage' | 'fixed_amount';
+    value: number;
+    amount: number;
+    free_shipping: boolean;
+  } | null;
+  subtotal: number;
+  tax: number;
+  shipping: number;
   onSuccess: (data: { orderId: string; actualAmount: number; cryptoAmount?: number; currency: string; cryptoCurrency?: string; cryptoPrices?: any }) => void;
   onError: (error: string) => void;
 }
@@ -32,7 +42,7 @@ interface CryptoPrices {
   solana: { usd: number; cad: number };
 }
 
-export default function WalletPayment({ amount, customerData, items, onSuccess, onError }: WalletPaymentProps) {
+export default function WalletPayment({ amount, customerData, items, appliedDiscount, subtotal, tax, shipping, onSuccess, onError }: WalletPaymentProps) {
   const { currency } = useCurrency();
   const { isConnected, walletAddress, selectedCrypto, connectWallet, disconnectWallet } = useWallet();
   const [isConnecting, setIsConnecting] = useState(false);
@@ -650,34 +660,17 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
       console.log('Payment amount received:', amount);
       console.log('Currency:', currency);
       
-      // For business records, ensure accurate breakdown
-      let actualSubtotal, tax, shipping;
-      
-      if (subtotal > 0) {
-        // Use cart calculation if items are present
-        actualSubtotal = subtotal;
-        tax = actualSubtotal * 0.13;
-        shipping = 0;
-      } else {
-        // ERROR: Cart is empty but payment was made - this shouldn't happen in production
-        console.error('🚨 CRITICAL: Cart is empty but payment processed! This indicates a data flow problem.');
-        console.error('Payment amount:', amount, currency);
-        console.error('This suggests items were lost between cart and payment processing.');
-        
-        // Emergency fallback for business records (but this needs to be fixed)
-        // Try to guess reasonable breakdown, but log as data integrity issue
-        actualSubtotal = amount / 1.13;
-        tax = actualSubtotal * 0.13;
-        shipping = 0;
-        
-        console.error('🚨 Using emergency fallback calculation - MUST FIX CART DATA FLOW');
-      }
+      // Use the calculated breakdown from CheckoutFlow
+      const actualSubtotal = subtotal;
+      const calculatedTax = tax;
+      const calculatedShipping = shipping;
       
       console.log('Calculated breakdown:', {
         subtotal: actualSubtotal,
-        tax: tax,
-        shipping: shipping,
-        total: actualSubtotal + tax + shipping,
+        discount: appliedDiscount?.amount || 0,
+        tax: calculatedTax,
+        shipping: calculatedShipping,
+        total: amount,
         paymentAmount: amount
       });
       
@@ -697,10 +690,18 @@ export default function WalletPayment({ amount, customerData, items, onSuccess, 
         },
         totals: { 
           subtotal: actualSubtotal,
-          tax,
-          shipping,
+          discount: appliedDiscount?.amount || 0,
+          tax: calculatedTax,
+          shipping: calculatedShipping,
           total: amount 
         },
+        discountCode: appliedDiscount ? {
+          code: appliedDiscount.code,
+          type: appliedDiscount.type,
+          value: appliedDiscount.value,
+          amount: appliedDiscount.amount,
+          free_shipping: appliedDiscount.free_shipping
+        } : null,
         timestamp: new Date().toISOString()
       };
 

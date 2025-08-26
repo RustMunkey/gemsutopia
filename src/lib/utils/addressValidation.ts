@@ -1,4 +1,4 @@
-// Address validation using Google Maps Geocoding API or similar service
+// Free address validation using OpenStreetMap Nominatim API and local validation
 
 export interface ValidationResult {
   isValid: boolean;
@@ -12,6 +12,7 @@ export interface ValidationResult {
     country?: string;
   };
   error?: string;
+  suggestions?: string[];
 }
 
 export interface AddressData {
@@ -23,104 +24,109 @@ export interface AddressData {
   country: string;
 }
 
-// Using Google Maps Geocoding API for address validation
+// Canadian postal code pattern
+const CANADIAN_POSTAL_REGEX = /^[A-Za-z]\d[A-Za-z] \d[A-Za-z]\d$/;
+// US zip code patterns
+const US_ZIP_REGEX = /^\d{5}(-\d{4})?$/;
+
+// Free address validation using server-side API route
 export async function validateAddress(addressData: AddressData): Promise<ValidationResult> {
   try {
-    // Construct full address string
-    const fullAddress = `${addressData.address}${addressData.apartment ? `, ${addressData.apartment}` : ''}, ${addressData.city}, ${addressData.state} ${addressData.zipCode}, ${addressData.country}`;
-    
-    // Use Google Maps Geocoding API (required)
-    const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-    
-    if (!GOOGLE_MAPS_API_KEY) {
-      throw new Error('Google Maps API key is required for address validation');
-    }
-    
-    const response = await fetch(
-      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(fullAddress)}&key=${GOOGLE_MAPS_API_KEY}`
-    );
+    const response = await fetch('/api/address-validation', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(addressData),
+    });
     
     if (!response.ok) {
-      throw new Error(`Google Maps API error: ${response.status}`);
+      throw new Error(`Address validation API error: ${response.status}`);
     }
     
-    const data = await response.json();
-    
-    if (data.status === 'OK' && data.results.length > 0) {
-      const result = data.results[0];
-      const components = result.address_components;
-      
-      // Extract address components
-      const addressComponents: ValidationResult['components'] = {};
-      
-      components.forEach((component: any) => {
-        const types = component.types;
-        if (types.includes('street_number')) {
-          addressComponents.streetNumber = component.long_name;
-        } else if (types.includes('route')) {
-          addressComponents.route = component.long_name;
-        } else if (types.includes('locality')) {
-          addressComponents.locality = component.long_name;
-        } else if (types.includes('administrative_area_level_1')) {
-          addressComponents.administrativeAreaLevel1 = component.short_name;
-        } else if (types.includes('postal_code')) {
-          addressComponents.postalCode = component.long_name;
-        } else if (types.includes('country')) {
-          addressComponents.country = component.short_name;
-        }
-      });
-      
-      // Verify the address matches what user entered (basic check)
-      const isReasonableMatch = result.formatted_address.toLowerCase().includes(addressData.city.toLowerCase());
-      
-      if (!isReasonableMatch) {
-        return {
-          isValid: false,
-          error: `Address not found in ${addressData.city}. Did you mean: ${result.formatted_address}?`,
-          formattedAddress: result.formatted_address
-        };
-      }
-      
-      return {
-        isValid: true,
-        formattedAddress: result.formatted_address,
-        components: addressComponents
-      };
-    } else if (data.status === 'ZERO_RESULTS') {
-      return {
-        isValid: false,
-        error: 'Address not found. Please check your address and try again.'
-      };
-    } else if (data.status === 'INVALID_REQUEST') {
-      return {
-        isValid: false,
-        error: 'Invalid address format. Please check all fields.'
-      };
-    } else {
-      return {
-        isValid: false,
-        error: `Address validation failed: ${data.status}`
-      };
-    }
+    const result = await response.json();
+    return result;
   } catch (error) {
-    console.error('Google Maps address validation error:', error);
-    return {
-      isValid: false,
-      error: 'Unable to validate address. Please ensure all fields are correct and try again.'
-    };
+    console.error('Address validation error:', error);
+    // Fall back to local validation if API fails
+    return validateAddressLocally(addressData);
   }
 }
 
+// Local validation fallback (when API is unavailable)
+function validateAddressLocally(addressData: AddressData): ValidationResult {
+  const errors: string[] = [];
+  
+  // Validate postal code
+  const postalValidation = validatePostalCode(addressData.zipCode, addressData.country);
+  if (!postalValidation.isValid) {
+    errors.push(postalValidation.error!);
+  }
+  
+  // Basic address validation
+  if (!addressData.address || addressData.address.length < 5) {
+    errors.push('Street address appears to be too short');
+  }
+  
+  if (!addressData.city || addressData.city.length < 2) {
+    errors.push('City name appears to be invalid');
+  }
+  
+  // Validate state/province for known locations
+  if (addressData.country === 'Canada') {
+    const validProvinces = ['AB', 'BC', 'MB', 'NB', 'NL', 'NT', 'NS', 'NU', 'ON', 'PE', 'QC', 'SK', 'YT'];
+    if (!validProvinces.includes(addressData.state)) {
+      errors.push('Invalid Canadian province code');
+    }
+  }
+  
+  if (errors.length > 0) {
+    return {
+      isValid: false,
+      error: errors.join('. ')
+    };
+  }
+  
+  return {
+    isValid: true,
+    formattedAddress: `${addressData.address}${addressData.apartment ? `, ${addressData.apartment}` : ''}, ${addressData.city}, ${addressData.state} ${addressData.zipCode}, ${addressData.country}`
+  };
+}
+
+// Validate postal/zip code format
+function validatePostalCode(postalCode: string, country: string): { isValid: boolean; error?: string } {
+  if (!postalCode) {
+    return { isValid: false, error: 'Postal/Zip code is required' };
+  }
+  
+  if (country === 'Canada') {
+    if (!CANADIAN_POSTAL_REGEX.test(postalCode)) {
+      return { 
+        isValid: false, 
+        error: 'Invalid Canadian postal code format. Use format: A1A 1A1' 
+      };
+    }
+  } else if (country === 'United States') {
+    if (!US_ZIP_REGEX.test(postalCode)) {
+      return { 
+        isValid: false, 
+        error: 'Invalid US zip code format. Use format: 12345 or 12345-6789' 
+      };
+    }
+  }
+  
+  return { isValid: true };
+}
 
 // Get user's approximate location for default country/state
 export async function getUserLocation(): Promise<{ country: string; state: string } | null> {
   try {
-    // Use IP geolocation API (free services available)
+    // Use ipapi.co (free IP geolocation)
     const response = await fetch('https://ipapi.co/json/');
     if (response.ok) {
       const data = await response.json();
       return {
-        country: data.country_code || 'US',
+        country: data.country_name || 'Canada',
         state: data.region_code || ''
       };
     }
@@ -128,4 +134,29 @@ export async function getUserLocation(): Promise<{ country: string; state: strin
     console.error('Failed to get user location:', error);
   }
   return null;
+}
+
+// Address suggestions using server-side API route
+export async function getAddressSuggestions(query: string, country: 'Canada' | 'United States' = 'Canada'): Promise<string[]> {
+  if (!query || query.length < 3) return [];
+  
+  try {
+    const params = new URLSearchParams({
+      q: query,
+      country: country
+    });
+    
+    const response = await fetch(`/api/address-suggestions?${params}`);
+    
+    if (!response.ok) {
+      console.error('Address suggestions API error:', response.status);
+      return [];
+    }
+    
+    const data = await response.json();
+    return data.suggestions || [];
+  } catch (error) {
+    console.error('Address suggestions error:', error);
+    return [];
+  }
 }

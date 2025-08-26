@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { recordDiscountUsage } from '@/lib/database/discountCodes';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -95,9 +96,11 @@ export async function POST(request: NextRequest) {
           })
         },
         subtotal: orderData.totals.subtotal,
+        discount: orderData.totals.discount || 0,
         shipping: orderData.totals.shipping,
         tax: orderData.totals.tax,
         total: orderData.totals.total,
+        discount_code: orderData.discountCode || null,
         status: 'confirmed',
         is_test_order: isTestOrder,
         created_at: orderData.timestamp
@@ -121,6 +124,40 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('Order saved successfully to database:', data[0]);
+    
+    // Record discount code usage if applicable
+    if (orderData.discountCode && orderData.discountCode.code) {
+      try {
+        console.log('Recording discount code usage for:', orderData.discountCode.code);
+        
+        // Get discount code ID first
+        const { data: discountData, error: discountError } = await supabase
+          .from('discount_codes')
+          .select('id')
+          .eq('code', orderData.discountCode.code)
+          .single();
+        
+        if (discountError || !discountData) {
+          console.error('Error finding discount code:', discountError);
+        } else {
+          const success = await recordDiscountUsage(
+            discountData.id,
+            data[0].id,
+            orderData.customerInfo.email,
+            orderData.discountCode.amount
+          );
+          
+          if (success) {
+            console.log('Discount code usage recorded successfully');
+          } else {
+            console.error('Failed to record discount code usage');
+          }
+        }
+      } catch (discountUsageError) {
+        console.error('Error recording discount code usage:', discountUsageError);
+        // Don't fail the order if discount recording fails
+      }
+    }
     
     // Update product inventory after successful order
     if (orderData.items && Array.isArray(orderData.items)) {

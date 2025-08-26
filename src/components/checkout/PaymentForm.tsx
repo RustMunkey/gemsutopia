@@ -24,11 +24,21 @@ interface PaymentFormProps {
   amount: number;
   customerData: any;
   items: any[];
+  appliedDiscount?: {
+    code: string;
+    type: 'percentage' | 'fixed_amount';
+    value: number;
+    amount: number;
+    free_shipping: boolean;
+  } | null;
+  subtotal: number;
+  tax: number;
+  shipping: number;
   onSuccess: (data: { orderId: string; actualAmount?: number; cryptoAmount?: number; currency?: string; cryptoCurrency?: string; cryptoPrices?: any }) => void;
   onError: (error: string) => void;
 }
 
-function StripeForm({ amount, customerData, items, onSuccess, onError }: Omit<PaymentFormProps, 'paymentMethod'>) {
+function StripeForm({ amount, customerData, items, appliedDiscount, subtotal, tax, shipping, onSuccess, onError }: Omit<PaymentFormProps, 'paymentMethod'>) {
   const stripe = useStripe();
   const elements = useElements();
   const [loading, setLoading] = useState(false);
@@ -130,10 +140,6 @@ function StripeForm({ amount, customerData, items, onSuccess, onError }: Omit<Pa
     } else if (paymentIntent?.status === 'succeeded') {
       // Save order
       try {
-        // Calculate totals properly
-        const subtotal = items.reduce((sum, item) => sum + item.price, 0);
-        const tax = subtotal * 0.13; // 13% HST for Canada
-        
         const orderData = {
           items,
           customerInfo: customerData,
@@ -145,9 +151,18 @@ function StripeForm({ amount, customerData, items, onSuccess, onError }: Omit<Pa
           },
           totals: { 
             subtotal,
+            discount: appliedDiscount?.amount || 0,
             tax,
+            shipping,
             total: amount 
           },
+          discountCode: appliedDiscount ? {
+            code: appliedDiscount.code,
+            type: appliedDiscount.type,
+            value: appliedDiscount.value,
+            amount: appliedDiscount.amount,
+            free_shipping: appliedDiscount.free_shipping
+          } : null,
           timestamp: new Date().toISOString()
         };
 
@@ -341,16 +356,12 @@ function StripeForm({ amount, customerData, items, onSuccess, onError }: Omit<Pa
   );
 }
 
-function PayPalForm({ amount, customerData, items, onSuccess, onError }: Omit<PaymentFormProps, 'paymentMethod'>) {
+function PayPalForm({ amount, customerData, items, appliedDiscount, subtotal, tax, shipping, onSuccess, onError }: Omit<PaymentFormProps, 'paymentMethod'>) {
   const [loading, setLoading] = useState(false);
 
   const handlePayPalSuccess = async (details: {captureID: string; status: string}) => {
     try {
       setLoading(true);
-      
-      // Calculate totals properly
-      const subtotal = items.reduce((sum, item) => sum + item.price, 0);
-      const tax = subtotal * 0.13; // 13% HST for Canada
       
       const orderData = {
         items,
@@ -359,14 +370,23 @@ function PayPalForm({ amount, customerData, items, onSuccess, onError }: Omit<Pa
           captureID: details.captureID,
           paymentMethod: 'paypal',
           amount,
-          currency: 'CAD',
+          currency: 'USD',
           status: details.status
         },
         totals: { 
           subtotal,
+          discount: appliedDiscount?.amount || 0,
           tax,
+          shipping,
           total: amount 
         },
+        discountCode: appliedDiscount ? {
+          code: appliedDiscount.code,
+          type: appliedDiscount.type,
+          value: appliedDiscount.value,
+          amount: appliedDiscount.amount,
+          free_shipping: appliedDiscount.free_shipping
+        } : null,
         timestamp: new Date().toISOString()
       };
 
@@ -463,6 +483,10 @@ export default function PaymentForm(props: PaymentFormProps) {
         amount={props.amount}
         customerData={props.customerData}
         items={props.items}
+        appliedDiscount={props.appliedDiscount}
+        subtotal={props.subtotal}
+        tax={props.tax}
+        shipping={props.shipping}
         onSuccess={props.onSuccess}
         onError={props.onError}
       />

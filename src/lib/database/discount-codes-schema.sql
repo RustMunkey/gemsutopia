@@ -1,6 +1,3 @@
--- Discount Codes Table Schema
--- Run this SQL in your Supabase dashboard to create the discount_codes table
-
 CREATE TABLE IF NOT EXISTS discount_codes (
     id SERIAL PRIMARY KEY,
     code VARCHAR(50) UNIQUE NOT NULL,
@@ -17,18 +14,15 @@ CREATE TABLE IF NOT EXISTS discount_codes (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_discount_codes_code ON discount_codes(code);
 CREATE INDEX IF NOT EXISTS idx_discount_codes_active ON discount_codes(is_active);
 CREATE INDEX IF NOT EXISTS idx_discount_codes_expires ON discount_codes(expires_at);
 
--- Create updated_at trigger
 CREATE OR REPLACE TRIGGER update_discount_codes_updated_at
     BEFORE UPDATE ON discount_codes
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
--- Create table for tracking discount code usage
 CREATE TABLE IF NOT EXISTS discount_code_usage (
     id SERIAL PRIMARY KEY,
     discount_code_id INTEGER REFERENCES discount_codes(id) ON DELETE CASCADE,
@@ -38,11 +32,9 @@ CREATE TABLE IF NOT EXISTS discount_code_usage (
     used_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Create indexes for usage tracking
 CREATE INDEX IF NOT EXISTS idx_discount_usage_code_id ON discount_code_usage(discount_code_id);
 CREATE INDEX IF NOT EXISTS idx_discount_usage_order_id ON discount_code_usage(order_id);
 
--- Sample discount codes
 INSERT INTO discount_codes (code, description, discount_type, discount_value, free_shipping, minimum_order, usage_limit) VALUES 
     ('WELCOME10', 'Welcome discount for new customers', 'percentage', 10.00, false, 0, 100),
     ('FREESHIP50', 'Free shipping on orders over $50', 'percentage', 0, true, 50.00, null),

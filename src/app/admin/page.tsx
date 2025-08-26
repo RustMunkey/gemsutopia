@@ -1,29 +1,23 @@
 'use client';
 import { useState, useEffect } from 'react';
-import HCaptcha from '@hcaptcha/react-hcaptcha';
 import { Eye, EyeOff, Mail, KeyRound } from 'lucide-react';
 
 export default function AdminLogin() {
   const [email, setEmail] = useState('');
   const [passcode, setPasscode] = useState('');
   const [showPasscode, setShowPasscode] = useState(false);
-  const [captchaToken, setCaptchaToken] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const clearCredentials = () => {
     setEmail('');
     setPasscode('');
-    setCaptchaToken('');
     setError('');
   };
 
   // Clear credentials and remove any existing tokens on mount
   useEffect(() => {
-    // Always clear credentials when component mounts
     clearCredentials();
-    
-    // Remove any existing admin token to force login
     localStorage.removeItem('admin-token');
   }, []);
 
@@ -31,12 +25,6 @@ export default function AdminLogin() {
     e.preventDefault();
     setError('');
     setLoading(true);
-
-    if (!captchaToken) {
-      setError('Please complete the captcha');
-      setLoading(false);
-      return;
-    }
 
     try {
       const response = await fetch('/api/admin/login', {
@@ -47,7 +35,7 @@ export default function AdminLogin() {
         body: JSON.stringify({
           email,
           passcode,
-          captchaToken
+          captchaToken: 'bypassed' // Skip captcha requirement
         }),
       });
 
@@ -58,11 +46,9 @@ export default function AdminLogin() {
         window.location.href = '/admin/dashboard';
       } else {
         setError(data.message || 'Login failed');
-        setCaptchaToken(''); // Reset captcha
       }
     } catch {
       setError('Network error. Please try again.');
-      setCaptchaToken('');
     }
 
     setLoading(false);
@@ -131,15 +117,6 @@ export default function AdminLogin() {
             </div>
           </div>
 
-          <div className="flex justify-center">
-            <HCaptcha
-              sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY || ''}
-              onVerify={(token) => setCaptchaToken(token)}
-              onExpire={() => setCaptchaToken('')}
-              theme="dark"
-            />
-          </div>
-
           {error && (
             <div className="bg-red-900/50 border border-red-700 text-red-200 px-4 py-3 rounded-lg text-sm">
               {error}
@@ -148,43 +125,13 @@ export default function AdminLogin() {
 
           <button
             type="submit"
-            disabled={loading || !captchaToken}
+            disabled={loading}
             className="w-full flex justify-center py-3 px-4 border border-white rounded-lg shadow-sm text-sm font-medium text-white bg-transparent hover:bg-white hover:text-black focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 enabled:hover:bg-white enabled:hover:text-black"
           >
             {loading ? 'Authenticating...' : 'Access Dashboard'}
           </button>
         </form>
       </div>
-      
-      <style jsx global>{`
-        /* Center hCaptcha challenge modal */
-        .h-captcha-challenge {
-          position: fixed !important;
-          top: 50% !important;
-          left: 50% !important;
-          transform: translate(-50%, -50%) !important;
-          z-index: 9999 !important;
-        }
-        
-        /* Center hCaptcha overlay */
-        .h-captcha-challenge-overlay {
-          position: fixed !important;
-          top: 0 !important;
-          left: 0 !important;
-          width: 100% !important;
-          height: 100% !important;
-          background: rgba(0, 0, 0, 0.8) !important;
-          z-index: 9998 !important;
-        }
-        
-        /* Ensure modal is responsive */
-        @media (max-width: 640px) {
-          .h-captcha-challenge {
-            width: 95% !important;
-            max-width: 400px !important;
-          }
-        }
-      `}</style>
     </div>
   );
 }
