@@ -1,5 +1,5 @@
 'use client';
-import React, { createContext, useContext, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, ReactNode, Suspense } from 'react';
 import { analytics } from '@/lib/analytics/tracker';
 import { usePathname, useSearchParams } from 'next/navigation';
 
@@ -21,7 +21,8 @@ interface AnalyticsProviderProps {
   enableAutoTracking?: boolean;
 }
 
-export function AnalyticsProvider({ children, enableAutoTracking = true }: AnalyticsProviderProps) {
+// Separate component for search params tracking
+function AnalyticsTracker({ enableAutoTracking }: { enableAutoTracking: boolean }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -32,6 +33,11 @@ export function AnalyticsProvider({ children, enableAutoTracking = true }: Analy
       analytics.trackPageView(url);
     }
   }, [pathname, searchParams, enableAutoTracking]);
+
+  return null;
+}
+
+export function AnalyticsProvider({ children, enableAutoTracking = true }: AnalyticsProviderProps) {
 
   const contextValue: AnalyticsContextType = {
     trackEvent: async (eventType: string, eventData?: any) => {
@@ -78,6 +84,10 @@ export function AnalyticsProvider({ children, enableAutoTracking = true }: Analy
 
   return (
     <AnalyticsContext.Provider value={contextValue}>
+      {/* Wrap analytics tracker in Suspense to avoid SSR issues with useSearchParams */}
+      <Suspense fallback={null}>
+        <AnalyticsTracker enableAutoTracking={enableAutoTracking} />
+      </Suspense>
       {children}
     </AnalyticsContext.Provider>
   );

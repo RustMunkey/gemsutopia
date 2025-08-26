@@ -13,6 +13,7 @@ import PageViewTracker from '../components/PageViewTracker';
 import MaintenanceOverlay from '../components/MaintenanceOverlay';
 import DynamicMetadata from '../components/DynamicMetadata';
 import DynamicTitle from '../components/DynamicTitle';
+import { AnalyticsProvider } from '../lib/contexts/AnalyticsContext';
 
 export default function ClientLayout({
   children,
@@ -29,12 +30,14 @@ export default function ClientLayout({
                 <GemPouchProvider>
                   <WalletProvider>
                     <NotificationProvider>
-                      <PageViewTracker />
-                      <DynamicMetadata />
-                      <DynamicTitle />
-                      {children}
-                      <CookieBanner />
-                      <MaintenanceOverlay />
+                      <AnalyticsProvider enableAutoTracking={true}>
+                        <PageViewTracker />
+                        <DynamicMetadata />
+                        <DynamicTitle />
+                        {children}
+                        <CookieBanner />
+                        <MaintenanceOverlay />
+                      </AnalyticsProvider>
                     </NotificationProvider>
                   </WalletProvider>
                 </GemPouchProvider>

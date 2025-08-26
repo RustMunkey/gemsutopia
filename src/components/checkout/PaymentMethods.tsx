@@ -26,7 +26,7 @@ export default function PaymentMethods({ onSelect }: PaymentMethodsProps) {
       id: 'paypal' as const,
       name: 'PayPal',
       description: 'Pay with your PayPal account or credit card',
-      currencyNote: 'USD only - Reese\'s PayPal accepts USD payments only',
+      currencyNote: 'USD only',
       icon: Wallet,
       available: currency === 'USD', // Only available for USD
       currencyCompatible: currency === 'USD',
@@ -52,7 +52,7 @@ export default function PaymentMethods({ onSelect }: PaymentMethodsProps) {
   return (
     <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 p-6">
       <div className="flex items-center mb-6">
-        <Shield className="h-6 w-6 text-green-500 mr-3" />
+        <Shield className="h-6 w-6 text-black mr-3" />
         <h2 className="text-xl font-semibold text-gray-900">Choose Payment Method</h2>
       </div>
       
@@ -113,30 +113,16 @@ export default function PaymentMethods({ onSelect }: PaymentMethodsProps) {
         })}
       </div>
 
-      {/* Currency and Tax Info */}
-      <div className="space-y-3 mb-6">
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-start">
-            <Shield className="h-5 w-5 text-blue-500 mt-0.5 mr-3 flex-shrink-0" />
-            <div>
-              <h4 className="text-sm font-semibold text-blue-900">Secure Payment</h4>
-              <p className="text-sm text-blue-800">
-                Your payment information is encrypted and secure. We never store your card details.
-              </p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-          <div className="flex items-start">
-            <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5 mr-3 flex-shrink-0" />
-            <div>
-              <h4 className="text-sm font-semibold text-amber-900">Tax Calculation</h4>
-              <p className="text-sm text-amber-800">
-                Taxes will be calculated after you select your payment method. 
-                <span className="font-medium"> Crypto payments are tax-free!</span>
-              </p>
-            </div>
+      {/* Tax Info */}
+      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+        <div className="flex items-start">
+          <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5 mr-3 flex-shrink-0" />
+          <div>
+            <h4 className="text-sm font-semibold text-amber-900">Tax Calculation</h4>
+            <p className="text-sm text-amber-800">
+              Taxes will be calculated after you select your payment method. 
+              <span className="font-medium"> Crypto payments are tax-free!</span>
+            </p>
           </div>
         </div>
       </div>

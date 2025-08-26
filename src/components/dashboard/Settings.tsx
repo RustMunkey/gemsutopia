@@ -23,6 +23,13 @@ export default function Settings() {
     enableShipping: true,
     shippingRates: [],
     internationalShipping: true,
+    // New dynamic shipping settings
+    singleItemShippingCAD: 18.50,
+    singleItemShippingUSD: 14.50,
+    combinedShippingCAD: 20.00,
+    combinedShippingUSD: 15.50,
+    combinedShippingEnabled: true,
+    combinedShippingThreshold: 2, // Apply combined shipping for 2+ items
     
     // Tax Settings  
     enableTaxes: true,
@@ -35,7 +42,7 @@ export default function Settings() {
     cryptoEnabled: true,
     
     // Currency Settings
-    baseCurrency: 'CAD',
+    baseCurrency: 'USD',
     supportedCurrencies: ['CAD', 'USD', 'EUR'],
     
     // SEO Settings
@@ -127,6 +134,44 @@ export default function Settings() {
     setSettings(prev => ({
       ...prev,
       [field]: value
+    }));
+  };
+
+  const handleNumberInputChange = (field: string, value: string) => {
+    // Allow empty string for editing, otherwise parse as number
+    const numValue = value === '' ? '' : parseFloat(value);
+    setSettings(prev => ({
+      ...prev,
+      [field]: numValue
+    }));
+  };
+
+  // Helper function to safely display number values
+  const getNumberValue = (value: number | string | undefined) => {
+    return (value === '' || value === undefined || value === null) ? '' : value;
+  };
+
+  // Helper function to safely format currency display
+  const formatCurrency = (value: number | string | undefined) => {
+    if (value === '' || value === undefined || value === null || isNaN(Number(value))) {
+      return '0.00';
+    }
+    return Number(value).toFixed(2);
+  };
+
+  // Simple handler for shipping fields - no auto-conversion for now
+  const handleShippingInputChange = (field: string, value: string) => {
+    // Just update the field, keep it simple
+    let processedValue: string | number = value;
+    
+    if (value !== '' && value !== '.') {
+      const parsed = parseFloat(value);
+      processedValue = isNaN(parsed) ? 0 : parsed;
+    }
+    
+    setSettings(prev => ({
+      ...prev,
+      [field]: processedValue
     }));
   };
 
@@ -874,9 +919,15 @@ export default function Settings() {
         <div className="flex items-center gap-3 mb-6">
           <Truck className="h-6 w-6 text-white" />
           <h2 className="text-xl font-semibold text-white">Shipping Settings</h2>
+          <div className="ml-auto">
+            <span className="bg-purple-500/20 text-purple-400 px-2 py-1 rounded-full text-xs font-medium">
+              Dynamic Rates
+            </span>
+          </div>
         </div>
         
-        <div className="space-y-6">
+        <div className="space-y-8">
+          {/* Enable Shipping */}
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-white font-medium">Enable Shipping</h3>
@@ -893,21 +944,205 @@ export default function Settings() {
             </label>
           </div>
 
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-white font-medium">International Shipping</h3>
-              <p className="text-sm text-slate-400">Allow orders from outside Canada</p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={settings.internationalShipping}
-                onChange={(e) => handleInputChange('internationalShipping', e.target.checked)}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-            </label>
-          </div>
+          {settings.enableShipping && (
+            <>
+              {/* Single Item Shipping Rates */}
+              <div className="border border-white/10 rounded-lg p-4 bg-black/20">
+                <h3 className="text-white font-medium mb-4 flex items-center gap-2">
+                  <Tag className="h-4 w-4" />
+                  Single Item Shipping Rates
+                </h3>
+                <p className="text-sm text-slate-400 mb-4">
+                  Fixed shipping cost applied when ordering 1 item
+                </p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      Canadian Customers (CAD)
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400">$</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={getNumberValue(settings.singleItemShippingCAD)}
+                        onChange={(e) => handleShippingInputChange('singleItemShippingCAD', e.target.value)}
+                        className="w-full bg-black/50 border border-white/20 rounded-lg pl-8 pr-3 py-2 text-white placeholder-slate-400 focus:border-white/40 focus:outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                        placeholder="18.50"
+                      />
+                      <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 text-sm">CAD</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      US Customers (USD)
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400">$</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={getNumberValue(settings.singleItemShippingUSD)}
+                        onChange={(e) => handleShippingInputChange('singleItemShippingUSD', e.target.value)}
+                        className="w-full bg-black/50 border border-white/20 rounded-lg pl-8 pr-3 py-2 text-white placeholder-slate-400 focus:border-white/40 focus:outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                        placeholder="14.50"
+                      />
+                      <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 text-sm">USD</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Combined Shipping */}
+              <div className="border border-white/10 rounded-lg p-4 bg-black/20">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-white font-medium flex items-center gap-2">
+                      <Plus className="h-4 w-4" />
+                      Combined Shipping
+                    </h3>
+                    <p className="text-sm text-slate-400 mt-1">
+                      Special rate for bulk orders to save customers money
+                    </p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={settings.combinedShippingEnabled}
+                      onChange={(e) => handleInputChange('combinedShippingEnabled', e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                  </label>
+                </div>
+
+                {settings.combinedShippingEnabled && (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-2">
+                        Trigger Threshold (items)
+                      </label>
+                      <input
+                        type="number"
+                        min="2"
+                        max="50"
+                        value={getNumberValue(settings.combinedShippingThreshold)}
+                        onChange={(e) => handleNumberInputChange('combinedShippingThreshold', e.target.value)}
+                        className="w-full bg-black/50 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-slate-400 focus:border-white/40 focus:outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                      />
+                      <p className="text-xs text-slate-500 mt-1">
+                        Combined shipping applies when customer orders {settings.combinedShippingThreshold}+ items
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                          Combined Rate - Canada (CAD)
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400">$</span>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={getNumberValue(settings.combinedShippingCAD)}
+                            onChange={(e) => handleShippingInputChange('combinedShippingCAD', e.target.value)}
+                            className="w-full bg-black/50 border border-white/20 rounded-lg pl-8 pr-3 py-2 text-white placeholder-slate-400 focus:border-white/40 focus:outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                            placeholder="20.00"
+                          />
+                          <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 text-sm">CAD</span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                          Combined Rate - US (USD)
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400">$</span>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={getNumberValue(settings.combinedShippingUSD)}
+                            onChange={(e) => handleShippingInputChange('combinedShippingUSD', e.target.value)}
+                            className="w-full bg-black/50 border border-white/20 rounded-lg pl-8 pr-3 py-2 text-white placeholder-slate-400 focus:border-white/40 focus:outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                            placeholder="15.50"
+                          />
+                          <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 text-sm">USD</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* International Shipping */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-white font-medium">International Shipping</h3>
+                  <p className="text-sm text-slate-400">Allow orders from outside Canada/US</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={settings.internationalShipping}
+                    onChange={(e) => handleInputChange('internationalShipping', e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                </label>
+              </div>
+
+              {/* Shipping Preview */}
+              <div className="bg-black/30 border border-white/10 rounded-lg p-4">
+                <h3 className="text-white font-medium mb-4 flex items-center gap-2">
+                  <Eye className="h-4 w-4" />
+                  Shipping Rate Preview
+                </h3>
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div className="space-y-2">
+                      <div className="text-slate-300 font-medium">Canadian Customers:</div>
+                      <div className="text-slate-400 pl-4">
+                        • 1 item: <span className="text-white">${formatCurrency(settings.singleItemShippingCAD)} CAD</span>
+                      </div>
+                      {settings.combinedShippingEnabled && (
+                        <div className="text-slate-400 pl-4">
+                          • {settings.combinedShippingThreshold}+ items: <span className="text-white">${formatCurrency(settings.combinedShippingCAD)} CAD</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <div className="text-slate-300 font-medium">US Customers:</div>
+                      <div className="text-slate-400 pl-4">
+                        • 1 item: <span className="text-white">${formatCurrency(settings.singleItemShippingUSD)} USD</span>
+                      </div>
+                      {settings.combinedShippingEnabled && (
+                        <div className="text-slate-400 pl-4">
+                          • {settings.combinedShippingThreshold}+ items: <span className="text-white">${formatCurrency(settings.combinedShippingUSD)} USD</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {settings.combinedShippingEnabled && (
+                    <div className="mt-3 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                      <div className="text-green-400 text-xs">
+                        💡 <strong>Cost Savings:</strong> Customers save money on bulk orders! 
+                        {settings.combinedShippingThreshold}+ items cost only ${formatCurrency(settings.combinedShippingCAD)} CAD / ${formatCurrency(settings.combinedShippingUSD)} USD total shipping.
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -921,8 +1156,8 @@ export default function Settings() {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-white font-medium">Enable Taxes</h3>
-              <p className="text-sm text-slate-400">Apply tax calculations to orders</p>
+              <h3 className="text-white font-medium">Enable Dynamic Taxes</h3>
+              <p className="text-sm text-slate-400">Automatically calculate taxes based on customer location</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -936,19 +1171,27 @@ export default function Settings() {
           </div>
 
           {settings.enableTaxes && (
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Tax Rate (%)</label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                max="100"
-                value={settings.taxRate}
-                onChange={(e) => handleInputChange('taxRate', parseFloat(e.target.value) || 0)}
-                className="w-full bg-black/50 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-slate-400 focus:border-white/40 focus:outline-none"
-                placeholder="13.00"
-              />
-              <p className="text-xs text-slate-500 mt-1">Current rate: {settings.taxRate}% (Ontario HST)</p>
+            <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-6 h-6 bg-blue-500/20 rounded-full flex items-center justify-center mt-0.5">
+                  <span className="text-blue-400 text-xs font-bold">✓</span>
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-blue-300 font-medium mb-2">Smart Tax Calculation Active</h4>
+                  <div className="text-sm text-blue-200 space-y-2">
+                    <p>Taxes are calculated automatically based on customer location:</p>
+                    <ul className="list-disc list-inside space-y-1 pl-4 text-xs text-blue-300">
+                      <li><strong>Canada:</strong> HST (13-15%) or GST+PST (5-12%) by province</li>
+                      <li><strong>US:</strong> State sales tax (0-10.5%) by state</li>
+                      <li><strong>Crypto payments:</strong> Tax-free globally</li>
+                      <li><strong>Other countries:</strong> Until added (currently shipping to Canada/US only)</li>
+                    </ul>
+                    <div className="mt-3 p-2 bg-green-500/10 border border-green-500/20 rounded text-xs text-green-300">
+                      💡 Powered by TaxJar API with real-time rates + accurate fallback tables
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -1019,18 +1262,38 @@ export default function Settings() {
           <h2 className="text-xl font-semibold text-white">Currency Settings</h2>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Base Currency</label>
+            <label className="block text-sm font-medium text-slate-300 mb-2">Site Default Currency</label>
             <select
               value={settings.baseCurrency}
               onChange={(e) => handleInputChange('baseCurrency', e.target.value)}
               className="w-full bg-black/50 border border-white/20 rounded-lg px-3 py-2 text-white focus:border-white/40 focus:outline-none"
             >
-              <option value="CAD">CAD (Canadian Dollar)</option>
               <option value="USD">USD (US Dollar)</option>
+              <option value="CAD">CAD (Canadian Dollar)</option>
               <option value="EUR">EUR (Euro)</option>
             </select>
+            <p className="text-xs text-slate-500 mt-2">
+              This sets the default currency for the entire site. Customers can still switch currencies using the currency toggle.
+            </p>
+          </div>
+          
+          <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center mt-0.5">
+                <span className="text-green-400 text-xs font-bold">$</span>
+              </div>
+              <div className="flex-1">
+                <h4 className="text-green-300 font-medium mb-2">Currency Display</h4>
+                <div className="text-sm text-green-200 space-y-1">
+                  <p><strong>Current setting:</strong> {settings.baseCurrency === 'USD' ? 'USD (US Dollar)' : settings.baseCurrency === 'CAD' ? 'CAD (Canadian Dollar)' : 'EUR (Euro)'}</p>
+                  <p>• All prices will show in {settings.baseCurrency} by default</p>
+                  <p>• Customers can toggle between CAD/USD using the currency switcher</p>
+                  <p>• Taxes and shipping calculate correctly for both currencies</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

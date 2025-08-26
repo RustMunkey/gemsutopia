@@ -5,6 +5,7 @@ import { useGemPouch } from '@/contexts/GemPouchContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useInventory } from '@/contexts/InventoryContext';
+import { useAnalytics } from '@/lib/contexts/AnalyticsContext';
 import CurrencySwitcher from '@/components/CurrencySwitcher';
 import { useState, useEffect, useRef } from 'react';
 
@@ -40,6 +41,7 @@ export default function ProductContent({ product: initialProduct }: ProductConte
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist();
   const { formatPrice } = useCurrency();
   const { productRefreshTrigger } = useInventory();
+  const analytics = useAnalytics();
   const [product, setProduct] = useState(initialProduct);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -52,6 +54,10 @@ export default function ProductContent({ product: initialProduct }: ProductConte
   
   // Get actual quantity from gem pouch context
   const cartQuantity = items.filter(item => item.id === product.id).length;
+  
+  // Calculate current price (sale price if on sale, otherwise regular price)
+  const currentPrice = product.on_sale && product.sale_price ? product.sale_price : product.price;
+  const originalPrice = product.on_sale && product.sale_price ? product.price : null;
   
   // Get the main product image (use featured image index as default)
   const productImage = product.images && product.images.length > 0 
@@ -69,6 +75,12 @@ export default function ProductContent({ product: initialProduct }: ProductConte
   useEffect(() => {
     const trackView = async () => {
       try {
+        // Track with analytics system
+        if (analytics) {
+          analytics.trackProductView(product.id, product.name, currentPrice);
+        }
+
+        // Also track with existing API for internal view count
         const response = await fetch(`/api/products/${product.id}/view`, {
           method: 'POST'
         });
@@ -85,7 +97,7 @@ export default function ProductContent({ product: initialProduct }: ProductConte
     };
 
     trackView();
-  }, [product.id]);
+  }, [product.id, analytics, product.name, currentPrice]);
 
   // Get video URL from metadata or direct property
   const videoUrl = product.video_url || product.metadata?.video_url;
@@ -190,10 +202,6 @@ export default function ProductContent({ product: initialProduct }: ProductConte
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [allMedia.length, showZoomModal]);
-  
-  // Calculate current price (sale price if on sale, otherwise regular price)
-  const currentPrice = product.on_sale && product.sale_price ? product.sale_price : product.price;
-  const originalPrice = product.on_sale && product.sale_price ? product.price : null;
 
   // Refresh product data when inventory changes
   useEffect(() => {

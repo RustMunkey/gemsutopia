@@ -26,7 +26,7 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     setIsClient(true);
   }, []);
 
-  // Load from localStorage on mount (client only)
+  // Fetch site default currency and load from localStorage on mount (client only)
   useEffect(() => {
     if (!isClient) return;
     

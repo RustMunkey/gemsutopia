@@ -1,11 +1,12 @@
 'use client';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGemPouch } from '@/contexts/GemPouchContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useWallet } from '@/contexts/WalletContext';
 import { useNotification } from '@/contexts/NotificationContext';
 import { useInventory } from '@/contexts/InventoryContext';
+import { useAnalytics } from '@/lib/contexts/AnalyticsContext';
 import CartReview from './CartReview';
 import CustomerInfo from './CustomerInfo';
 import PaymentMethods from './PaymentMethods';
@@ -13,6 +14,7 @@ import PaymentForm from './PaymentForm';
 import OrderSuccess from './OrderSuccess';
 import { ArrowLeft } from 'lucide-react';
 import { calculateTax, TaxCalculationResult } from '@/lib/utils/taxCalculation';
+import { calculateShipping, ShippingSettings, ShippingCalculation } from '@/lib/utils/shipping';
 
 interface CheckoutData {
   customer: {
@@ -40,6 +42,7 @@ export default function CheckoutFlow() {
   const { isConnected, disconnectWallet } = useWallet();
   const { showNotification } = useNotification();
   const { refreshShopProducts, refreshProduct } = useInventory();
+  const analytics = useAnalytics();
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('cart');
   const [checkoutData, setCheckoutData] = useState<CheckoutData>({
     customer: {
@@ -58,7 +61,7 @@ export default function CheckoutFlow() {
     orderTotal: 0
   });
 
-  // Load saved customer data on mount
+  // Load saved customer data and shipping settings on mount
   useEffect(() => {
     const savedCustomerData = localStorage.getItem('customerShippingInfo');
     if (savedCustomerData) {
@@ -72,6 +75,21 @@ export default function CheckoutFlow() {
         console.error('Error loading saved customer data:', error);
       }
     }
+
+    // Load shipping settings
+    async function loadShippingSettings() {
+      try {
+        const response = await fetch('/api/shipping-settings');
+        if (response.ok) {
+          const data = await response.json();
+          setShippingSettings(data.settings);
+        }
+      } catch (error) {
+        console.error('Error loading shipping settings:', error);
+      }
+    }
+
+    loadShippingSettings();
   }, []);
   const [orderId, setOrderId] = useState<string>('');
   const [error, setError] = useState<string>('');
@@ -93,6 +111,7 @@ export default function CheckoutFlow() {
     free_shipping: boolean;
   } | null>(null);
   const [discountError, setDiscountError] = useState<string>('');
+  const [shippingSettings, setShippingSettings] = useState<ShippingSettings | null>(null);
 
   // Calculate totals
   const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -105,11 +124,31 @@ export default function CheckoutFlow() {
   const tax = taxCalculation?.amount || 0;
   const taxLabel = taxCalculation?.rate.name || 'Tax';
   
-  // Calculate shipping (free if discount includes free shipping)
-  const baseShippingCost = 15; // Default shipping cost
-  const shipping = appliedDiscount?.free_shipping ? 0 : baseShippingCost;
+  // Calculate shipping dynamically
+  const shipping = React.useMemo(() => {
+    if (appliedDiscount?.free_shipping) {
+      return 0; // Free shipping from discount
+    }
+    
+    if (!shippingSettings || items.length === 0) {
+      return 0; // No items or settings not loaded
+    }
+
+    // Get current currency from context
+    const currentCurrency = localStorage.getItem('currency') as 'CAD' | 'USD' || 'CAD';
+    const calculation = calculateShipping(items.length, currentCurrency, shippingSettings);
+    
+    return calculation.shippingCost;
+  }, [appliedDiscount?.free_shipping, shippingSettings, items.length]);
   
   const total = subtotalAfterDiscount + tax + shipping;
+
+  // Track checkout start event when component loads and total is calculated
+  useEffect(() => {
+    if (analytics && items.length > 0 && total > 0) {
+      analytics.trackCheckoutStart(total, items.length);
+    }
+  }, [analytics, items.length, total]);
 
   // Effect to calculate tax when payment method is selected (after customer info)
   useEffect(() => {
@@ -220,6 +259,12 @@ export default function CheckoutFlow() {
           cryptoCurrency: data.cryptoCurrency,
           cryptoPrices: data.cryptoPrices
         });
+        
+        // Track purchase completion
+        if (analytics) {
+          analytics.trackCheckoutComplete(data.orderId, data.actualAmount || total);
+        }
+        
         setCurrentStep('success');
         clearPouch();
         refreshShopProducts(); // Trigger real-time inventory update
@@ -388,6 +433,12 @@ export default function CheckoutFlow() {
                     items={items}
                     subtotal={subtotal}
                     tax={tax}
+                    shipping={shipping}
+                    paymentMethod={checkoutData.paymentMethod || undefined}
+                    shippingMethod={'flat'}
+                    appliedDiscount={appliedDiscount || undefined}
+                    taxRate={taxCalculation?.rate?.total || undefined}
+                    taxLabel={taxCalculation?.rate?.name}
                     shippingAddress={checkoutData.customer}
                   />
                 </div>
@@ -416,7 +467,7 @@ export default function CheckoutFlow() {
                 
                 <div className="space-y-4 mb-6">
                   {items.map((item, index) => (
-                    <div key={`${item.id}-${index}`} className="flex items-center space-x-3">
+                    <div key={`order-item-${index}-${item.id}`} className="flex items-center space-x-3">
                       <div className="w-12 h-12 bg-gray-100 rounded-lg flex-shrink-0">
                         <img
                           src={item.image}

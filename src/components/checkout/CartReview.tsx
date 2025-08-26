@@ -1,7 +1,8 @@
 'use client';
 import { useGemPouch } from '@/contexts/GemPouchContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import { Trash2, Plus, Minus, Tag, X, Check, Percent } from 'lucide-react';
+import { useNotification } from '@/contexts/NotificationContext';
+import { Trash2, Tag, X, Check } from 'lucide-react';
 import Image from 'next/image';
 
 interface CartReviewProps {
@@ -38,8 +39,54 @@ export default function CartReview({
   validateDiscountCode,
   removeDiscount
 }: CartReviewProps) {
-  const { removeItem, updateQuantity } = useGemPouch();
+  const { removeItem, updateQuantity, addItem } = useGemPouch();
   const { formatPrice } = useCurrency();
+  const { showNotification } = useNotification();
+
+  const handleQuantityDecrease = (itemId: string, currentQuantity: number, itemName: string) => {
+    if (currentQuantity <= 1) {
+      // Remove item directly and show notification like gem pouch
+      const item = items.find(i => i.id === itemId);
+      if (item) {
+        const originalQuantity = item.quantity;
+        removeItem(itemId);
+        showNotification('success', `${itemName} removed from your gem pouch`, {
+          label: 'Undo',
+          onClick: () => {
+            // Restore the item with original quantity like gem pouch does
+            addItem(item);
+            // Set the quantity back to what it was
+            if (originalQuantity > 1) {
+              setTimeout(() => updateQuantity(itemId, originalQuantity), 100);
+            }
+            showNotification('success', `${itemName} restored to gem pouch`);
+          }
+        });
+      }
+    } else {
+      updateQuantity(itemId, currentQuantity - 1);
+    }
+  };
+
+  const handleDirectRemoval = (itemId: string, itemName: string) => {
+    const item = items.find(i => i.id === itemId);
+    if (item) {
+      const originalQuantity = item.quantity;
+      removeItem(itemId);
+      showNotification('success', `${itemName} removed from your gem pouch`, {
+        label: 'Undo',
+        onClick: () => {
+          // Restore the item with original quantity like gem pouch does
+          addItem(item);
+          // Set the quantity back to what it was
+          if (originalQuantity > 1) {
+            setTimeout(() => updateQuantity(itemId, originalQuantity), 100);
+          }
+          showNotification('success', `${itemName} restored to gem pouch`);
+        }
+      });
+    }
+  };
 
   const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const totalItemCount = items.reduce((sum, item) => sum + item.quantity, 0);
@@ -68,39 +115,44 @@ export default function CartReview({
             <div className="flex-1">
               <h3 className="text-lg font-medium text-gray-900">{item.name}</h3>
               <div className="flex items-center gap-3 mt-2">
-                <span className="text-sm text-gray-600">Quantity:</span>
-                <div className="flex items-center border border-gray-300 rounded-lg">
-                  <button
-                    onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                    disabled={item.quantity <= 1}
-                    className="p-2 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed rounded-l-lg transition-colors"
-                  >
-                    <Minus className="h-4 w-4" />
-                  </button>
-                  <span className="px-3 py-2 min-w-[3rem] text-center font-medium">
-                    {item.quantity}
-                  </span>
-                  <button
-                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                    disabled={item.stock ? item.quantity >= item.stock : false}
-                    className="p-2 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed rounded-r-lg transition-colors"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </button>
-                </div>
-                {item.stock && (
-                  <span className="text-xs text-gray-500">
-                    {item.stock - item.quantity} left
-                  </span>
-                )}
+                <button
+                  onClick={() => handleQuantityDecrease(item.id, item.quantity, item.name)}
+                  className="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-black font-bold"
+                >
+                  −
+                </button>
+                <span className="font-medium text-black">
+                  Qty: {item.quantity}
+                  {item.stock && (
+                    <span className="text-gray-500 text-sm ml-2">
+                      (of {item.stock})
+                    </span>
+                  )}
+                </span>
+                <button
+                  onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                  disabled={item.stock ? item.quantity >= item.stock : false}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-black font-bold ${
+                    item.stock && item.quantity >= item.stock
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-gray-200 hover:bg-gray-300'
+                  }`}
+                >
+                  +
+                </button>
               </div>
+              {item.stock && item.quantity >= item.stock && (
+                <p className="text-sm text-orange-600 mt-1">
+                  Maximum stock reached
+                </p>
+              )}
               <p className="text-lg font-semibold text-gray-900 mt-2">
                 {formatPrice(item.price * item.quantity)}
               </p>
             </div>
             
             <button
-              onClick={() => removeItem(item.id)}
+              onClick={() => handleDirectRemoval(item.id, item.name)}
               className="p-2 text-gray-400 hover:text-red-500 transition-colors"
               title="Remove item"
             >
@@ -199,6 +251,7 @@ export default function CartReview({
       >
         Continue to Shipping
       </button>
+
     </div>
   );
 }

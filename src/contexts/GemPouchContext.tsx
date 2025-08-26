@@ -1,5 +1,6 @@
 'use client';
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useAnalytics } from '@/lib/contexts/AnalyticsContext';
 
 interface GemPouchItem {
   id: string;
@@ -26,6 +27,7 @@ const GemPouchContext = createContext<GemPouchContextType | undefined>(undefined
 export function GemPouchProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<GemPouchItem[]>([]);
   const [isClient, setIsClient] = useState(false);
+  const analytics = useAnalytics();
 
   // Set client flag
   useEffect(() => {
@@ -65,10 +67,21 @@ export function GemPouchProvider({ children }: { children: ReactNode }) {
         return [...prev, { ...item, quantity: 1 }];
       }
     });
+    
+    // Track cart add event
+    if (analytics) {
+      analytics.trackCartAdd(item.id, item.name, item.price, 1);
+    }
   };
 
   const removeItem = (id: string) => {
+    const itemToRemove = items.find(item => item.id === id);
     setItems(prev => prev.filter(item => item.id !== id));
+    
+    // Track cart remove event
+    if (analytics && itemToRemove) {
+      analytics.trackCartRemove(itemToRemove.id, itemToRemove.name);
+    }
   };
 
   const updateQuantity = (id: string, quantity: number) => {

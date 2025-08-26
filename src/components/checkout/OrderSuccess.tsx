@@ -11,9 +11,27 @@ interface OrderSuccessProps {
   cryptoAmount?: number;
   currency?: string;
   cryptoCurrency?: string;
-  items?: Array<{ name: string; price: number; quantity: number }>;
+  items?: Array<{ 
+    id: string;
+    name: string; 
+    price: number; 
+    quantity: number;
+    image?: string;
+  }>;
   subtotal?: number;
   tax?: number;
+  shipping?: number;
+  paymentMethod?: string;
+  shippingMethod?: 'flat' | 'combined';
+  appliedDiscount?: {
+    code: string;
+    type: 'percentage' | 'fixed_amount';
+    value: number;
+    amount: number;
+    free_shipping: boolean;
+  };
+  taxRate?: number;
+  taxLabel?: string;
   cryptoPrices?: any; // For converting individual amounts to crypto
   shippingAddress?: {
     firstName: string;
@@ -28,7 +46,26 @@ interface OrderSuccessProps {
   };
 }
 
-export default function OrderSuccess({ orderId, customerEmail, customerName, amount, cryptoAmount, currency = 'CAD', cryptoCurrency, items = [], subtotal, tax, cryptoPrices, shippingAddress }: OrderSuccessProps) {
+export default function OrderSuccess({ 
+  orderId, 
+  customerEmail, 
+  customerName, 
+  amount, 
+  cryptoAmount, 
+  currency = 'CAD', 
+  cryptoCurrency, 
+  items = [], 
+  subtotal, 
+  tax, 
+  shipping = 0,
+  paymentMethod,
+  shippingMethod,
+  appliedDiscount,
+  taxRate,
+  taxLabel,
+  cryptoPrices, 
+  shippingAddress 
+}: OrderSuccessProps) {
   
   // Calculate proper amounts for display
   const calculateDisplayAmounts = () => {
@@ -312,15 +349,32 @@ export default function OrderSuccess({ orderId, customerEmail, customerName, amo
               <span className="text-sm">{customerEmail}</span>
             </div>
             
+            {/* Payment Method */}
+            <div className="flex justify-between">
+              <span className="text-gray-600">Payment Method:</span>
+              <span className="text-sm">
+                {cryptoCurrency ? (
+                  `Cryptocurrency (${cryptoCurrency})`
+                ) : paymentMethod === 'stripe' ? (
+                  'Credit/Debit Card'
+                ) : paymentMethod === 'paypal' ? (
+                  'PayPal'
+                ) : (
+                  'Card Payment'
+                )}
+              </span>
+            </div>
+            
             {/* Order Breakdown */}
             {(subtotal !== undefined || items.length > 0) && (
               <>
                 <div className="border-t border-gray-200 pt-3 mt-4">
                   <div className="text-sm font-medium text-gray-700 mb-2">Order Breakdown:</div>
                   
-                  {/* Items */}
+                  {/* Items with Images */}
                   {items.length > 0 && (
-                    <div className="space-y-1 mb-3">
+                    <div className="space-y-3 mb-4">
+                      <div className="text-sm font-medium text-gray-700 mb-2">Products Ordered:</div>
                       {items.map((item, index) => {
                         const itemTotal = item.price * item.quantity;
                         const itemCryptoTotal = cryptoCurrency && cryptoAmount ? 
@@ -328,16 +382,30 @@ export default function OrderSuccess({ orderId, customerEmail, customerName, amo
                           itemTotal;
                         
                         return (
-                          <div key={index} className="flex justify-between text-sm">
-                            <span className="text-gray-600">
-                              {item.name} {item.quantity > 1 && `(×${item.quantity})`}
-                            </span>
-                            <span>
-                              {cryptoCurrency ? 
-                                `${itemCryptoTotal.toFixed(8)} ${cryptoCurrency}` : 
-                                `$${itemTotal.toFixed(2)} ${currency}`
-                              }
-                            </span>
+                          <div key={item.id || index} className="flex items-center gap-3 p-2 bg-white rounded border border-gray-100">
+                            {item.image && (
+                              <div className="w-12 h-12 bg-gray-100 rounded flex-shrink-0">
+                                <img
+                                  src={item.image}
+                                  alt={item.name}
+                                  className="w-full h-full object-cover rounded"
+                                />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <p className="text-sm font-medium text-gray-900 truncate">{item.name}</p>
+                                  <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
+                                </div>
+                                <span className="text-sm font-medium">
+                                  {cryptoCurrency ? 
+                                    `${itemCryptoTotal.toFixed(8)} ${cryptoCurrency}` : 
+                                    `$${itemTotal.toFixed(2)} ${currency}`
+                                  }
+                                </span>
+                              </div>
+                            </div>
                           </div>
                         );
                       })}
@@ -355,8 +423,42 @@ export default function OrderSuccess({ orderId, customerEmail, customerName, amo
                         }
                       </span>
                     </div>
+                    
+                    {/* Discount */}
+                    {appliedDiscount && (
+                      <div className="flex justify-between text-green-600">
+                        <span>Discount ({appliedDiscount.code}):</span>
+                        <span>
+                          -{cryptoCurrency ? 
+                            `${(appliedDiscount.amount * (cryptoAmount || 1) / amount).toFixed(8)} ${cryptoCurrency}` : 
+                            `$${appliedDiscount.amount.toFixed(2)} ${currency}`
+                          }
+                        </span>
+                      </div>
+                    )}
+                    
+                    {/* Shipping */}
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Tax:</span>
+                      <span className="text-gray-600">
+                        Shipping {shippingMethod && `(${shippingMethod === 'flat' ? 'Flat Rate' : 'Combined'})`}:
+                      </span>
+                      <span>
+                        {appliedDiscount?.free_shipping ? (
+                          <span className="text-green-600">FREE</span>
+                        ) : shipping === 0 ? (
+                          <span className="text-green-600">FREE</span>
+                        ) : cryptoCurrency ? 
+                          `${((shipping || 0) * (cryptoAmount || 1) / amount).toFixed(8)} ${cryptoCurrency}` : 
+                          `$${(shipping || 0).toFixed(2)} ${currency}`
+                        }
+                      </span>
+                    </div>
+                    
+                    {/* Tax */}
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">
+                        {taxLabel || 'Tax'} {taxRate && `(${(taxRate * 100).toFixed(1)}%)`}:
+                      </span>
                       <span>
                         {cryptoCurrency ? 
                           (displayAmounts.tax === 0 ? 'Tax Free (Crypto)' : `${displayAmounts.tax.toFixed(8)} ${cryptoCurrency}`) :

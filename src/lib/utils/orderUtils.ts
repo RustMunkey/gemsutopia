@@ -30,75 +30,121 @@ interface Order {
 export const isTestOrder = (order: Order): boolean => {
   const { payment_details } = order;
   
-  // IMPORTANT: ALL CURRENT ORDERS ARE TEST ORDERS
-  // Since the site hasn't had any real orders yet, we treat all existing orders as test orders
-  
-  // ALL USD/CAD payments are currently test payments (using test Stripe/PayPal keys)
-  if (payment_details.currency === 'USD' || payment_details.currency === 'CAD') {
-    return true;
+  if (!payment_details) {
+    return true; // No payment details = test order
   }
   
-  // ALL orders with no currency specified should also be test orders
-  if (!payment_details.currency) {
+  // Check for test Stripe payments
+  if (payment_details.method === 'stripe') {
+    // Test Stripe payment IDs start with specific prefixes
+    if (payment_details.payment_id?.startsWith('pi_test_') ||
+        payment_details.payment_id?.startsWith('cs_test_') ||
+        payment_details.payment_id?.startsWith('ch_test_') ||
+        payment_details.payment_id?.startsWith('pm_test_') ||
+        payment_details.payment_id?.includes('test')) {
+      return true;
+    }
+    
+    // If using test Stripe keys (check environment variables if available)
+    // For now, we can detect based on the current API keys in use
+    const usingTestKeys = process.env.STRIPE_SECRET_KEY?.startsWith('sk_test_') || 
+                          process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.startsWith('pk_test_');
+    if (usingTestKeys) {
+      return true;
+    }
+    
+    // Non-test Stripe payment IDs (live) start with pi_, cs_, etc. without "test_"
+    return false;
+  }
+  
+  // Check for test PayPal payments
+  if (payment_details.method === 'paypal') {
+    // PayPal sandbox (test) environment
+    if (payment_details.payment_id?.includes('sandbox') ||
+        payment_details.payment_id?.includes('test')) {
+      return true;
+    }
+    
+    // Check if using PayPal sandbox client ID
+    const usingSandbox = process.env.PAYPAL_CLIENT_ID?.includes('sandbox') ||
+                         process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID?.includes('sandbox');
+    if (usingSandbox) {
+      return true;
+    }
+    
+    // For now, assume all PayPal orders are test until live credentials are confirmed
     return true;
   }
   
   // Check for test crypto currencies and networks
   if (payment_details.method === 'crypto') {
-    const testNetworks = ['devnet', 'sepolia', 'testnet'];
+    const testNetworks = [
+      'devnet',
+      'testnet', 
+      'sepolia',
+      'goerli',
+      'rinkeby',
+      'kovan',
+      'ropsten',
+      'mumbai',
+      'polygon-mumbai',
+      'bitcoin testnet',
+      'ethereum sepolia'
+    ];
     
     // Check if it's on a test network
     if (payment_details.network && testNetworks.some(network => 
-      payment_details.network?.toLowerCase().includes(network.toLowerCase())
+      payment_details.network!.toLowerCase().includes(network.toLowerCase())
     )) {
       return true;
     }
     
-    // Check for test cryptocurrencies (tBTC, testnet tokens)
+    // Check for test cryptocurrencies or wallet addresses
     if (payment_details.crypto_currency === 'tBTC' ||
-        payment_details.crypto_currency?.toLowerCase().includes('test')) {
-      return true;
-    }
-    
-    // Check for test payment IDs or wallet addresses (common test patterns)
-    if (payment_details.payment_id?.includes('test') || 
+        payment_details.crypto_currency?.toLowerCase().includes('test') ||
         payment_details.wallet_address?.startsWith('tb1') || // Bitcoin testnet
-        payment_details.payment_id?.length < 20) { // Short test transaction IDs
+        payment_details.payment_id?.includes('testnet')) {
       return true;
     }
     
-    // ALL current Solana payments are test orders (no live integration yet)
-    if (payment_details.crypto_currency === 'SOL') {
-      return true;
+    // Bitcoin mainnet vs testnet detection
+    if (payment_details.crypto_currency === 'BTC') {
+      // Testnet addresses start with 'tb1', 'm', 'n', or '2' 
+      // Mainnet addresses start with '1', '3', or 'bc1'
+      if (payment_details.wallet_address) {
+        const addr = payment_details.wallet_address;
+        if (addr.startsWith('tb1') || addr.startsWith('m') || 
+            addr.startsWith('n') || addr.startsWith('2')) {
+          return true; // Testnet
+        }
+      }
+      
+      // Check for testnet transaction patterns
+      if (payment_details.network?.toLowerCase().includes('testnet')) {
+        return true;
+      }
     }
     
-    // ALL current Ethereum payments are test orders (no live integration yet)  
+    // Ethereum mainnet vs testnet detection
     if (payment_details.crypto_currency === 'ETH') {
-      return true;
+      if (payment_details.network?.toLowerCase().includes('sepolia') ||
+          payment_details.network?.toLowerCase().includes('goerli') ||
+          payment_details.network?.toLowerCase().includes('testnet')) {
+        return true; // Testnet
+      }
+    }
+    
+    // Solana mainnet vs devnet detection
+    if (payment_details.crypto_currency === 'SOL') {
+      if (payment_details.network?.toLowerCase().includes('devnet') ||
+          payment_details.network?.toLowerCase().includes('testnet')) {
+        return true; // Devnet/Testnet
+      }
     }
   }
   
-  // Check for test Stripe payments (test mode keys start with sk_test_ or pk_test_)
-  if (payment_details.method === 'stripe' || payment_details.method === 'card') {
-    // Test Stripe payment IDs typically start with pi_test_ or contain test patterns
-    if (payment_details.payment_id?.startsWith('pi_test_') ||
-        payment_details.payment_id?.includes('test')) {
-      return true;
-    }
-  }
-  
-  // Check for test PayPal payments
-  if (payment_details.method === 'paypal') {
-    // PayPal sandbox payment IDs often contain specific patterns
-    if (payment_details.payment_id?.includes('sandbox') ||
-        payment_details.payment_id?.includes('test')) {
-      return true;
-    }
-  }
-  
-  // Since ALL current orders are test orders, default to true for safety
-  // This ensures live mode shows a clean slate until real orders come in
-  return true;
+  // If we can't determine, assume it's live (real order)
+  return false;
 };
 
 // Filter out test orders from an array

@@ -42,7 +42,10 @@ export default function AdminLogin() {
       const data = await response.json();
 
       if (response.ok) {
+        // Store token in localStorage for client-side auth
         localStorage.setItem('admin-token', data.token);
+        
+        // Force a hard refresh to ensure clean state
         window.location.href = '/admin/dashboard';
       } else {
         setError(data.message || 'Login failed');

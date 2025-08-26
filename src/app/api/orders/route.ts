@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { recordDiscountUsage } from '@/lib/database/discountCodes';
+import { filterOrdersByMode } from '@/lib/utils/orderUtils';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -28,16 +28,6 @@ function isTestOrderFromPayment(orderData: any): boolean {
              payment.currency === 'CAD';   // Currently all CAD is test
              
     case 'crypto':
-      // Determine test vs live based on network and currency
-      const testNetworks = ['devnet', 'sepolia', 'testnet'];
-      const isTestNetwork = testNetworks.some(network => 
-        payment.network?.toLowerCase().includes(network.toLowerCase())
-      );
-      
-      // Check for test cryptocurrencies
-      const isTestCrypto = payment.cryptoCurrency === 'tBTC' ||
-                          payment.cryptoCurrency?.toLowerCase().includes('test');
-      
       // For now, all crypto payments are test until mainnet is enabled
       // TODO: Update this when mainnet crypto payments are enabled
       return true; // All current crypto is test (devnet/testnet)
@@ -56,8 +46,51 @@ export async function POST(request: NextRequest) {
     // Validate required fields
     if (!orderData.customerInfo || !orderData.payment || !orderData.totals) {
       console.error('Missing required order data fields');
+      console.error('customerInfo exists:', !!orderData.customerInfo);
+      console.error('payment exists:', !!orderData.payment);
+      console.error('totals exists:', !!orderData.totals);
       return NextResponse.json(
         { error: 'Missing required order data' },
+        { status: 400 }
+      );
+    }
+
+    // Validate customerInfo fields
+    const requiredCustomerFields = ['email', 'firstName', 'lastName', 'address', 'city', 'state', 'zipCode', 'country'];
+    const missingCustomerFields = requiredCustomerFields.filter(field => !orderData.customerInfo[field]);
+    if (missingCustomerFields.length > 0) {
+      console.error('Missing customer info fields:', missingCustomerFields);
+      return NextResponse.json(
+        { error: `Missing customer information: ${missingCustomerFields.join(', ')}` },
+        { status: 400 }
+      );
+    }
+
+    // Validate payment fields
+    if (!orderData.payment.paymentMethod) {
+      console.error('Missing payment method');
+      return NextResponse.json(
+        { error: 'Missing payment method' },
+        { status: 400 }
+      );
+    }
+
+    // Validate totals fields
+    const requiredTotalFields = ['subtotal', 'total'];
+    const missingTotalFields = requiredTotalFields.filter(field => orderData.totals[field] === undefined || orderData.totals[field] === null);
+    if (missingTotalFields.length > 0) {
+      console.error('Missing total fields:', missingTotalFields);
+      return NextResponse.json(
+        { error: `Missing order totals: ${missingTotalFields.join(', ')}` },
+        { status: 400 }
+      );
+    }
+
+    // Validate items array
+    if (!orderData.items || !Array.isArray(orderData.items) || orderData.items.length === 0) {
+      console.error('Missing or invalid items array');
+      return NextResponse.json(
+        { error: 'Order must contain at least one item' },
         { status: 400 }
       );
     }
@@ -67,50 +100,75 @@ export async function POST(request: NextRequest) {
     
     console.log(`Order detection: ${isTestOrder ? 'TEST' : 'LIVE'} order for payment method: ${orderData.payment.paymentMethod}`);
     
+    // Prepare order data for database insert
+    const orderRecord = {
+      customer_email: orderData.customerInfo.email,
+      customer_name: `${orderData.customerInfo.firstName} ${orderData.customerInfo.lastName}`,
+      shipping_address: {
+        address: orderData.customerInfo.address,
+        apartment: orderData.customerInfo.apartment || null,
+        city: orderData.customerInfo.city,
+        state: orderData.customerInfo.state,
+        zipCode: orderData.customerInfo.zipCode,
+        country: orderData.customerInfo.country
+      },
+      items: orderData.items,
+      payment_details: {
+        method: orderData.payment.paymentMethod,
+        payment_id: orderData.payment.paymentIntentId || orderData.payment.captureID || orderData.payment.transactionId,
+        amount: orderData.totals.total,
+        currency: orderData.payment.currency || 'CAD',
+        ...(orderData.payment.paymentMethod === 'crypto' && {
+          crypto_type: orderData.payment.cryptoType,
+          crypto_amount: orderData.payment.cryptoAmount,
+          crypto_currency: orderData.payment.cryptoCurrency,
+          wallet_address: orderData.payment.walletAddress,
+          network: orderData.payment.network
+        })
+      },
+      subtotal: parseFloat(orderData.totals.subtotal) || 0,
+      shipping: parseFloat(orderData.totals.shipping) || 0,
+      tax: parseFloat(orderData.totals.tax) || 0,
+      total: parseFloat(orderData.totals.total) || 0,
+      status: 'confirmed',
+      created_at: orderData.timestamp || new Date().toISOString()
+    };
+
+    console.log('Prepared order record for database:', JSON.stringify(orderRecord, null, 2));
+    
     // Save order to database
     const { data, error } = await supabase
       .from('orders')
-      .insert([{
-        customer_email: orderData.customerInfo.email,
-        customer_name: `${orderData.customerInfo.firstName} ${orderData.customerInfo.lastName}`,
-        shipping_address: {
-          address: orderData.customerInfo.address,
-          apartment: orderData.customerInfo.apartment,
-          city: orderData.customerInfo.city,
-          state: orderData.customerInfo.state,
-          zipCode: orderData.customerInfo.zipCode,
-          country: orderData.customerInfo.country
-        },
-        items: orderData.items,
-        payment_details: {
-          method: orderData.payment.paymentMethod,
-          payment_id: orderData.payment.paymentIntentId || orderData.payment.captureID || orderData.payment.transactionId,
-          amount: orderData.totals.total,
-          currency: orderData.payment.currency || 'CAD',
-          ...(orderData.payment.paymentMethod === 'crypto' && {
-            crypto_type: orderData.payment.cryptoType,
-            crypto_amount: orderData.payment.cryptoAmount,
-            crypto_currency: orderData.payment.cryptoCurrency,
-            wallet_address: orderData.payment.walletAddress,
-            network: orderData.payment.network
-          })
-        },
-        subtotal: orderData.totals.subtotal,
-        discount: orderData.totals.discount || 0,
-        shipping: orderData.totals.shipping,
-        tax: orderData.totals.tax,
-        total: orderData.totals.total,
-        discount_code: orderData.discountCode || null,
-        status: 'confirmed',
-        is_test_order: isTestOrder,
-        created_at: orderData.timestamp
-      }])
+      .insert([orderRecord])
       .select();
 
     if (error) {
-      console.error('Database error:', error);
+      console.error('Database error details:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
+      
+      // Provide more specific error messages based on error type
+      let userMessage = 'Failed to save order';
+      if (error.code === '23502') { // NOT NULL violation
+        userMessage = `Missing required field: ${error.details}`;
+      } else if (error.code === '23505') { // Unique constraint violation
+        userMessage = 'Duplicate order detected';
+      } else if (error.code === '42703') { // Undefined column
+        userMessage = 'Database schema error - invalid column';
+      } else if (error.message?.includes('JSON')) {
+        userMessage = 'Invalid data format in order';
+      }
+      
       return NextResponse.json(
-        { error: 'Failed to save order', details: error.message },
+        { 
+          error: userMessage, 
+          details: error.message,
+          code: error.code,
+          hint: error.hint
+        },
         { status: 500 }
       );
     }
@@ -125,39 +183,8 @@ export async function POST(request: NextRequest) {
 
     console.log('Order saved successfully to database:', data[0]);
     
-    // Record discount code usage if applicable
-    if (orderData.discountCode && orderData.discountCode.code) {
-      try {
-        console.log('Recording discount code usage for:', orderData.discountCode.code);
-        
-        // Get discount code ID first
-        const { data: discountData, error: discountError } = await supabase
-          .from('discount_codes')
-          .select('id')
-          .eq('code', orderData.discountCode.code)
-          .single();
-        
-        if (discountError || !discountData) {
-          console.error('Error finding discount code:', discountError);
-        } else {
-          const success = await recordDiscountUsage(
-            discountData.id,
-            data[0].id,
-            orderData.customerInfo.email,
-            orderData.discountCode.amount
-          );
-          
-          if (success) {
-            console.log('Discount code usage recorded successfully');
-          } else {
-            console.error('Failed to record discount code usage');
-          }
-        }
-      } catch (discountUsageError) {
-        console.error('Error recording discount code usage:', discountUsageError);
-        // Don't fail the order if discount recording fails
-      }
-    }
+    // Note: Discount code tracking disabled due to missing database columns
+    // This can be re-enabled when discount_codes table and related columns are added
     
     // Update product inventory after successful order
     if (orderData.items && Array.isArray(orderData.items)) {
@@ -213,37 +240,42 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '50');
     const offset = parseInt(searchParams.get('offset') || '0');
-    const mode = searchParams.get('mode') || 'dev'; // 'dev' or 'live'
+    const modeParam = searchParams.get('mode') || 'dev';
+    const mode = (modeParam === 'live' ? 'live' : 'dev') as 'dev' | 'live'; // 'dev' or 'live'
 
     console.log(`Fetching orders for ${mode} mode`);
 
-    // Filter orders based on mode
-    let query = supabase
+    // Get all orders for now (we'll filter in JavaScript if needed)
+    const { data: orders, error } = await supabase
       .from('orders')
-      .select('*');
-
-    // Apply mode-based filtering
-    if (mode === 'live') {
-      query = query.eq('is_test_order', false);
-    } else {
-      query = query.eq('is_test_order', true);
-    }
-
-    const { data: orders, error } = await query
+      .select('*')
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
     if (error) {
-      console.error('Database error:', error);
+      console.error('Database error details:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
       return NextResponse.json(
-        { error: 'Failed to fetch orders' },
+        { 
+          error: 'Failed to fetch orders',
+          details: error.message,
+          code: error.code
+        },
         { status: 500 }
       );
     }
 
-    console.log(`Found ${orders?.length || 0} ${mode} orders`);
+    console.log(`Found ${orders?.length || 0} total orders from database`);
 
-    return NextResponse.json({ orders: orders || [] });
+    // Filter orders based on mode (test vs live)
+    const filteredOrders = orders ? filterOrdersByMode(orders, mode) : [];
+    console.log(`Filtered to ${filteredOrders.length} ${mode} orders`);
+
+    return NextResponse.json({ orders: filteredOrders });
   } catch (error) {
     console.error('Error fetching orders:', error);
     return NextResponse.json(

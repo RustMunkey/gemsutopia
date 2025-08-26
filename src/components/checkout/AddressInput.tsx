@@ -39,6 +39,7 @@ export default function AddressInput({
     if (!value.trim()) {
       setSuggestions([]);
       setShowSuggestions(false);
+      setLoading(false);
       return;
     }
 
@@ -51,6 +52,13 @@ export default function AddressInput({
     debounceRef.current = setTimeout(async () => {
       if (value.trim().length >= 3) {
         setLoading(true);
+        
+        // Set a timeout to prevent infinite loading
+        const loadingTimeout = setTimeout(() => {
+          console.warn('Address suggestion timeout - stopping loading state');
+          setLoading(false);
+        }, 10000); // 10 second timeout
+        
         try {
           const addressSuggestions = await getAddressSuggestions(value.trim(), country);
           setSuggestions(addressSuggestions);
@@ -60,8 +68,11 @@ export default function AddressInput({
           setSuggestions([]);
           setShowSuggestions(false);
         } finally {
+          clearTimeout(loadingTimeout);
           setLoading(false);
         }
+      } else {
+        setLoading(false);
       }
     }, 500);
 
@@ -142,41 +153,108 @@ export default function AddressInput({
   };
 
   const parseAddressFromSuggestion = (suggestion: string) => {
-    // Basic parsing of address components from OpenStreetMap suggestion
-    // Format is usually: "Street Number Street Name, City, Province/State, Postal Code, Country"
+    // Enhanced parsing of address components from OpenStreetMap suggestion
+    // Format varies but usually: "Street Address, City, Province/State, Postal Code, Country"
+    console.log('Parsing suggestion:', suggestion); // Debug log
+    
     const parts = suggestion.split(', ');
-    if (parts.length >= 4) {
+    console.log('Address parts:', parts); // Debug log
+    
+    if (parts.length >= 3) {
       const streetAddress = parts[0];
-      const city = parts[1];
-      const state = parts[2];
-      const remaining = parts.slice(3);
-      
-      // Extract postal code (pattern matching)
+      let city = '';
+      let state = '';
       let postalCode = '';
-      let country = '';
+      let country = 'Canada'; // Default
       
-      for (const part of remaining) {
+      // More flexible parsing - scan all parts for different components
+      for (let i = 1; i < parts.length; i++) {
+        const part = parts[i].trim();
+        
+        // Check for postal codes first (most specific)
         if (/^[A-Za-z]\d[A-Za-z] \d[A-Za-z]\d$/.test(part)) {
-          // Canadian postal code
+          // Canadian postal code (K1A 0A6 format)
           postalCode = part;
         } else if (/^\d{5}(-\d{4})?$/.test(part)) {
-          // US zip code
+          // US zip code (12345 or 12345-6789)
           postalCode = part;
-        } else if (part.toLowerCase().includes('canada') || part.toLowerCase().includes('united states')) {
-          country = part.includes('canada') ? 'Canada' : 'United States';
+        } else if (part.toLowerCase().includes('canada')) {
+          country = 'Canada';
+        } else if (part.toLowerCase().includes('united states') || part.toLowerCase() === 'usa') {
+          country = 'United States';
+        } else if (isCanadianProvince(part) || isUSState(part)) {
+          // This looks like a province/state - normalize Canadian provinces to abbreviations
+          state = country === 'Canada' ? normalizeCanadianProvince(part) : part;
+        } else if (!city && i === 1) {
+          // Usually the first part after street address is the city
+          city = part;
+        } else if (!city && !state) {
+          // If we haven't found city yet, this could be it
+          city = part;
         }
       }
       
-      return {
+      // If we didn't find a state, try to extract from the parts again
+      if (!state && parts.length >= 3) {
+        // Check the part that's typically the state/province position
+        const potentialState = parts[parts.length - 3] || parts[2];
+        if (isCanadianProvince(potentialState) || isUSState(potentialState)) {
+          state = country === 'Canada' ? normalizeCanadianProvince(potentialState) : potentialState;
+        }
+      }
+      
+      const result = {
         address: streetAddress,
         city: city,
         state: state,
         zipCode: postalCode,
-        country: country || 'Canada'
+        country: country
       };
+      
+      console.log('Parsed result:', result); // Debug log
+      return result;
     }
     
+    console.log('Could not parse address parts'); // Debug log
     return null;
+  };
+
+  // Helper functions for state/province detection
+  const isCanadianProvince = (text: string): boolean => {
+    const provinces = ['AB', 'BC', 'MB', 'NB', 'NL', 'NT', 'NS', 'NU', 'ON', 'PE', 'QC', 'SK', 'YT',
+                     'Alberta', 'British Columbia', 'Manitoba', 'New Brunswick', 'Newfoundland and Labrador',
+                     'Northwest Territories', 'Nova Scotia', 'Nunavut', 'Ontario', 'Prince Edward Island',
+                     'Quebec', 'Saskatchewan', 'Yukon'];
+    return provinces.some(province => text.toLowerCase().includes(province.toLowerCase()));
+  };
+
+  const normalizeCanadianProvince = (text: string): string => {
+    const provinceMap: { [key: string]: string } = {
+      'alberta': 'AB',
+      'british columbia': 'BC',
+      'manitoba': 'MB',
+      'new brunswick': 'NB',
+      'newfoundland and labrador': 'NL',
+      'northwest territories': 'NT',
+      'nova scotia': 'NS',
+      'nunavut': 'NU',
+      'ontario': 'ON',
+      'prince edward island': 'PE',
+      'quebec': 'QC',
+      'saskatchewan': 'SK',
+      'yukon': 'YT'
+    };
+    
+    const normalized = text.toLowerCase();
+    return provinceMap[normalized] || text;
+  };
+
+  const isUSState = (text: string): boolean => {
+    const states = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 
+                   'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 
+                   'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 
+                   'VA', 'WA', 'WV', 'WI', 'WY'];
+    return states.some(state => text.toUpperCase() === state);
   };
 
   return (
@@ -191,7 +269,7 @@ export default function AddressInput({
           onBlur={handleBlur}
           placeholder={loading ? "Finding addresses..." : placeholder}
           className={`${className} ${error ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : ''} pr-10`}
-          disabled={loading}
+          disabled={false}
         />
         <div className="absolute inset-y-0 right-0 flex items-center pr-3">
           {loading ? (
@@ -243,10 +321,6 @@ export default function AddressInput({
         </div>
       )}
 
-      {/* Help text */}
-      <p className="mt-1 text-xs text-gray-500">
-        Start typing your address for suggestions (powered by OpenStreetMap)
-      </p>
     </div>
   );
 }

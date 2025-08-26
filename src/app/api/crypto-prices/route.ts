@@ -26,7 +26,20 @@ export async function GET() {
 
     const data: CoinGeckoResponse = await response.json();
     
-    return NextResponse.json(data);
+    // Calculate exchange rates from Bitcoin prices
+    const cadToUsdRate = data.bitcoin.usd / data.bitcoin.cad;
+    const usdToCadRate = data.bitcoin.cad / data.bitcoin.usd;
+    
+    const responseData = {
+      ...data,
+      success: true,
+      exchangeRates: {
+        CAD_TO_USD: parseFloat(cadToUsdRate.toFixed(4)),
+        USD_TO_CAD: parseFloat(usdToCadRate.toFixed(4))
+      }
+    };
+    
+    return NextResponse.json(responseData);
   } catch (error) {
     console.error('Failed to fetch crypto prices:', error);
     
@@ -34,7 +47,12 @@ export async function GET() {
     const fallbackPrices = {
       bitcoin: { usd: 43000, cad: 58000 },
       ethereum: { usd: 2300, cad: 3100 },
-      solana: { usd: 85, cad: 115 }
+      solana: { usd: 85, cad: 115 },
+      success: true,
+      exchangeRates: {
+        CAD_TO_USD: 0.74,
+        USD_TO_CAD: 1.35
+      }
     };
     
     return NextResponse.json(fallbackPrices);

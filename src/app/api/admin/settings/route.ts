@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { updateSEOMetadata } from '@/lib/utils/seoMetadata';
 import { updateSiteInfo } from '@/lib/utils/siteInfo';
 import { getAllSettings, setMultipleSettings } from '@/lib/database/siteSettings';
+import { validateShippingSettings } from '@/lib/security/sanitize';
 
 // Load settings from database
 async function loadSettingsFromDB() {
@@ -14,10 +15,16 @@ async function loadSettingsFromDB() {
       siteName: dbSettings.site_name || 'Gemsutopia',
       siteFavicon: dbSettings.site_favicon || '/favicon.ico',
       
-      // Shipping Settings (these can stay in-memory for now or be moved to DB later)
-      enableShipping: true,
+      // Shipping Settings (from database)
+      enableShipping: dbSettings.enable_shipping !== undefined ? dbSettings.enable_shipping === 'true' : true,
       shippingRates: [],
-      internationalShipping: true,
+      internationalShipping: dbSettings.international_shipping !== undefined ? dbSettings.international_shipping === 'true' : true,
+      singleItemShippingCAD: parseFloat(dbSettings.single_item_shipping_cad) || 18.50,
+      singleItemShippingUSD: parseFloat(dbSettings.single_item_shipping_usd) || 14.50,
+      combinedShippingCAD: parseFloat(dbSettings.combined_shipping_cad) || 20.00,
+      combinedShippingUSD: parseFloat(dbSettings.combined_shipping_usd) || 15.50,
+      combinedShippingEnabled: dbSettings.combined_shipping_enabled !== undefined ? dbSettings.combined_shipping_enabled === 'true' : true,
+      combinedShippingThreshold: parseInt(dbSettings.combined_shipping_threshold) || 2,
       
       // Tax Settings  
       enableTaxes: true,
@@ -30,7 +37,7 @@ async function loadSettingsFromDB() {
       cryptoEnabled: true,
       
       // Currency Settings
-      baseCurrency: 'CAD',
+      baseCurrency: dbSettings.base_currency || 'USD',
       supportedCurrencies: ['CAD', 'USD', 'EUR'],
       
       // SEO Settings (from database)
@@ -54,13 +61,19 @@ async function loadSettingsFromDB() {
       enableShipping: true,
       shippingRates: [],
       internationalShipping: true,
+      singleItemShippingCAD: 18.50,
+      singleItemShippingUSD: 14.50,
+      combinedShippingCAD: 20.00,
+      combinedShippingUSD: 15.50,
+      combinedShippingEnabled: true,
+      combinedShippingThreshold: 2,
       enableTaxes: true,
       taxRate: 13.0,
       taxExemptStates: [],
       stripeEnabled: true,
       paypalEnabled: true,
       cryptoEnabled: true,
-      baseCurrency: 'CAD',
+      baseCurrency: 'USD',
       supportedCurrencies: ['CAD', 'USD', 'EUR'],
       seoTitle: 'Gemsutopia - Premium Gemstone Collection',
       seoDescription: 'Hi, I\'m Reese, founder of Gemsutopia and proud Canadian gem dealer from Alberta. Every gemstone is hand-selected, ethically sourced, and personally...',
@@ -78,17 +91,7 @@ async function loadSettingsFromDB() {
 
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const token = authHeader.split(' ')[1];
-    // Simple token check - in production, verify against database
-    if (!token || token.length < 10) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-    }
-
+    // Authentication is handled by middleware.ts - no need for redundant checks
     console.log('Settings GET request - loading from database');
     const settings = await loadSettingsFromDB();
     return NextResponse.json(settings);
@@ -100,18 +103,20 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // Authentication is handled by middleware.ts - no need for redundant checks
+    const rawUpdates = await request.json();
+    
+    // Validate and sanitize all inputs
+    const validation = validateShippingSettings(rawUpdates);
+    if (!validation.isValid) {
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Invalid input data',
+        details: validation.errors 
+      }, { status: 400 });
     }
-
-    const token = authHeader.split(' ')[1];
-    // Simple token check - in production, verify against database
-    if (!token || token.length < 10) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-    }
-
-    const updates = await request.json();
+    
+    const updates = validation.sanitized;
     
     // Load current settings from database
     const currentSettings = await loadSettingsFromDB();
@@ -123,6 +128,21 @@ export async function POST(request: NextRequest) {
     // Map frontend field names to database keys for persistent fields
     if (updates.siteName !== undefined) dbUpdates.site_name = updates.siteName;
     if (updates.siteFavicon !== undefined) dbUpdates.site_favicon = updates.siteFavicon;
+    
+    // Currency settings
+    if (updates.baseCurrency !== undefined) dbUpdates.base_currency = updates.baseCurrency;
+    
+    // Shipping settings
+    if (updates.enableShipping !== undefined) dbUpdates.enable_shipping = updates.enableShipping.toString();
+    if (updates.internationalShipping !== undefined) dbUpdates.international_shipping = updates.internationalShipping.toString();
+    if (updates.singleItemShippingCAD !== undefined) dbUpdates.single_item_shipping_cad = updates.singleItemShippingCAD.toString();
+    if (updates.singleItemShippingUSD !== undefined) dbUpdates.single_item_shipping_usd = updates.singleItemShippingUSD.toString();
+    if (updates.combinedShippingCAD !== undefined) dbUpdates.combined_shipping_cad = updates.combinedShippingCAD.toString();
+    if (updates.combinedShippingUSD !== undefined) dbUpdates.combined_shipping_usd = updates.combinedShippingUSD.toString();
+    if (updates.combinedShippingEnabled !== undefined) dbUpdates.combined_shipping_enabled = updates.combinedShippingEnabled.toString();
+    if (updates.combinedShippingThreshold !== undefined) dbUpdates.combined_shipping_threshold = updates.combinedShippingThreshold.toString();
+    
+    // SEO settings
     if (updates.seoTitle !== undefined) dbUpdates.seo_title = updates.seoTitle;
     if (updates.seoDescription !== undefined) dbUpdates.seo_description = updates.seoDescription;
     if (updates.seoKeywords !== undefined) dbUpdates.seo_keywords = updates.seoKeywords;

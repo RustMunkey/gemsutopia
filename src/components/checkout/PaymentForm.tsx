@@ -166,6 +166,8 @@ function StripeForm({ amount, customerData, items, appliedDiscount, subtotal, ta
           timestamp: new Date().toISOString()
         };
 
+        console.log('Sending order data to API:', JSON.stringify(orderData, null, 2));
+
         const response = await fetch('/api/orders', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -176,7 +178,17 @@ function StripeForm({ amount, customerData, items, appliedDiscount, subtotal, ta
           const orderResult = await response.json();
           onSuccess({ orderId: orderResult.order.id, actualAmount: amount, currency: 'CAD' });
         } else {
-          const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+          const responseText = await response.text();
+          console.error('Order save failed - Response status:', response.status);
+          console.error('Order save failed - Response text:', responseText);
+          
+          let errorData = { error: 'Unknown error' };
+          try {
+            errorData = JSON.parse(responseText);
+          } catch (e) {
+            errorData = { error: `Server error (${response.status}): ${responseText}` };
+          }
+          
           console.error('Order save failed:', errorData);
           onError(`Payment processed but order save failed: ${errorData.error || 'Unknown error'}. Please contact support.`);
         }
@@ -390,6 +402,8 @@ function PayPalForm({ amount, customerData, items, appliedDiscount, subtotal, ta
         timestamp: new Date().toISOString()
       };
 
+      console.log('Sending PayPal order data to API:', JSON.stringify(orderData, null, 2));
+
       const response = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -400,7 +414,17 @@ function PayPalForm({ amount, customerData, items, appliedDiscount, subtotal, ta
         const orderResult = await response.json();
         onSuccess({ orderId: orderResult.order.id, actualAmount: amount, currency: 'CAD' });
       } else {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        const responseText = await response.text();
+        console.error('Order save failed - Response status:', response.status);
+        console.error('Order save failed - Response text:', responseText);
+        
+        let errorData = { error: 'Unknown error' };
+        try {
+          errorData = JSON.parse(responseText);
+        } catch (e) {
+          errorData = { error: `Server error (${response.status}): ${responseText}` };
+        }
+        
         console.error('Order save failed:', errorData);
         onError(`Payment processed but order save failed: ${errorData.error || 'Unknown error'}. Please contact support.`);
       }
