@@ -273,9 +273,11 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Email sending failed:', error);
+    console.error('Full error object:', JSON.stringify(error, null, 2));
     return NextResponse.json({ 
       error: 'Failed to send email receipt',
-      details: error instanceof Error ? error.message : 'Unknown error'
+      details: error instanceof Error ? error.message : 'Unknown error',
+      fullError: error
     }, { status: 500 });
   }
 }
