@@ -105,12 +105,15 @@ export async function POST(request: NextRequest) {
       customer_email: orderData.customerInfo.email,
       customer_name: `${orderData.customerInfo.firstName} ${orderData.customerInfo.lastName}`,
       shipping_address: {
+        firstName: orderData.customerInfo.firstName,
+        lastName: orderData.customerInfo.lastName,
         address: orderData.customerInfo.address,
         apartment: orderData.customerInfo.apartment || null,
         city: orderData.customerInfo.city,
         state: orderData.customerInfo.state,
         zipCode: orderData.customerInfo.zipCode,
-        country: orderData.customerInfo.country
+        country: orderData.customerInfo.country,
+        phone: orderData.customerInfo.phone || null
       },
       items: orderData.items,
       payment_details: {

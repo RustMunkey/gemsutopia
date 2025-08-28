@@ -246,14 +246,15 @@ export async function fetchShippingSettings(): Promise<ShippingSettings | null> 
 
 /**
  * API endpoint to get shipping settings (public, no auth needed)
+ * These defaults should match the current admin panel settings
  */
 export const DEFAULT_SHIPPING_SETTINGS: ShippingSettings = {
   enableShipping: true,
   internationalShipping: true,
-  singleItemShippingCAD: 18.50,
-  singleItemShippingUSD: 14.50,
-  combinedShippingCAD: 20.00,
-  combinedShippingUSD: 15.50,
+  singleItemShippingCAD: 21.00,
+  singleItemShippingUSD: 15.00,
+  combinedShippingCAD: 25.00,
+  combinedShippingUSD: 18.00,
   combinedShippingEnabled: true,
   combinedShippingThreshold: 2,
 };

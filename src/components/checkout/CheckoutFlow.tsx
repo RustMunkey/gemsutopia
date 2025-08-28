@@ -14,7 +14,7 @@ import PaymentForm from './PaymentForm';
 import OrderSuccess from './OrderSuccess';
 import { ArrowLeft } from 'lucide-react';
 import { calculateTax, TaxCalculationResult } from '@/lib/utils/taxCalculation';
-import { calculateShipping, ShippingSettings, ShippingCalculation } from '@/lib/utils/shipping';
+import { calculateShipping, ShippingSettings } from '@/lib/utils/shipping';
 
 interface CheckoutData {
   customer: {
@@ -42,6 +42,10 @@ export default function CheckoutFlow() {
   const { isConnected, disconnectWallet } = useWallet();
   const { showNotification } = useNotification();
   const { refreshShopProducts, refreshProduct } = useInventory();
+  
+  // Preserve items and subtotal for OrderSuccess (before clearPouch)
+  const [preservedItems, setPreservedItems] = useState(items);
+  const [preservedSubtotal, setPreservedSubtotal] = useState(0);
   const analytics = useAnalytics();
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('cart');
   const [checkoutData, setCheckoutData] = useState<CheckoutData>({
@@ -76,20 +80,6 @@ export default function CheckoutFlow() {
       }
     }
 
-    // Load shipping settings
-    async function loadShippingSettings() {
-      try {
-        const response = await fetch('/api/shipping-settings');
-        if (response.ok) {
-          const data = await response.json();
-          setShippingSettings(data.settings);
-        }
-      } catch (error) {
-        console.error('Error loading shipping settings:', error);
-      }
-    }
-
-    loadShippingSettings();
   }, []);
   const [orderId, setOrderId] = useState<string>('');
   const [error, setError] = useState<string>('');
@@ -111,7 +101,6 @@ export default function CheckoutFlow() {
     free_shipping: boolean;
   } | null>(null);
   const [discountError, setDiscountError] = useState<string>('');
-  const [shippingSettings, setShippingSettings] = useState<ShippingSettings | null>(null);
   const [useCombinedShipping, setUseCombinedShipping] = useState<boolean>(true); // Default to combined shipping
 
   // Calculate totals
@@ -125,29 +114,54 @@ export default function CheckoutFlow() {
   const tax = taxCalculation?.amount || 0;
   const taxLabel = taxCalculation?.rate.name || 'Tax';
   
-  // Calculate shipping dynamically
-  const shipping = React.useMemo(() => {
-    if (appliedDiscount?.free_shipping) {
-      return 0; // Free shipping from discount
-    }
-    
-    if (!shippingSettings || items.length === 0) {
-      return 0; // No items or settings not loaded
-    }
+  // Calculate shipping dynamically with fresh settings
+  const [shipping, setShipping] = useState<number>(0);
+  const [currentShippingSettings, setCurrentShippingSettings] = useState<ShippingSettings | null>(null);
+  
+  React.useEffect(() => {
+    async function calculateShippingCost() {
+      if (appliedDiscount?.free_shipping) {
+        setShipping(0);
+        return;
+      }
+      
+      if (items.length === 0) {
+        setShipping(0);
+        return;
+      }
 
-    // Get current currency from context
-    const currentCurrency = localStorage.getItem('currency') as 'CAD' | 'USD' || 'CAD';
+      try {
+        // Fetch fresh shipping settings from database
+        const response = await fetch('/api/shipping-settings');
+        if (!response.ok) {
+          setShipping(0);
+          return;
+        }
+        
+        const data = await response.json();
+        const freshSettings = data.settings;
+        setCurrentShippingSettings(freshSettings);
+        
+        // Get current currency from context
+        const currentCurrency = localStorage.getItem('currency') as 'CAD' | 'USD' || 'CAD';
+        
+        // Create modified shipping settings based on user choice
+        const modifiedSettings = {
+          ...freshSettings,
+          combinedShippingEnabled: useCombinedShipping && freshSettings.combinedShippingEnabled
+        };
+        
+        const calculation = calculateShipping(items.length, currentCurrency, modifiedSettings);
+        setShipping(calculation.shippingCost);
+        
+      } catch (error) {
+        console.error('Error calculating shipping:', error);
+        setShipping(0);
+      }
+    }
     
-    // Create modified shipping settings based on user choice
-    const modifiedSettings = {
-      ...shippingSettings,
-      combinedShippingEnabled: useCombinedShipping && shippingSettings.combinedShippingEnabled
-    };
-    
-    const calculation = calculateShipping(items.length, currentCurrency, modifiedSettings);
-    
-    return calculation.shippingCost;
-  }, [appliedDiscount?.free_shipping, shippingSettings, items.length, useCombinedShipping]);
+    calculateShippingCost();
+  }, [appliedDiscount?.free_shipping, items.length, useCombinedShipping]);
   
   const total = subtotalAfterDiscount + tax + shipping;
 
@@ -172,7 +186,7 @@ export default function CheckoutFlow() {
         setCalculatingTax(true);
         try {
           const result = await calculateTax(
-            subtotalAfterDiscount, // Tax calculated on discounted amount
+            subtotal, // Tax calculated on FULL amount before discount - legally required
             checkoutData.customer.country,
             checkoutData.customer.state,
             checkoutData.customer.city,
@@ -272,6 +286,10 @@ export default function CheckoutFlow() {
         if (analytics) {
           analytics.trackCheckoutComplete(data.orderId, data.actualAmount || total);
         }
+        
+        // PRESERVE items and subtotal for OrderSuccess BEFORE clearing pouch
+        setPreservedItems(items);
+        setPreservedSubtotal(subtotal);
         
         setCurrentStep('success');
         clearPouch();
@@ -438,8 +456,8 @@ export default function CheckoutFlow() {
                     currency={paymentInfo?.currency || 'CAD'}
                     cryptoCurrency={paymentInfo?.cryptoCurrency}
                     cryptoPrices={paymentInfo?.cryptoPrices}
-                    items={items}
-                    subtotal={subtotal}
+                    items={preservedItems}
+                    subtotal={preservedSubtotal}
                     tax={tax}
                     shipping={shipping}
                     paymentMethod={checkoutData.paymentMethod || undefined}
@@ -475,7 +493,7 @@ export default function CheckoutFlow() {
                 
                 <div className="space-y-4 mb-6">
                   {items.map((item, index) => (
-                    <div key={`order-item-${index}-${item.id}`} className="flex items-center space-x-3">
+                    <div key={`checkout-summary-${item.id || `item-${index}`}`} className="flex items-center space-x-3">
                       <div className="w-12 h-12 bg-gray-100 rounded-lg flex-shrink-0">
                         <img
                           src={item.image}
@@ -505,7 +523,7 @@ export default function CheckoutFlow() {
                   )}
                   
                   {/* Shipping Option Selection */}
-                  {currentStep !== 'cart' && shippingSettings?.combinedShippingEnabled && items.length >= (shippingSettings?.combinedShippingThreshold || 2) && (
+                  {currentStep !== 'cart' && currentShippingSettings?.combinedShippingEnabled && items.length >= (currentShippingSettings?.combinedShippingThreshold || 2) && (
                     <div className="border-t border-gray-200 pt-3 mb-3">
                       <div className="flex items-center space-x-2 mb-2">
                         <input
@@ -516,13 +534,13 @@ export default function CheckoutFlow() {
                           className="rounded border-gray-300 text-black focus:ring-black"
                         />
                         <label htmlFor="combined-shipping" className="text-sm text-gray-600">
-                          Use Combined Shipping (Save money!)
+                          Use Combined Shipping
                         </label>
                       </div>
                       <p className="text-xs text-gray-500">
                         {useCombinedShipping 
-                          ? `Pay one flat rate for all ${items.length} items` 
-                          : `Pay shipping for each item individually (${formatPrice(items.length * (localStorage.getItem('currency') === 'USD' ? shippingSettings.singleItemShippingUSD : shippingSettings.singleItemShippingCAD))})`
+                          ? `Pay one flat rate (${formatPrice(localStorage.getItem('currency') === 'USD' ? currentShippingSettings.combinedShippingUSD : currentShippingSettings.combinedShippingCAD)}) for all ${items.length} items` 
+                          : `Pay shipping per item (${formatPrice(localStorage.getItem('currency') === 'USD' ? currentShippingSettings.singleItemShippingUSD : currentShippingSettings.singleItemShippingCAD)} each = ${formatPrice(items.length * (localStorage.getItem('currency') === 'USD' ? currentShippingSettings.singleItemShippingUSD : currentShippingSettings.singleItemShippingCAD))} total)`
                         }
                       </p>
                     </div>

@@ -23,11 +23,11 @@ export default function Settings() {
     enableShipping: true,
     shippingRates: [],
     internationalShipping: true,
-    // New dynamic shipping settings
-    singleItemShippingCAD: 18.50,
-    singleItemShippingUSD: 14.50,
-    combinedShippingCAD: 20.00,
-    combinedShippingUSD: 15.50,
+    // New dynamic shipping settings - these match current admin panel values
+    singleItemShippingCAD: 21.00,
+    singleItemShippingUSD: 15.00,
+    combinedShippingCAD: 25.00,
+    combinedShippingUSD: 18.00,
     combinedShippingEnabled: true,
     combinedShippingThreshold: 2, // Apply combined shipping for 2+ items
     

@@ -17,11 +17,17 @@ export default function Wishlist() {
   const { showNotification } = useNotification();
   
   const addAllToCart = () => {
+    const addedItems: any[] = [];
     items.forEach(item => {
       if (!isInPouch(item.id)) {
         addToGemPouch(item);
+        removeItem(item.id);
+        addedItems.push(item);
       }
     });
+    if (addedItems.length > 0) {
+      showNotification('success', `Moved ${addedItems.length} items to cart and removed from wishlist`);
+    }
   };
 
   const handleRemoveFromWishlist = (item: any) => {
@@ -63,6 +69,9 @@ export default function Wishlist() {
       handleRemoveFromGemPouch(item);
     } else {
       addToGemPouch(item);
+      // Remove from wishlist when added to cart
+      removeItem(item.id);
+      showNotification('success', `${item.name} moved to cart and removed from wishlist`);
     }
   };
   

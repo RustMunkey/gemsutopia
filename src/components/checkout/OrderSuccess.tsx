@@ -1,6 +1,6 @@
 'use client';
 import { CheckCircle, Package, Mail, ArrowRight } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { initEmailJS, sendOrderReceiptEmail } from '@/lib/emailjs';
 
 interface OrderSuccessProps {
@@ -67,30 +67,59 @@ export default function OrderSuccess({
   shippingAddress 
 }: OrderSuccessProps) {
   
-  // Calculate proper amounts for display using passed values
-  const calculateDisplayAmounts = () => {
-    // Use the actual values passed from CheckoutFlow
-    const actualSubtotal = subtotal || (items ? items.reduce((sum, item) => sum + (item.price * item.quantity), 0) : 0);
-    const actualTax = tax || 0;
-    
-    if (cryptoCurrency && cryptoAmount) {
-      // For crypto payments: convert amounts to crypto using the conversion ratio
-      const fiatTotal = actualSubtotal + actualTax + (shipping || 0);
-      const conversionRate = cryptoAmount / (fiatTotal || cryptoAmount);
-      return {
-        subtotal: actualSubtotal * conversionRate,
-        tax: actualTax * conversionRate,
-      };
-    } else {
-      // For fiat payments: use actual values directly
-      return {
-        subtotal: actualSubtotal,
-        tax: actualTax,
-      };
+  // RECALCULATE values exactly like CheckoutFlow to ensure accuracy
+  const calculatedSubtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const calculatedDiscount = appliedDiscount?.amount || 0;
+  const subtotalAfterDiscount = calculatedSubtotal - calculatedDiscount;
+  
+  // Use calculated values if they're valid, otherwise use passed values
+  const actualSubtotal = calculatedSubtotal > 0 ? calculatedSubtotal : (subtotal || 0);
+  const actualTax = tax || 0;
+  const actualDiscount = calculatedDiscount;
+  
+  // CALCULATE shipping directly from database settings - FUCK the passed value
+  const [calculatedShipping, setCalculatedShipping] = useState<number>(shipping || 0);
+  
+  React.useEffect(() => {
+    async function getCorrectShipping() {
+      if (appliedDiscount?.free_shipping) {
+        setCalculatedShipping(0);
+        return;
+      }
+      
+      try {
+        // Fetch fresh shipping settings from database
+        const response = await fetch('/api/shipping-settings');
+        const data = await response.json();
+        const settings = data.settings;
+        
+        // Use the EXACT same logic as CheckoutFlow
+        const isCombined = shippingMethod === 'combined';
+        const isUSD = currency === 'USD';
+        
+        let shippingCost = 0;
+        if (isCombined) {
+          shippingCost = isUSD ? settings.combinedShippingUSD : settings.combinedShippingCAD;
+        } else {
+          const singleRate = isUSD ? settings.singleItemShippingUSD : settings.singleItemShippingCAD;
+          shippingCost = singleRate * items.length;
+        }
+        
+        setCalculatedShipping(shippingCost);
+        
+      } catch (error) {
+        console.error('Error calculating shipping:', error);
+        setCalculatedShipping(shipping || 0); // Fallback to passed value
+      }
     }
-  };
+    
+    getCorrectShipping();
+  }, [appliedDiscount?.free_shipping, shippingMethod, currency, items.length]);
+  
+  const actualShipping = calculatedShipping;
+  
+  
 
-  const displayAmounts = calculateDisplayAmounts();
   const [transactionId, setTransactionId] = useState<string>('');
   const [walletAddress, setWalletAddress] = useState<string>('');
   const [emailSent, setEmailSent] = useState(false);
@@ -340,60 +369,57 @@ export default function OrderSuccess({
             </div>
             
             {/* Order Breakdown */}
-            {(subtotal !== undefined || items.length > 0) && (
-              <>
-                <div className="border-t border-gray-200 pt-3 mt-4">
-                  <div className="text-sm font-medium text-gray-700 mb-2">Order Breakdown:</div>
-                  
-                  {/* Items with Images */}
-                  {items.length > 0 && (
+            <>
+              <div className="border-t border-gray-200 pt-3 mt-4">
+                <div className="text-sm font-medium text-gray-700 mb-2">Order Breakdown:</div>
+                
+                {/* Items with Images - ALWAYS show this section */}
+                {items && items.length > 0 ? (
                     <div className="space-y-3 mb-4">
-                      <div className="text-sm font-medium text-gray-700 mb-2">Products Ordered:</div>
-                      {items.map((item, index) => {
-                        const itemTotal = item.price * item.quantity;
-                        const itemCryptoTotal = cryptoCurrency && cryptoAmount ? 
-                          (itemTotal * (cryptoAmount / (displayAmounts.subtotal + displayAmounts.tax))) : 
-                          itemTotal;
-                        
-                        return (
-                          <div key={item.id || index} className="flex items-center gap-3 p-2 bg-white rounded border border-gray-100">
-                            {item.image && (
-                              <div className="w-12 h-12 bg-gray-100 rounded flex-shrink-0">
+                      <div className="text-sm font-medium text-gray-700 mb-4">Products Ordered:</div>
+                      <div className="space-y-4 mb-6">
+                        {items.map((item, index) => {
+                          const itemTotal = item.price * item.quantity;
+                          const itemCryptoTotal = cryptoCurrency && cryptoAmount ? 
+                            (itemTotal * (cryptoAmount / (actualSubtotal + actualTax))) : 
+                            itemTotal;
+                          
+                          return (
+                            <div key={`order-success-${item.id || `item-${index}`}`} className="flex items-center space-x-3">
+                              <div className="w-12 h-12 bg-gray-100 rounded-lg flex-shrink-0">
                                 <img
                                   src={item.image}
                                   alt={item.name}
-                                  className="w-full h-full object-cover rounded"
+                                  className="w-full h-full object-cover rounded-lg"
                                 />
                               </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex justify-between items-start">
-                                <div>
-                                  <p className="text-sm font-medium text-gray-900 truncate">{item.name}</p>
-                                  <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
-                                </div>
-                                <span className="text-sm font-medium">
-                                  {cryptoCurrency ? 
-                                    `${itemCryptoTotal.toFixed(8)} ${cryptoCurrency}` : 
-                                    `$${itemTotal.toFixed(2)} ${currency}`
-                                  }
-                                </span>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 truncate">{item.name}</p>
+                                <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
                               </div>
+                              <span className="text-sm font-medium text-gray-900">
+                                {cryptoCurrency ? 
+                                  `${itemCryptoTotal.toFixed(8)} ${cryptoCurrency}` : 
+                                  `$${itemTotal.toFixed(2)} ${currency}`
+                                }
+                              </span>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                      </div>
                     </div>
-                  )}
-                  
-                  {/* Financial breakdown */}
-                  <div className="space-y-2 text-sm border-t border-gray-200 pt-2">
+                ) : (
+                  <div className="text-sm text-gray-500 mb-4">No items found in order</div>
+                )}
+                
+                {/* Financial breakdown */}
+                <div className="space-y-2 text-sm border-t border-gray-200 pt-2">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Subtotal:</span>
                       <span>
                         {cryptoCurrency ? 
-                          `${displayAmounts.subtotal.toFixed(8)} ${cryptoCurrency}` : 
-                          `$${displayAmounts.subtotal.toFixed(2)} ${currency}`
+                          `${(actualSubtotal * (cryptoAmount || 1) / amount).toFixed(8)} ${cryptoCurrency}` : 
+                          `$${actualSubtotal.toFixed(2)} ${currency}`
                         }
                       </span>
                     </div>
@@ -419,11 +445,9 @@ export default function OrderSuccess({
                       <span>
                         {appliedDiscount?.free_shipping ? (
                           <span className="text-green-600">FREE</span>
-                        ) : (shipping || 0) === 0 ? (
-                          <span className="text-green-600">FREE</span>
                         ) : cryptoCurrency ? 
-                          `${(((shipping || 0) * (cryptoAmount || 1)) / amount).toFixed(8)} ${cryptoCurrency}` : 
-                          `$${(shipping || 0).toFixed(2)} ${currency}`
+                          `${((actualShipping * (cryptoAmount || 1)) / amount).toFixed(8)} ${cryptoCurrency}` : 
+                          `$${actualShipping.toFixed(2)} ${currency}`
                         }
                       </span>
                     </div>
@@ -435,15 +459,14 @@ export default function OrderSuccess({
                       </span>
                       <span>
                         {cryptoCurrency ? 
-                          ((tax || 0) === 0 ? 'Tax Free (Crypto)' : `${(((tax || 0) * (cryptoAmount || 1)) / amount).toFixed(8)} ${cryptoCurrency}`) :
-                          `$${(tax || 0).toFixed(2)} ${currency}`
+                          (actualTax === 0 ? 'Tax Free (Crypto)' : `${((Math.abs(actualTax) * (cryptoAmount || 1)) / amount).toFixed(8)} ${cryptoCurrency}`) :
+                          `$${Math.abs(actualTax).toFixed(2)} ${currency}`
                         }
                       </span>
                     </div>
                   </div>
                 </div>
               </>
-            )}
             
             {/* Total amount with proper formatting */}
             <div className="flex justify-between border-t border-gray-300 pt-3 mt-3">
