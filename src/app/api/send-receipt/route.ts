@@ -243,7 +243,7 @@ export async function POST(request: NextRequest) {
     // Send to customer
     console.log('Sending to customer:', orderData.customerEmail);
     const customerEmail = await resend.emails.send({
-      from: 'Gemsutopia <orders@gemsutopia.com>',
+      from: 'Gemsutopia <onboarding@resend.dev>',
       to: [orderData.customerEmail],
       subject: `Order Confirmation #${orderData.orderId.slice(-8).toUpperCase()} - Gemsutopia`,
       html: receiptHTML,
@@ -253,7 +253,7 @@ export async function POST(request: NextRequest) {
     // Send to admin (gemsutopia@gmail.com)
     console.log('Sending to admin: gemsutopia@gmail.com');
     const adminEmail = await resend.emails.send({
-      from: 'Gemsutopia <orders@gemsutopia.com>',
+      from: 'Gemsutopia <onboarding@resend.dev>',
       to: ['gemsutopia@gmail.com'],
       subject: `New Order Received #${orderData.orderId.slice(-8).toUpperCase()}`,
       html: receiptHTML,
