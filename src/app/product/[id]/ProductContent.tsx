@@ -295,8 +295,16 @@ export default function ProductContent({ product: initialProduct }: ProductConte
     <div className="flex-grow py-8 md:py-16 relative">
       {/* Desktop Wishlist Button - Top Right Corner */}
       <button
-        onClick={toggleWishlist}
-        className="hidden md:block absolute top-4 right-4 z-10 text-black hover:text-neutral-600 transition-colors p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-lg"
+        onClick={() => {
+          if (product.inventory === 0) return; // Don't allow wishlist if sold out
+          toggleWishlist();
+        }}
+        disabled={product.inventory === 0}
+        className={`hidden md:block absolute top-4 right-4 z-10 transition-colors p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-lg ${
+          product.inventory === 0 
+            ? 'text-gray-400 cursor-not-allowed' 
+            : 'text-black hover:text-neutral-600'
+        }`}
       >
         {isInWishlist(product.id) ? (
           <IconStarFilled className="h-8 w-8 text-yellow-400" />
@@ -319,8 +327,16 @@ export default function ProductContent({ product: initialProduct }: ProductConte
               onTouchEnd={handleTouchEnd}
             >
               <div 
-                className={`w-full h-full bg-neutral-100 rounded-lg overflow-hidden relative ${selectedImageIndex >= product.images.length && videoUrl ? 'cursor-default' : 'cursor-zoom-in'}`}
+                className={`w-full h-full bg-neutral-100 rounded-lg overflow-hidden relative ${
+                  product.inventory === 0 
+                    ? 'cursor-default' 
+                    : selectedImageIndex >= product.images.length && videoUrl 
+                      ? 'cursor-default' 
+                      : 'cursor-zoom-in'
+                }`}
                 onClick={() => {
+                  // Don't allow zoom if out of stock
+                  if (product.inventory === 0) return;
                   // Only open zoom for images, not videos
                   if (selectedImageIndex < product.images.length) {
                     openZoomModal();
@@ -352,9 +368,16 @@ export default function ProductContent({ product: initialProduct }: ProductConte
                     priority
                   />
                 )}
+
+                {/* Sold Out Overlay */}
+                {product.inventory === 0 && (
+                  <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-30">
+                    <span className="text-white font-bold text-4xl md:text-6xl tracking-wider">SOLD</span>
+                  </div>
+                )}
                 
                 {/* Navigation Arrows (Desktop) */}
-                {allMedia.length > 1 && (
+                {allMedia.length > 1 && product.inventory > 0 && (
                   <>
                     <button
                       onClick={(e) => {
@@ -395,12 +418,13 @@ export default function ProductContent({ product: initialProduct }: ProductConte
                   <button
                     key={index}
                     onClick={() => {
+                      if (product.inventory === 0) return; // Don't allow clicking if sold out
                       setSelectedImageIndex(index);
                       if (showZoomModal) {
                         setZoomImageIndex(index);
                       }
                     }}
-                    className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors ${
+                    className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors relative ${
                       selectedImageIndex === index
                         ? 'border-black'
                         : 'border-gray-300 hover:border-gray-400'
@@ -413,23 +437,32 @@ export default function ProductContent({ product: initialProduct }: ProductConte
                       height={64}
                       className="w-full h-full object-cover"
                     />
+                    {/* Sold Out Overlay for thumbnail */}
+                    {product.inventory === 0 && (
+                      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+                    )}
                   </button>
                 ))}
                 {videoUrl && (
                   <button
                     onClick={() => {
+                      if (product.inventory === 0) return; // Don't allow clicking if sold out
                       setSelectedImageIndex(product.images.length);
                       if (showZoomModal) {
                         setZoomImageIndex(product.images.length);
                       }
                     }}
-                    className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors flex items-center justify-center bg-gray-100 ${
+                    className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors flex items-center justify-center bg-gray-100 relative ${
                       selectedImageIndex >= product.images.length
                         ? 'border-black'
                         : 'border-gray-300 hover:border-gray-400'
                     }`}
                   >
                     <div className="text-xs font-medium text-gray-600">VIDEO</div>
+                    {/* Sold Out Overlay for video thumbnail */}
+                    {product.inventory === 0 && (
+                      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+                    )}
                   </button>
                 )}
               </div>
@@ -469,47 +502,70 @@ export default function ProductContent({ product: initialProduct }: ProductConte
             </div>
             
             <div className="space-y-3 md:space-y-4">
-              <div className="w-full bg-black text-white py-3 md:py-4 px-6 md:px-8 rounded-full font-semibold text-base md:text-lg flex items-center justify-between min-h-[52px] md:min-h-[60px]">
+              <div className={`w-full py-3 md:py-4 px-6 md:px-8 rounded-full font-semibold text-base md:text-lg flex items-center justify-between min-h-[52px] md:min-h-[60px] ${
+                product.inventory === 0 
+                  ? 'bg-gray-400 text-gray-600 cursor-not-allowed' 
+                  : 'bg-black text-white'
+              }`}>
                 <button
                   type="button"
                   onClick={handleDecreaseQuantity}
-                  className={`text-white hover:text-gray-300 text-xl font-bold w-8 h-8 flex items-center justify-center ${cartQuantity === 0 ? 'invisible' : ''}`}
+                  disabled={product.inventory === 0}
+                  className={`hover:text-gray-300 text-xl font-bold w-8 h-8 flex items-center justify-center ${
+                    cartQuantity === 0 || product.inventory === 0 ? 'invisible' : ''
+                  }`}
                 >
                   -
                 </button>
                 <button 
                   onClick={handleIncreaseQuantity}
-                  disabled={cartQuantity >= product.inventory}
+                  disabled={cartQuantity >= product.inventory || product.inventory === 0}
                   className="flex-1 flex items-center justify-center disabled:cursor-not-allowed"
                 >
-                  {cartQuantity > 0 ? `Add to Cart (${cartQuantity})` : 'Add to Cart'}
+                  {product.inventory === 0 ? 'SOLD' : (cartQuantity > 0 ? `Add to Cart (${cartQuantity})` : 'Add to Cart')}
                 </button>
                 <button
                   type="button"
                   onClick={handleIncreaseQuantity}
-                  disabled={cartQuantity >= product.inventory}
-                  className={`text-white text-xl font-bold w-8 h-8 flex items-center justify-center ${cartQuantity === 0 ? 'invisible' : ''} ${cartQuantity >= product.inventory ? 'opacity-30' : 'hover:text-gray-300'}`}
+                  disabled={cartQuantity >= product.inventory || product.inventory === 0}
+                  className={`text-xl font-bold w-8 h-8 flex items-center justify-center ${
+                    cartQuantity === 0 || product.inventory === 0 ? 'invisible' : ''
+                  } ${cartQuantity >= product.inventory || product.inventory === 0 ? 'opacity-30' : 'hover:text-gray-300'}`}
                 >
                   +
                 </button>
               </div>
               <button 
                 onClick={() => {
+                  if (product.inventory === 0) return; // Don't allow buying if sold out
                   if (cartQuantity === 0) {
                     handleIncreaseQuantity(); // Add to cart first if nothing is in cart
                   }
                   // Then navigate to checkout
                   window.location.href = '/checkout';
                 }}
-                className="w-full border-2 border-black text-black py-3 md:py-4 px-6 md:px-8 rounded-full font-semibold text-base md:text-lg hover:bg-black hover:text-white transition-colors"
+                disabled={product.inventory === 0}
+                className={`w-full border-2 py-3 md:py-4 px-6 md:px-8 rounded-full font-semibold text-base md:text-lg transition-colors ${
+                  product.inventory === 0 
+                    ? 'border-gray-400 text-gray-600 bg-gray-100 cursor-not-allowed' 
+                    : 'border-black text-black hover:bg-black hover:text-white'
+                }`}
               >
-                Buy Now
+                {product.inventory === 0 ? 'SOLD' : 'Buy Now'}
               </button>
               
               {/* Mobile Wishlist - Simple link style */}
               <button
-                onClick={toggleWishlist}
-                className="md:hidden text-black hover:text-neutral-600 transition-colors flex items-center justify-center gap-2 py-2"
+                onClick={() => {
+                  if (product.inventory === 0) return; // Don't allow wishlist if sold out
+                  toggleWishlist();
+                }}
+                disabled={product.inventory === 0}
+                className={`md:hidden transition-colors flex items-center justify-center gap-2 py-2 ${
+                  product.inventory === 0 
+                    ? 'text-gray-400 cursor-not-allowed' 
+                    : 'text-black hover:text-neutral-600'
+                }`}
               >
                 {isInWishlist(product.id) ? (
                   <>

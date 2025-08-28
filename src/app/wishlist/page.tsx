@@ -65,6 +65,11 @@ export default function Wishlist() {
   };
 
   const toggleGemPouch = (item: any) => {
+    // Don't allow cart actions for sold out items
+    if (item.inventory === 0 || item.stock === 0) {
+      return;
+    }
+    
     if (isInPouch(item.id)) {
       handleRemoveFromGemPouch(item);
     } else {
@@ -150,6 +155,11 @@ export default function Wishlist() {
                       className="object-cover"
                       sizes="96px"
                     />
+                    {(item.inventory === 0 || item.stock === 0) && (
+                      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-20">
+                        <span className="text-white font-bold text-sm tracking-wider">SOLD</span>
+                      </div>
+                    )}
                   </div>
                   <div className="flex-grow">
                     <h3 className="text-xl font-semibold text-black mb-2">{item.name}</h3>
@@ -158,8 +168,9 @@ export default function Wishlist() {
                   <div className="flex items-center gap-3">
                     <button
                       onClick={() => toggleGemPouch(item)}
-                      className="text-black hover:text-neutral-600 transition-colors p-1 relative"
-                      title={isInPouch(item.id) ? 'Remove from gem pouch' : 'Add to gem pouch'}
+                      className={`transition-colors p-1 relative ${(item.inventory === 0 || item.stock === 0) ? 'text-neutral-400 cursor-not-allowed' : 'text-black hover:text-neutral-600'}`}
+                      title={(item.inventory === 0 || item.stock === 0) ? 'Item is sold out' : (isInPouch(item.id) ? 'Remove from gem pouch' : 'Add to gem pouch')}
+                      disabled={(item.inventory === 0 || item.stock === 0)}
                     >
                       <ShoppingBag className="h-6 w-6" strokeWidth={2} />
                       {isInPouch(item.id) && (

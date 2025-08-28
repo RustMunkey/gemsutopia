@@ -94,6 +94,43 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Pre-validate inventory before processing payment
+    console.log('Validating inventory for all items before order creation...');
+    for (const item of orderData.items) {
+      if (item.id && item.quantity) {
+        const { data: productData, error: fetchError } = await supabase
+          .from('products')
+          .select('inventory, name')
+          .eq('id', item.id)
+          .single();
+
+        if (fetchError) {
+          console.error(`Error fetching product ${item.id} for validation:`, fetchError);
+          return NextResponse.json(
+            { error: `Unable to validate product availability` },
+            { status: 400 }
+          );
+        }
+
+        const currentInventory = productData?.inventory || 0;
+        if (currentInventory < item.quantity) {
+          console.log(`Insufficient inventory for ${productData?.name}: requested ${item.quantity}, available ${currentInventory}`);
+          return NextResponse.json(
+            { 
+              error: `Insufficient inventory for ${productData?.name}. Only ${currentInventory} left in stock.`,
+              insufficientItems: [{
+                id: item.id,
+                name: productData?.name,
+                requested: item.quantity,
+                available: currentInventory
+              }]
+            },
+            { status: 409 } // Conflict status for inventory issues
+          );
+        }
+      }
+    }
     
     // Determine if this is a test order
     const isTestOrder = isTestOrderFromPayment(orderData);
@@ -189,37 +226,27 @@ export async function POST(request: NextRequest) {
     // Note: Discount code tracking disabled due to missing database columns
     // This can be re-enabled when discount_codes table and related columns are added
     
-    // Update product inventory after successful order
+    // Update product inventory after successful order with atomic operation
     if (orderData.items && Array.isArray(orderData.items)) {
       console.log('Updating inventory for items:', orderData.items);
       
       for (const item of orderData.items) {
         if (item.id && item.quantity) {
           try {
-            // First get current inventory
-            const { data: productData, error: fetchError } = await supabase
-              .from('products')
-              .select('inventory')
-              .eq('id', item.id)
-              .single();
-
-            if (fetchError) {
-              console.error(`Error fetching product ${item.id}:`, fetchError);
-              continue;
-            }
-
-            const newInventory = Math.max(0, (productData?.inventory || 0) - item.quantity);
-            
-            // Update inventory
-            const { error: updateError } = await supabase
-              .from('products')
-              .update({ inventory: newInventory })
-              .eq('id', item.id);
+            // Use atomic decrement with constraint check to prevent negative inventory
+            // This will fail if inventory would go below 0, preventing overselling
+            const { data: updateResult, error: updateError } = await supabase
+              .rpc('decrement_inventory', {
+                product_id: item.id,
+                decrement_amount: item.quantity
+              });
 
             if (updateError) {
               console.error(`Error updating inventory for product ${item.id}:`, updateError);
+              // This is a critical error - the order was created but inventory wasn't decremented
+              // In a production system, you might want to implement compensation logic here
             } else {
-              console.log(`Updated inventory for product ${item.id}: ${productData?.inventory} -> ${newInventory}`);
+              console.log(`Successfully decremented inventory for product ${item.id} by ${item.quantity}`);
             }
           } catch (inventoryError) {
             console.error(`Error processing inventory for item ${item.id}:`, inventoryError);

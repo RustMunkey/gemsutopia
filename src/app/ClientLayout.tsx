@@ -13,6 +13,7 @@ import PageViewTracker from '../components/PageViewTracker';
 import MaintenanceOverlay from '../components/MaintenanceOverlay';
 import DynamicMetadata from '../components/DynamicMetadata';
 import DynamicTitle from '../components/DynamicTitle';
+import SoldOutItemsMonitor from '../components/SoldOutItemsMonitor';
 import { AnalyticsProvider } from '../lib/contexts/AnalyticsContext';
 
 export default function ClientLayout({
@@ -34,6 +35,7 @@ export default function ClientLayout({
                         <PageViewTracker />
                         <DynamicMetadata />
                         <DynamicTitle />
+                        <SoldOutItemsMonitor />
                         {children}
                         <CookieBanner />
                         <MaintenanceOverlay />

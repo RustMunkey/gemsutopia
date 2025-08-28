@@ -21,8 +21,8 @@ interface FeaturedProduct {
   original_price: number;
   product_id?: string;
   sort_order: number;
+  inventory: number;
   is_active: boolean;
-  inventory?: number;
 }
 
 export default function Featured() {
@@ -237,6 +237,13 @@ export default function Featured() {
                             sizes="280px"
                             quality={75}
                           />
+                          {/* Sold Out Overlay */}
+                          {product.inventory === 0 && (
+                            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-20">
+                              <span className="text-white font-bold text-2xl md:text-3xl tracking-wider">SOLD</span>
+                            </div>
+                          )}
+
                           <div className="absolute bottom-2 right-2 z-10">
                             <Image 
                               src="/logos/gems-logo.png" 
@@ -251,8 +258,16 @@ export default function Featured() {
                         <div className="mt-auto pt-2">
                           <div className="flex items-center justify-between relative">
                             <button
-                              onClick={(e) => toggleWishlist(product.id, e)}
-                              className="text-black hover:text-yellow-400 transition-colors p-1"
+                              onClick={(e) => {
+                                if (product.inventory === 0) return; // Don't allow wishlist if sold out
+                                toggleWishlist(product.id, e);
+                              }}
+                              disabled={product.inventory === 0}
+                              className={`transition-colors p-1 ${
+                                product.inventory === 0 
+                                  ? 'text-gray-400 cursor-not-allowed' 
+                                  : 'text-black hover:text-yellow-400'
+                              }`}
                             >
                               {isInWishlist(product.product_id || product.id) ? (
                                 <IconStarFilled className="h-6 w-6 text-yellow-400" />
@@ -269,8 +284,16 @@ export default function Featured() {
                             </div>
                             
                             <button
-                              onClick={(e) => toggleGemPouch(product.id, e)}
-                              className="text-black hover:text-neutral-600 transition-colors p-1 relative"
+                              onClick={(e) => {
+                                if (product.inventory === 0) return; // Don't allow cart if sold out
+                                toggleGemPouch(product.id, e);
+                              }}
+                              disabled={product.inventory === 0}
+                              className={`transition-colors p-1 relative ${
+                                product.inventory === 0 
+                                  ? 'text-gray-400 cursor-not-allowed' 
+                                  : 'text-black hover:text-neutral-600'
+                              }`}
                             >
                               <ShoppingBag className="h-6 w-6" strokeWidth={2} />
                               {isInPouch(product.product_id || product.id) && (
@@ -330,6 +353,13 @@ export default function Featured() {
                               sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                               quality={75}
                             />
+                            {/* Sold Out Overlay */}
+                            {product.inventory === 0 && (
+                              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-20">
+                                <span className="text-white font-bold text-2xl md:text-3xl tracking-wider">SOLD</span>
+                              </div>
+                            )}
+
                             <div className="absolute bottom-2 right-2 z-10">
                               <Image 
                                 src="/logos/gems-logo.png" 
@@ -344,8 +374,16 @@ export default function Featured() {
                           <div className="mt-auto pt-2">
                             <div className="flex items-center justify-between relative">
                               <button
-                                onClick={(e) => toggleWishlist(product.id, e)}
-                                className="text-black hover:text-yellow-400 transition-colors p-1"
+                                onClick={(e) => {
+                                  if (product.inventory === 0) return; // Don't allow wishlist if sold out
+                                  toggleWishlist(product.id, e);
+                                }}
+                                disabled={product.inventory === 0}
+                                className={`transition-colors p-1 ${
+                                  product.inventory === 0 
+                                    ? 'text-gray-400 cursor-not-allowed' 
+                                    : 'text-black hover:text-yellow-400'
+                                }`}
                               >
                                 {isInWishlist(product.product_id || product.id) ? (
                                   <IconStarFilled className="h-6 w-6 text-yellow-400" />
@@ -362,8 +400,16 @@ export default function Featured() {
                               </div>
                               
                               <button
-                                onClick={(e) => toggleGemPouch(product.id, e)}
-                                className="text-black hover:text-neutral-600 transition-colors p-1 relative"
+                                onClick={(e) => {
+                                  if (product.inventory === 0) return; // Don't allow cart if sold out
+                                  toggleGemPouch(product.id, e);
+                                }}
+                                disabled={product.inventory === 0}
+                                className={`transition-colors p-1 relative ${
+                                  product.inventory === 0 
+                                    ? 'text-gray-400 cursor-not-allowed' 
+                                    : 'text-black hover:text-neutral-600'
+                                }`}
                               >
                                 <ShoppingBag className="h-6 w-6" strokeWidth={2} />
                                 {isInPouch(product.product_id || product.id) && (

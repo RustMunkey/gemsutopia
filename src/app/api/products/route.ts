@@ -57,11 +57,18 @@ export async function GET(request: NextRequest) {
         throw fetchError;
       }
       const visibleProducts = allProducts?.filter(p => p.metadata?.frontend_visible !== false) || [];
+      
+      // Transform products to add stock field for backward compatibility
+      const transformedProducts = visibleProducts.map(product => ({
+        ...product,
+        stock: product.inventory || 0 // Map inventory to stock for compatibility
+      }));
+      
       console.log(`Returning ${visibleProducts.length} frontend visible products out of ${allProducts?.length || 0} total`);
       return NextResponse.json({
         success: true,
-        products: visibleProducts,
-        count: visibleProducts.length
+        products: transformedProducts,
+        count: transformedProducts.length
       });
     } else {
       console.log('Including ALL products (admin view)');
@@ -88,10 +95,16 @@ export async function GET(request: NextRequest) {
 
     console.log(`Returning ${products?.length || 0} products. Active: ${products?.filter(p => p.is_active).length}, Inactive: ${products?.filter(p => !p.is_active).length}`);
 
+    // Transform products to add stock field for backward compatibility
+    const transformedProducts = (products || []).map(product => ({
+      ...product,
+      stock: product.inventory || 0 // Map inventory to stock for compatibility
+    }));
+
     return NextResponse.json({
       success: true,
-      products: products || [],
-      count: products?.length || 0
+      products: transformedProducts,
+      count: transformedProducts.length || 0
     });
 
   } catch (error) {

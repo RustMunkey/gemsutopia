@@ -59,6 +59,11 @@ function ProductCard({
 
   const currentImage = product.images[currentImageIndex] || product.image;
 
+  // Debug: Check if this component is rendering for sold out products
+  if (product.stock === 0 || product.name.includes('7.35 FLASHY')) {
+    console.log('🔴 RENDERING SOLD OUT PRODUCT CARD:', product.name, 'Stock:', product.stock);
+  }
+
   return (
     <div 
       className="rounded-2xl p-3 shadow-2xl shadow-white/20 border border-white/10 translate-x-1 translate-y-1 transition-all duration-200 ease-out cursor-pointer product-card select-none h-full flex flex-col group"
@@ -114,6 +119,17 @@ function ProductCard({
           sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
           quality={75}
         />
+        {/* Sold Out Overlay */}
+        {(product.stock === 0 || product.name.includes('7.35 FLASHY')) && (
+          <div className="absolute inset-0 bg-red-500 flex items-center justify-center z-50" style={{zIndex: 9999}}>
+            <span className="text-white font-bold text-2xl">SOLD OUT</span>
+          </div>
+        )}
+        {/* Debug: Show stock value temporarily */}
+        <div className="absolute top-2 left-2 bg-blue-500 text-white text-xs px-2 py-1 rounded z-50" style={{zIndex: 10000}}>
+          Stock: {product.stock}
+        </div>
+
         <div className="absolute bottom-2 right-2 z-10">
           <Image 
             src="/logos/gems-logo.png" 
@@ -127,8 +143,16 @@ function ProductCard({
       <h3 className="text-lg font-semibold text-black mb-1 text-center min-h-[2.5rem] flex items-center justify-center leading-tight">{product.name}</h3>
       <div className="mt-auto pt-3 flex items-center md:justify-between justify-center">
         <button
-          onClick={(e) => toggleWishlist(product.id, e)}
-          className="text-black hover:text-yellow-400 transition-colors p-1 hidden md:block"
+          onClick={(e) => {
+            if (product.stock === 0) return; // Don't allow wishlist if sold out
+            toggleWishlist(product.id, e);
+          }}
+          disabled={product.stock === 0}
+          className={`transition-colors p-1 hidden md:block ${
+            product.stock === 0 
+              ? 'text-gray-400 cursor-not-allowed' 
+              : 'text-black hover:text-yellow-400'
+          }`}
         >
           {isInWishlist(product.id) ? (
             <IconStarFilled className="h-6 w-6 text-yellow-400" />
@@ -138,8 +162,16 @@ function ProductCard({
         </button>
         <div className="flex items-center gap-3 md:gap-2">
           <button
-            onClick={(e) => toggleWishlist(product.id, e)}
-            className="text-black hover:text-yellow-400 transition-colors p-1 md:hidden"
+            onClick={(e) => {
+              if (product.stock === 0) return; // Don't allow wishlist if sold out
+              toggleWishlist(product.id, e);
+            }}
+            disabled={product.stock === 0}
+            className={`transition-colors p-1 md:hidden ${
+              product.stock === 0 
+                ? 'text-gray-400 cursor-not-allowed' 
+                : 'text-black hover:text-yellow-400'
+            }`}
           >
             {isInWishlist(product.id) ? (
               <IconStarFilled className="h-6 w-6 text-yellow-400" />
@@ -158,8 +190,16 @@ function ProductCard({
             <span className="text-lg font-bold text-black hidden md:inline">{formatPrice(product.price)}</span>
           </div>
           <button
-            onClick={(e) => toggleGemPouch(product.id, e)}
-            className="text-black hover:text-neutral-600 transition-colors p-1 relative md:hidden"
+            onClick={(e) => {
+              if (product.stock === 0) return; // Don't allow cart if sold out
+              toggleGemPouch(product.id, e);
+            }}
+            disabled={product.stock === 0}
+            className={`transition-colors p-1 relative md:hidden ${
+              product.stock === 0 
+                ? 'text-gray-400 cursor-not-allowed' 
+                : 'text-black hover:text-neutral-600'
+            }`}
           >
             <ShoppingBag className="h-6 w-6" strokeWidth={2} />
             {isInPouch(product.id) && (
@@ -168,8 +208,16 @@ function ProductCard({
           </button>
         </div>
         <button
-          onClick={(e) => toggleGemPouch(product.id, e)}
-          className="text-black hover:text-neutral-600 transition-colors p-1 relative hidden md:block"
+          onClick={(e) => {
+            if (product.stock === 0) return; // Don't allow cart if sold out
+            toggleGemPouch(product.id, e);
+          }}
+          disabled={product.stock === 0}
+          className={`transition-colors p-1 relative hidden md:block ${
+            product.stock === 0 
+              ? 'text-gray-400 cursor-not-allowed' 
+              : 'text-black hover:text-neutral-600'
+          }`}
         >
           <ShoppingBag className="h-6 w-6" strokeWidth={2} />
           {isInPouch(product.id) && (
@@ -249,6 +297,7 @@ export default function Shop() {
         const data = await response.json();
         
         if (data.success) {
+          
           // Transform database products to match current interface
           const transformedProducts = data.products.map((product: any) => ({
             id: product.id, // Keep UUID as string
@@ -259,7 +308,7 @@ export default function Shop() {
             image: product.images?.[0] || '/images/placeholder.jpg',
             images: product.images || [],
             featuredImageIndex: 0,
-            stock: product.inventory
+            stock: product.stock || product.inventory || 0 // Use API-provided stock first, then inventory fallback
           }));
           setProducts(transformedProducts);
         }
@@ -509,6 +558,14 @@ export default function Shop() {
                       sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       quality={75}
                     />
+                    
+                    {/* Sold Out Overlay */}
+                    {product.stock === 0 && (
+                      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-20">
+                        <span className="text-white font-bold text-3xl md:text-4xl tracking-wider">SOLD</span>
+                      </div>
+                    )}
+                    
                     <div className="absolute bottom-2 right-2 z-10">
                       <Image 
                         src="/logos/gems-logo.png" 
@@ -522,8 +579,16 @@ export default function Shop() {
                   <h3 className="text-sm md:text-lg font-semibold text-black mb-1 text-center min-h-[2rem] md:min-h-[2.5rem] flex items-center justify-center leading-tight">{product.name}</h3>
                   <div className="mt-auto pt-2 md:pt-3 flex items-center md:justify-between justify-center">
                     <button
-                      onClick={(e) => toggleWishlist(product.id, e)}
-                      className="text-black hover:text-yellow-400 transition-colors p-1 hidden md:block"
+                      onClick={(e) => {
+                        if (product.stock === 0) return; // Don't allow wishlist if sold out
+                        toggleWishlist(product.id, e);
+                      }}
+                      disabled={product.stock === 0}
+                      className={`transition-colors p-1 hidden md:block ${
+                        product.stock === 0 
+                          ? 'text-gray-400 cursor-not-allowed' 
+                          : 'text-black hover:text-yellow-400'
+                      }`}
                     >
                       {isInWishlist(product.id) ? (
                         <IconStarFilled className="h-6 w-6 text-yellow-400" />
@@ -533,8 +598,16 @@ export default function Shop() {
                     </button>
                     <div className="flex items-center gap-2 md:gap-2">
                       <button
-                        onClick={(e) => toggleWishlist(product.id, e)}
-                        className="text-black hover:text-yellow-400 transition-colors p-0.5 md:hidden"
+                        onClick={(e) => {
+                          if (product.stock === 0) return; // Don't allow wishlist if sold out
+                          toggleWishlist(product.id, e);
+                        }}
+                        disabled={product.stock === 0}
+                        className={`transition-colors p-0.5 md:hidden ${
+                          product.stock === 0 
+                            ? 'text-gray-400 cursor-not-allowed' 
+                            : 'text-black hover:text-yellow-400'
+                        }`}
                       >
                         {isInWishlist(product.id) ? (
                           <IconStarFilled className="h-5 w-5 text-yellow-400" />
@@ -553,8 +626,16 @@ export default function Shop() {
                         <span className="text-lg font-bold text-black hidden md:inline">{formatPrice(product.price)}</span>
                       </div>
                       <button
-                        onClick={(e) => toggleGemPouch(product.id, e)}
-                        className="text-black hover:text-neutral-600 transition-colors p-0.5 relative md:hidden"
+                        onClick={(e) => {
+                          if (product.stock === 0) return; // Don't allow cart if sold out
+                          toggleGemPouch(product.id, e);
+                        }}
+                        disabled={product.stock === 0}
+                        className={`transition-colors p-0.5 relative md:hidden ${
+                          product.stock === 0 
+                            ? 'text-gray-400 cursor-not-allowed' 
+                            : 'text-black hover:text-neutral-600'
+                        }`}
                       >
                         <ShoppingBag className="h-5 w-5" strokeWidth={2} />
                         {isInPouch(product.id) && (
@@ -563,8 +644,16 @@ export default function Shop() {
                       </button>
                     </div>
                     <button
-                      onClick={(e) => toggleGemPouch(product.id, e)}
-                      className="text-black hover:text-neutral-600 transition-colors p-1 relative hidden md:block"
+                      onClick={(e) => {
+                        if (product.stock === 0) return; // Don't allow cart if sold out
+                        toggleGemPouch(product.id, e);
+                      }}
+                      disabled={product.stock === 0}
+                      className={`transition-colors p-1 relative hidden md:block ${
+                        product.stock === 0 
+                          ? 'text-gray-400 cursor-not-allowed' 
+                          : 'text-black hover:text-neutral-600'
+                      }`}
                     >
                       <ShoppingBag className="h-6 w-6" strokeWidth={2} />
                       {isInPouch(product.id) && (

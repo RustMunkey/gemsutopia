@@ -6,6 +6,8 @@ interface WishlistItem {
   name: string;
   price: number;
   image: string;
+  inventory?: number;
+  stock?: number;
 }
 
 interface WishlistContextType {
@@ -15,6 +17,7 @@ interface WishlistContextType {
   clearWishlist: () => void;
   isInWishlist: (id: string) => boolean;
   itemCount: number;
+  removeSoldOutItems: () => void;
 }
 
 const WishlistContext = createContext<WishlistContextType | undefined>(undefined);
@@ -62,6 +65,13 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     setItems([]);
   };
 
+  const removeSoldOutItems = () => {
+    setItems(prev => prev.filter(item => 
+      !((item.inventory !== undefined && item.inventory === 0) || 
+        (item.stock !== undefined && item.stock === 0))
+    ));
+  };
+
   const isInWishlist = (id: string) => {
     return items.some(item => item.id === id);
   };
@@ -75,7 +85,8 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
       removeItem,
       clearWishlist,
       isInWishlist,
-      itemCount
+      itemCount,
+      removeSoldOutItems
     }}>
       {children}
     </WishlistContext.Provider>

@@ -9,6 +9,7 @@ interface GemPouchItem {
   image: string;
   quantity: number;
   stock?: number;
+  inventory?: number;
 }
 
 interface GemPouchContextType {
@@ -20,6 +21,7 @@ interface GemPouchContextType {
   isInPouch: (id: string) => boolean;
   itemCount: number;
   totalItems: number;
+  removeSoldOutItems: () => void;
 }
 
 const GemPouchContext = createContext<GemPouchContextType | undefined>(undefined);
@@ -105,6 +107,27 @@ export function GemPouchProvider({ children }: { children: ReactNode }) {
     setItems([]);
   };
 
+  const removeSoldOutItems = () => {
+    const soldOutItems = items.filter(item => 
+      (item.inventory !== undefined && item.inventory === 0) || 
+      (item.stock !== undefined && item.stock === 0)
+    );
+    
+    if (soldOutItems.length > 0) {
+      setItems(prev => prev.filter(item => 
+        !((item.inventory !== undefined && item.inventory === 0) || 
+          (item.stock !== undefined && item.stock === 0))
+      ));
+      
+      // Track removal events for analytics
+      if (analytics) {
+        soldOutItems.forEach(item => {
+          analytics.trackCartRemove(item.id, item.name);
+        });
+      }
+    }
+  };
+
   const isInPouch = (id: string) => {
     return items.some(item => item.id === id);
   };
@@ -121,7 +144,8 @@ export function GemPouchProvider({ children }: { children: ReactNode }) {
       clearPouch,
       isInPouch,
       itemCount,
-      totalItems
+      totalItems,
+      removeSoldOutItems
     }}>
       {children}
     </GemPouchContext.Provider>
