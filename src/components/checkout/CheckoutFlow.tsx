@@ -13,7 +13,7 @@ import PaymentMethods from './PaymentMethods';
 import PaymentForm from './PaymentForm';
 import OrderSuccess from './OrderSuccess';
 import { ArrowLeft } from 'lucide-react';
-import { calculateTax, TaxCalculationResult } from '@/lib/utils/taxCalculation';
+// TAX REMOVED - no longer needed
 import { calculateShipping, ShippingSettings } from '@/lib/utils/shipping';
 
 interface CheckoutData {
@@ -38,7 +38,7 @@ type CheckoutStep = 'cart' | 'customer' | 'payment-method' | 'payment' | 'succes
 export default function CheckoutFlow() {
   const router = useRouter();
   const { items, clearPouch } = useGemPouch();
-  const { formatPrice } = useCurrency();
+  const { formatPrice, formatPriceRaw, currency: currentCurrency } = useCurrency();
   const { isConnected, disconnectWallet } = useWallet();
   const { showNotification } = useNotification();
   const { refreshShopProducts, refreshProduct } = useInventory();
@@ -90,8 +90,8 @@ export default function CheckoutFlow() {
     cryptoCurrency?: string;
     cryptoPrices?: any;
   } | null>(null);
-  const [taxCalculation, setTaxCalculation] = useState<TaxCalculationResult | null>(null);
-  const [calculatingTax, setCalculatingTax] = useState(false);
+  // TAX REMOVED
+  // TAX REMOVED
   const [discountCode, setDiscountCode] = useState<string>('');
   const [appliedDiscount, setAppliedDiscount] = useState<{
     code: string;
@@ -110,16 +110,25 @@ export default function CheckoutFlow() {
   const discount = appliedDiscount?.amount || 0;
   const subtotalAfterDiscount = subtotal - discount;
   
-  // Calculate tax - use stored calculation or default to 0
-  const tax = taxCalculation?.amount || 0;
-  const taxLabel = taxCalculation?.rate.name || 'Tax';
+  // NO TAX - REMOVED ENTIRELY
+  const tax = 0;
+  
+  // PRESERVE shipping values at payment completion to prevent recalculation
+  const [finalShipping, setFinalShipping] = useState<number>(0);
+  const [shippingLocked, setShippingLocked] = useState<boolean>(false); // Prevent recalculation once locked
   
   // Calculate shipping dynamically with fresh settings
-  const [shipping, setShipping] = useState<number>(0);
+  const [shipping, setShipping] = useState<number>(0); // Start at 0, will load properly
   const [currentShippingSettings, setCurrentShippingSettings] = useState<ShippingSettings | null>(null);
   
-  React.useEffect(() => {
-    async function calculateShippingCost() {
+  // Shipping calculation function (moved outside useEffect so it can be called manually)
+  const calculateShippingCost = async () => {
+      // Don't recalculate shipping once we're in payment step
+      if (shippingLocked) {
+        console.log('SHIPPING LOCKED - NOT RECALCULATING');
+        return;
+      }
+
       if (appliedDiscount?.free_shipping) {
         setShipping(0);
         return;
@@ -132,38 +141,131 @@ export default function CheckoutFlow() {
 
       try {
         // Fetch fresh shipping settings from database
+        console.log('FETCHING SHIPPING SETTINGS FROM DATABASE');
         const response = await fetch('/api/shipping-settings');
         if (!response.ok) {
-          setShipping(0);
+          console.error('Failed to fetch shipping settings');
+          setShipping(-1); // Keep showing "Calculating..."
           return;
         }
         
         const data = await response.json();
         const freshSettings = data.settings;
+        console.log('🔍 RAW SHIPPING SETTINGS FROM DATABASE:', freshSettings);
+        console.log('🔍 INDIVIDUAL RATES:', {
+          singleCAD: freshSettings.singleItemShippingCAD,
+          singleUSD: freshSettings.singleItemShippingUSD,
+          combinedCAD: freshSettings.combinedShippingCAD,
+          combinedUSD: freshSettings.combinedShippingUSD,
+          combinedEnabled: freshSettings.combinedShippingEnabled
+        });
         setCurrentShippingSettings(freshSettings);
         
-        // Get current currency from context
-        const currentCurrency = localStorage.getItem('currency') as 'CAD' | 'USD' || 'CAD';
+        // Use the display currency (what the user selected) for shipping calculation
+        const shippingCurrency = currentCurrency as 'CAD' | 'USD';
+        const customerCountry = checkoutData.customer?.country || 'Canada';
+        console.log('🔍 CURRENCY LOGIC:', {
+          customerCountry,
+          displayCurrency: currentCurrency,
+          shippingCurrency
+        });
         
         // Create modified shipping settings based on user choice
         const modifiedSettings = {
           ...freshSettings,
+          // Force the user's checkbox choice - if they unchecked, disable combined shipping
           combinedShippingEnabled: useCombinedShipping && freshSettings.combinedShippingEnabled
         };
         
-        const calculation = calculateShipping(items.length, currentCurrency, modifiedSettings);
+        const calculation = calculateShipping(items.length, shippingCurrency, modifiedSettings);
+        console.log('SHIPPING CALCULATION INPUT:', {
+          itemCount: items.length,
+          shippingCurrency: shippingCurrency,
+          useCombinedShipping: useCombinedShipping,
+          settings: modifiedSettings
+        });
+        console.log('SHIPPING CALCULATION RESULT:', calculation);
+        console.log('SETTING SHIPPING TO:', calculation.shippingCost);
+        console.log('EXPECTED USD COMBINED RATE FROM DB:', freshSettings.combinedShippingUSD);
+        console.log('EXPECTED CAD COMBINED RATE FROM DB:', freshSettings.combinedShippingCAD);
         setShipping(calculation.shippingCost);
         
       } catch (error) {
         console.error('Error calculating shipping:', error);
-        setShipping(0);
+        setShipping(-1); // Keep showing "Calculating..."
       }
+    };
+
+  // Function to calculate shipping immediately from current settings (no API call)
+  const calculateShippingFromCurrentSettings = () => {
+    if (!currentShippingSettings || shippingLocked) {
+      console.log('SKIPPING IMMEDIATE CALC:', { hasSettings: !!currentShippingSettings, shippingLocked });
+      return;
     }
     
+    if (appliedDiscount?.free_shipping) {
+      setShipping(0);
+      return;
+    }
+    
+    if (items.length === 0) {
+      setShipping(0);
+      return;
+    }
+
+    const customerCountry = checkoutData.customer?.country || 'Canada';
+    const shippingCurrency = currentCurrency as 'CAD' | 'USD';
+    
+    console.log('🔍 DEBUGGING SHIPPING SETTINGS:', {
+      currentShippingSettings,
+      customerCountry,
+      shippingCurrency,
+      useCombinedShipping,
+      itemCount: items.length,
+      '🚨 RATES_BEING_USED': {
+        singleUSD: currentShippingSettings.singleItemShippingUSD,
+        combinedUSD: currentShippingSettings.combinedShippingUSD,
+        singleCAD: currentShippingSettings.singleItemShippingCAD,
+        combinedCAD: currentShippingSettings.combinedShippingCAD
+      }
+    });
+    
+    const modifiedSettings = {
+      ...currentShippingSettings,
+      combinedShippingEnabled: useCombinedShipping && currentShippingSettings.combinedShippingEnabled
+    };
+    
+    console.log('🔍 MODIFIED SETTINGS FOR CALCULATION:', modifiedSettings);
+    
+    const calculation = calculateShipping(items.length, shippingCurrency, modifiedSettings);
+    console.log('🔍 SHIPPING CALCULATION RESULT:', {
+      itemCount: items.length,
+      shippingCurrency,
+      useCombinedShipping,
+      combinedEnabled: modifiedSettings.combinedShippingEnabled,
+      result: calculation.shippingCost,
+      isCombined: calculation.isCombinedShipping
+    });
+    setShipping(calculation.shippingCost);
+  };
+
+  // UseEffect to trigger shipping calculation when dependencies change
+  React.useEffect(() => {
     calculateShippingCost();
-  }, [appliedDiscount?.free_shipping, items.length, useCombinedShipping]);
+  }, [appliedDiscount?.free_shipping, items.length, checkoutData.customer?.country]);
+
+  // Separate effect for checkbox changes - use immediate calculation
+  React.useEffect(() => {
+    console.log('🔍 CHECKBOX EFFECT TRIGGERED:', { useCombinedShipping, hasSettings: !!currentShippingSettings });
+    if (currentShippingSettings && !shippingLocked) {
+      console.log('🔍 CALLING IMMEDIATE CALCULATION FROM CHECKBOX');
+      calculateShippingFromCurrentSettings();
+    } else {
+      console.log('🔍 SKIPPING CALCULATION - LOCKED OR NO SETTINGS');
+    }
+  }, [useCombinedShipping]);
   
-  const total = subtotalAfterDiscount + tax + shipping;
+  const total = subtotalAfterDiscount + shipping; // NO TAX!
 
   // Track checkout start event when component loads and total is calculated
   useEffect(() => {
@@ -172,47 +274,9 @@ export default function CheckoutFlow() {
     }
   }, [analytics, items.length, total]);
 
-  // Effect to calculate tax when payment method is selected (after customer info)
-  useEffect(() => {
-    async function calculateTaxForOrder() {
-      // Only calculate tax if we have customer info AND payment method selected
-      if (
-        checkoutData.paymentMethod && 
-        checkoutData.customer.country && 
-        checkoutData.customer.state && 
-        checkoutData.customer.city && 
-        checkoutData.customer.zipCode
-      ) {
-        setCalculatingTax(true);
-        try {
-          const result = await calculateTax(
-            subtotal, // Tax calculated on FULL amount before discount - legally required
-            checkoutData.customer.country,
-            checkoutData.customer.state,
-            checkoutData.customer.city,
-            checkoutData.customer.zipCode,
-            checkoutData.customer.address,
-            checkoutData.paymentMethod === 'wallet' ? 'crypto' : 'card' // Crypto vs regular payment
-          );
-          setTaxCalculation(result);
-        } catch (error) {
-          console.error('Tax calculation error:', error);
-          // Fallback to 0 tax if calculation fails
-          setTaxCalculation({
-            amount: 0,
-            rate: { federal: 0, total: 0, name: 'Tax' }
-          });
-        } finally {
-          setCalculatingTax(false);
-        }
-      } else {
-        // Reset tax calculation if payment method not selected
-        setTaxCalculation(null);
-      }
-    }
+  // TAX REMOVED - NO CALCULATION NEEDED
 
-    calculateTaxForOrder();
-  }, [checkoutData.paymentMethod, checkoutData.customer, subtotalAfterDiscount]);
+  // TAX REMOVED - NO CURRENCY EFFECT NEEDED
 
   const updateCheckoutData = (updates: Partial<CheckoutData>) => {
     setCheckoutData(prev => ({ ...prev, ...updates }));
@@ -259,17 +323,22 @@ export default function CheckoutFlow() {
     setDiscountError('');
   };
 
-  const handleStepComplete = (step: CheckoutStep, data?: any) => {
+  const handleStepComplete = async (step: CheckoutStep, data?: any) => {
     switch (step) {
       case 'cart':
         setCurrentStep('customer');
         break;
       case 'customer':
         updateCheckoutData({ customer: data });
+        // Calculate shipping immediately after customer info is entered
+        await calculateShippingCost();
         setCurrentStep('payment-method');
         break;
       case 'payment-method':
         updateCheckoutData({ paymentMethod: data });
+        // Lock shipping calculation to prevent recalculation in payment step
+        setShippingLocked(true);
+        console.log('SHIPPING LOCKED AT PAYMENT METHOD SELECTION - FINAL SHIPPING COST:', shipping);
         setCurrentStep('payment');
         break;
       case 'payment':
@@ -287,9 +356,11 @@ export default function CheckoutFlow() {
           analytics.trackCheckoutComplete(data.orderId, data.actualAmount || total);
         }
         
-        // PRESERVE items and subtotal for OrderSuccess BEFORE clearing pouch
+        // PRESERVE items, subtotal, tax, and shipping for OrderSuccess BEFORE clearing pouch
         setPreservedItems(items);
         setPreservedSubtotal(subtotal);
+        // NO TAX
+        setFinalShipping(shipping);
         
         setCurrentStep('success');
         clearPouch();
@@ -326,6 +397,8 @@ export default function CheckoutFlow() {
         setCurrentStep('customer');
         break;
       case 'payment':
+        // Unlock shipping when going back from payment
+        setShippingLocked(false);
         setCurrentStep('payment-method');
         break;
       case 'error':
@@ -420,6 +493,11 @@ export default function CheckoutFlow() {
               <CustomerInfo
                 data={checkoutData.customer}
                 onContinue={(customerData) => handleStepComplete('customer', customerData)}
+                onAddressChange={(customerData) => {
+                  updateCheckoutData({ customer: customerData });
+                  // TRIGGER SHIPPING RECALCULATION IMMEDIATELY
+                  calculateShippingCost();
+                }}
               />
             )}
             
@@ -458,13 +536,11 @@ export default function CheckoutFlow() {
                     cryptoPrices={paymentInfo?.cryptoPrices}
                     items={preservedItems}
                     subtotal={preservedSubtotal}
-                    tax={tax}
-                    shipping={shipping}
+                    tax={0}
+                    shipping={finalShipping || shipping}
                     paymentMethod={checkoutData.paymentMethod || undefined}
                     shippingMethod={useCombinedShipping ? 'combined' : 'flat'}
                     appliedDiscount={appliedDiscount || undefined}
-                    taxRate={taxCalculation?.rate?.total || undefined}
-                    taxLabel={taxCalculation?.rate?.name}
                     shippingAddress={checkoutData.customer}
                   />
                 </div>
@@ -538,10 +614,15 @@ export default function CheckoutFlow() {
                         </label>
                       </div>
                       <p className="text-xs text-gray-500">
-                        {useCombinedShipping 
-                          ? `Pay one flat rate (${formatPrice(localStorage.getItem('currency') === 'USD' ? currentShippingSettings.combinedShippingUSD : currentShippingSettings.combinedShippingCAD)}) for all ${items.length} items` 
-                          : `Pay shipping per item (${formatPrice(localStorage.getItem('currency') === 'USD' ? currentShippingSettings.singleItemShippingUSD : currentShippingSettings.singleItemShippingCAD)} each = ${formatPrice(items.length * (localStorage.getItem('currency') === 'USD' ? currentShippingSettings.singleItemShippingUSD : currentShippingSettings.singleItemShippingCAD))} total)`
-                        }
+                        {(() => {
+                          const shippingCurrency = currentCurrency as 'CAD' | 'USD';
+                          const combinedRate = shippingCurrency === 'USD' ? currentShippingSettings.combinedShippingUSD : currentShippingSettings.combinedShippingCAD;
+                          const singleRate = shippingCurrency === 'USD' ? currentShippingSettings.singleItemShippingUSD : currentShippingSettings.singleItemShippingCAD;
+                          
+                          return useCombinedShipping 
+                            ? `Pay one flat rate (${formatPriceRaw(combinedRate)}) for all ${items.length} items` 
+                            : `Pay shipping per item (${formatPriceRaw(singleRate)} each = ${formatPriceRaw(items.length * singleRate)} total)`;
+                        })()}
                       </p>
                     </div>
                   )}
@@ -549,18 +630,11 @@ export default function CheckoutFlow() {
                     <>
                       <div className="flex justify-between text-sm text-gray-600">
                         <span>Shipping</span>
-                        <span>{shipping === 0 ? 'Free' : formatPrice(shipping)}</span>
-                      </div>
-                      <div className="flex justify-between text-sm text-gray-600">
-                        <span>{taxLabel}</span>
                         <span>
-                          {calculatingTax ? (
-                            <span className="animate-pulse">Calculating...</span>
-                          ) : (
-                            formatPrice(tax)
-                          )}
+                          {appliedDiscount?.free_shipping ? 'FREE' : (!currentShippingSettings ? 'Calculating...' : formatPriceRaw(shipping))}
                         </span>
                       </div>
+                      {/* TAX REMOVED */}
                     </>
                   )}
                   <div className="flex justify-between text-lg font-semibold text-gray-900 pt-2 border-t border-gray-200">

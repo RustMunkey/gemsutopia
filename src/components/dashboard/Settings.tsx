@@ -111,6 +111,31 @@ export default function Settings() {
           document.title = settings.siteName + ' - Dashboard';
         }
         
+        // SAVE SHIPPING SETTINGS to shipping-settings API
+        console.log('[SETTINGS] Saving shipping settings to database...');
+        const shippingResponse = await fetch('/api/shipping-settings', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            singleItemShippingCAD: settings.singleItemShippingCAD,
+            singleItemShippingUSD: settings.singleItemShippingUSD,
+            combinedShippingCAD: settings.combinedShippingCAD,
+            combinedShippingUSD: settings.combinedShippingUSD,
+            combinedShippingEnabled: settings.combinedShippingEnabled,
+            combinedShippingThreshold: settings.combinedShippingThreshold,
+            enableShipping: settings.enableShipping,
+            internationalShipping: settings.internationalShipping
+          })
+        });
+        
+        if (shippingResponse.ok) {
+          console.log('[SETTINGS] Shipping settings saved successfully!');
+        } else {
+          console.error('[SETTINGS] Failed to save shipping settings');
+        }
+        
         // Notify components about settings update
         if (typeof window !== 'undefined') {
           console.log('[SETTINGS] Dispatching settings update events...');

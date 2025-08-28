@@ -1,4 +1,4 @@
--- Create site_settings table for storing global site configuration
+TSUY-- Create site_settings table for storing global site configuration
 CREATE TABLE IF NOT EXISTS site_settings (
     id SERIAL PRIMARY KEY,
     setting_key VARCHAR(100) UNIQUE NOT NULL,

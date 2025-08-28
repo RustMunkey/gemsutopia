@@ -36,7 +36,7 @@ export default function PaymentMethods({ onSelect }: PaymentMethodsProps) {
       id: 'wallet' as const,
       name: 'Connect Wallet',
       description: 'Pay with cryptocurrency using WalletConnect',
-      currencyNote: 'Tax-free crypto payments (Bitcoin, Ethereum, Solana)',
+      currencyNote: 'Crypto payments (Bitcoin, Ethereum, Solana)',
       icon: Wallet,
       available: true,
       currencyCompatible: true
@@ -113,19 +113,6 @@ export default function PaymentMethods({ onSelect }: PaymentMethodsProps) {
         })}
       </div>
 
-      {/* Tax Info */}
-      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
-        <div className="flex items-start">
-          <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5 mr-3 flex-shrink-0" />
-          <div>
-            <h4 className="text-sm font-semibold text-amber-900">Tax Calculation</h4>
-            <p className="text-sm text-amber-800">
-              Taxes will be calculated after you select your payment method. 
-              <span className="font-medium"> Crypto payments are tax-free!</span>
-            </p>
-          </div>
-        </div>
-      </div>
 
       <button
         onClick={handleContinue}

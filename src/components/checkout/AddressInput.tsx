@@ -321,14 +321,14 @@ export default function AddressInput({
         </div>
       )}
       
-      {/* Helper text for address input */}
-      {!loading && suggestions.length === 0 && value.trim().length >= 3 && (
-        <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
+      {/* Optional helper text - only show if user seems to be looking for suggestions */}
+      {!loading && suggestions.length === 0 && value.trim().length >= 10 && (
+        <div className="mt-2 p-2 bg-gray-50 border border-gray-200 rounded-md">
           <div className="flex items-start gap-2">
-            <MapPin className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+            <CheckCircle className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
             <div>
-              <p className="text-xs text-blue-700">
-                No address suggestions found. You can continue with your manually entered address.
+              <p className="text-xs text-gray-600">
+                Address verification is optional. You can proceed with your manually entered address.
               </p>
             </div>
           </div>

@@ -30,8 +30,6 @@ interface OrderSuccessProps {
     amount: number;
     free_shipping: boolean;
   };
-  taxRate?: number;
-  taxLabel?: string;
   cryptoPrices?: any; // For converting individual amounts to crypto
   shippingAddress?: {
     firstName: string;
@@ -61,8 +59,6 @@ export default function OrderSuccess({
   paymentMethod,
   shippingMethod,
   appliedDiscount,
-  taxRate,
-  taxLabel,
   cryptoPrices, 
   shippingAddress 
 }: OrderSuccessProps) {
@@ -74,49 +70,14 @@ export default function OrderSuccess({
   
   // Use calculated values if they're valid, otherwise use passed values
   const actualSubtotal = calculatedSubtotal > 0 ? calculatedSubtotal : (subtotal || 0);
+  // NEVER recalculate tax - ALWAYS use the exact value from checkout
   const actualTax = tax || 0;
   const actualDiscount = calculatedDiscount;
   
-  // CALCULATE shipping directly from database settings - FUCK the passed value
-  const [calculatedShipping, setCalculatedShipping] = useState<number>(shipping || 0);
+  // USE THE PRESERVED SHIPPING VALUE FROM CHECKOUT - DO NOT RECALCULATE
+  const finalShipping = appliedDiscount?.free_shipping ? 0 : (shipping || 0);
   
-  React.useEffect(() => {
-    async function getCorrectShipping() {
-      if (appliedDiscount?.free_shipping) {
-        setCalculatedShipping(0);
-        return;
-      }
-      
-      try {
-        // Fetch fresh shipping settings from database
-        const response = await fetch('/api/shipping-settings');
-        const data = await response.json();
-        const settings = data.settings;
-        
-        // Use the EXACT same logic as CheckoutFlow
-        const isCombined = shippingMethod === 'combined';
-        const isUSD = currency === 'USD';
-        
-        let shippingCost = 0;
-        if (isCombined) {
-          shippingCost = isUSD ? settings.combinedShippingUSD : settings.combinedShippingCAD;
-        } else {
-          const singleRate = isUSD ? settings.singleItemShippingUSD : settings.singleItemShippingCAD;
-          shippingCost = singleRate * items.length;
-        }
-        
-        setCalculatedShipping(shippingCost);
-        
-      } catch (error) {
-        console.error('Error calculating shipping:', error);
-        setCalculatedShipping(shipping || 0); // Fallback to passed value
-      }
-    }
-    
-    getCorrectShipping();
-  }, [appliedDiscount?.free_shipping, shippingMethod, currency, items.length]);
-  
-  const actualShipping = calculatedShipping;
+  const actualShipping = finalShipping;
   
   
 
@@ -200,6 +161,7 @@ export default function OrderSuccess({
         const amounts = calculateAmounts();
 
         // Send via Resend (new professional receipts)
+        console.log('SENDING EMAIL TO:', customerEmail);
         const resendData = {
           orderId,
           customerEmail,
@@ -448,19 +410,6 @@ export default function OrderSuccess({
                         ) : cryptoCurrency ? 
                           `${((actualShipping * (cryptoAmount || 1)) / amount).toFixed(8)} ${cryptoCurrency}` : 
                           `$${actualShipping.toFixed(2)} ${currency}`
-                        }
-                      </span>
-                    </div>
-                    
-                    {/* Tax */}
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">
-                        {taxLabel || 'Tax'} {taxRate && `(${(taxRate * 100).toFixed(1)}%)`}:
-                      </span>
-                      <span>
-                        {cryptoCurrency ? 
-                          (actualTax === 0 ? 'Tax Free (Crypto)' : `${((Math.abs(actualTax) * (cryptoAmount || 1)) / amount).toFixed(8)} ${cryptoCurrency}`) :
-                          `$${Math.abs(actualTax).toFixed(2)} ${currency}`
                         }
                       </span>
                     </div>

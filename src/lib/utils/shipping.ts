@@ -33,6 +33,18 @@ export function calculateShipping(
   currency: 'CAD' | 'USD',
   settings: ShippingSettings
 ): ShippingCalculation {
+  console.log('🔥 CALCULATE_SHIPPING_CALLED:', {
+    itemCount,
+    currency,
+    'USD_RATES': {
+      single: settings.singleItemShippingUSD,
+      combined: settings.combinedShippingUSD
+    },
+    'CAD_RATES': {
+      single: settings.singleItemShippingCAD,
+      combined: settings.combinedShippingCAD
+    }
+  });
   // If shipping is disabled, return zero cost
   if (!settings.enableShipping) {
     return {
