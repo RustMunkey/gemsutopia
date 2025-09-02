@@ -6,7 +6,7 @@ import { useNotification } from '@/contexts/NotificationContext';
 
 export default function SoldOutItemsMonitor() {
   const { items: cartItems, removeSoldOutItems: removeCartSoldOut } = useGemPouch();
-  const { items: wishlistItems, removeSoldOutItems: removeWishlistSoldOut } = useWishlist();
+  const { items: wishlistItems } = useWishlist(); // Note: We DON'T remove sold out items from wishlist
   const { showNotification } = useNotification();
   const lastCheckRef = useRef<number>(0);
 
@@ -60,11 +60,8 @@ export default function SoldOutItemsMonitor() {
           showNotification('info', `Removed ${soldOutCartItems.length} sold out item${soldOutCartItems.length > 1 ? 's' : ''} from your cart`);
         }
 
-        // Remove sold out items from wishlist  
-        if (soldOutWishlistItems.length > 0) {
-          removeWishlistSoldOut();
-          showNotification('info', `Removed ${soldOutWishlistItems.length} sold out item${soldOutWishlistItems.length > 1 ? 's' : ''} from your wishlist`);
-        }
+        // Note: We DON'T remove sold out items from wishlist - they stay with SOLD overlay
+        // This allows users to keep them and purchase later if restocked
 
       } catch (error) {
         // Silently fail - don't spam the user with error notifications
@@ -81,7 +78,7 @@ export default function SoldOutItemsMonitor() {
     const interval = setInterval(checkSoldOutItems, 60000); // Check every minute
 
     return () => clearInterval(interval);
-  }, [cartItems.length, wishlistItems.length, removeCartSoldOut, removeWishlistSoldOut, showNotification]);
+  }, [cartItems.length, wishlistItems.length, removeCartSoldOut, showNotification]);
 
   // This component doesn't render anything
   return null;

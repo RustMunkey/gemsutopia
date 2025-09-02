@@ -9,15 +9,18 @@ import {
   EyeOff,
   Star,
   Package,
-  Tag
+  Tag,
+  Grid
 } from 'lucide-react';
 import Image from 'next/image';
 import { Product } from '@/lib/types/database';
 import ImageUpload from './ImageUpload';
 import { useMode } from '@/lib/contexts/ModeContext';
+import Categories from './Categories';
 
 export default function Products() {
   const { mode } = useMode();
+  const [activeTab, setActiveTab] = useState<'products' | 'categories'>('products');
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -141,20 +144,51 @@ export default function Products() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-2xl font-bold text-white mb-2">Products ✨</h1>
-            <p className="text-slate-400">Manage your product catalog</p>
+            <p className="text-slate-400">Manage your product catalog and categories</p>
           </div>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 bg-white hover:bg-white/80 text-black px-4 py-2 rounded-lg transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-            Add Product
-          </button>
+          {activeTab === 'products' && (
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="flex items-center gap-2 bg-white hover:bg-white/80 text-black px-4 py-2 rounded-lg transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              Add Product
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      {/* Tabs */}
+      <div className="flex gap-1 bg-neutral-900 p-1 rounded-lg w-fit">
+        <button
+          onClick={() => setActiveTab('products')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all ${
+            activeTab === 'products' 
+              ? 'bg-white text-black' 
+              : 'text-neutral-400 hover:text-white hover:bg-neutral-800'
+          }`}
+        >
+          <Package className="h-4 w-4" />
+          Products
+        </button>
+        <button
+          onClick={() => setActiveTab('categories')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all ${
+            activeTab === 'categories' 
+              ? 'bg-white text-black' 
+              : 'text-neutral-400 hover:text-white hover:bg-neutral-800'
+          }`}
+        >
+          <Grid className="h-4 w-4" />
+          Categories
+        </button>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'products' ? (
+        <>
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className={`rounded-2xl p-6 ${mode === 'dev' ? 'bg-gradient-to-br from-orange-500/10 to-orange-600/5 border border-orange-500/20' : 'bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/20'}`}>
           <div className="flex items-center justify-between mb-4">
             <div className={`p-3 rounded-xl ${mode === 'dev' ? 'bg-orange-500/20' : 'bg-blue-500/20'}`}>
@@ -408,6 +442,10 @@ export default function Products() {
             setEditingProduct(null);
           }}
         />
+      )}
+        </>
+      ) : (
+        <Categories />
       )}
     </div>
   );

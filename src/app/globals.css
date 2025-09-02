@@ -179,7 +179,7 @@
 
 @keyframes scroll-forward {
   0% {
-    transform: translateX(-50%);
+    transform: translateX(-100%);
   }
   100% {
     transform: translateX(0%);
@@ -187,5 +187,13 @@
 }
 
 .animate-scroll-forward {
-  animation: scroll-forward 15s linear infinite;
+  animation: scroll-forward 30s linear infinite;
+  will-change: transform;
+}
+
+/* Mobile-optimized marquee */
+@media (max-width: 640px) {
+  .animate-scroll-forward {
+    animation: scroll-forward 20s linear infinite;
+  }
 }

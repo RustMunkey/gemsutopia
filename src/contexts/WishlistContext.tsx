@@ -48,6 +48,12 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
   }, [items, isClient]);
 
   const addItem = (item: WishlistItem) => {
+    // Prevent adding sold out items to wishlist
+    if ((item.inventory !== undefined && item.inventory === 0) || 
+        (item.stock !== undefined && item.stock === 0)) {
+      return;
+    }
+    
     setItems(prev => {
       const exists = prev.find(i => i.id === item.id);
       if (exists) {

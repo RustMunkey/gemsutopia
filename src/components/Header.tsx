@@ -1,6 +1,6 @@
 'use client';
 import { IconMenu2 } from '@tabler/icons-react';
-import { Star, ShoppingBag, ArrowLeft, Plane } from 'lucide-react';
+import { Star, ShoppingBag, ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -38,17 +38,22 @@ export default function Header() {
     <header className={headerClass}>
       {marqueeEnabled && (
         <div 
-          className="text-white py-1 overflow-hidden relative"
+          className="text-white py-2 overflow-hidden relative"
           style={{ background: `linear-gradient(to right, ${gradientFrom}, ${gradientTo})` }}
         >
-          <div className="flex animate-scroll-forward whitespace-nowrap w-max">
-            {Array.from({ length: 8 }).map((_, index) => (
-              <p key={index} className="text-sm font-medium px-8 flex items-center gap-2">
-                <Plane className="h-4 w-4 rotate-45" />
-                {marqueeText}
-                <Plane className="h-4 w-4 rotate-45" />
-              </p>
-            ))}
+          <div className="animate-scroll-forward whitespace-nowrap">
+            <span className="inline-block text-xs sm:text-sm font-medium">
+              ✈️ {marqueeText} ✈️&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              ✈️ {marqueeText} ✈️&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              ✈️ {marqueeText} ✈️&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              ✈️ {marqueeText} ✈️&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              ✈️ {marqueeText} ✈️&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              ✈️ {marqueeText} ✈️&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              ✈️ {marqueeText} ✈️&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              ✈️ {marqueeText} ✈️&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              ✈️ {marqueeText} ✈️&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              ✈️ {marqueeText} ✈️&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            </span>
           </div>
         </div>
       )}

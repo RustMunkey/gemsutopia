@@ -53,6 +53,12 @@ export function GemPouchProvider({ children }: { children: ReactNode }) {
   }, [items, isClient]);
 
   const addItem = (item: Omit<GemPouchItem, 'quantity'>) => {
+    // Prevent adding sold out items to cart
+    if ((item.inventory !== undefined && item.inventory === 0) || 
+        (item.stock !== undefined && item.stock === 0)) {
+      return;
+    }
+    
     setItems(prev => {
       const existingItem = prev.find(i => i.id === item.id);
       if (existingItem) {

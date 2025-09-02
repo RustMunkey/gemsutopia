@@ -68,8 +68,8 @@ export default function AdminLogin() {
           <p className="text-neutral-400">Gemsutopia Content Management</p>
         </div>
 
-        <form onSubmit={handleLogin} className="mt-8 space-y-6" autoComplete="off">
-          <div className="space-y-4">
+        <form onSubmit={handleLogin} className="mt-8 space-y-12" autoComplete="off">
+          <div className="space-y-8">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-neutral-300 mb-2">
                 Authorized Email

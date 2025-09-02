@@ -7,30 +7,40 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// Function to determine if an order is a test order based on payment details
-function isTestOrderFromPayment(orderData: any): boolean {
+// Function to determine if an order is a test order based on payment details and system mode
+function isTestOrderFromPayment(orderData: any, systemMode?: string): boolean {
   const { payment } = orderData;
   
-  // Check payment method and detect test vs live
+  // If system mode is explicitly set, use it (from admin dashboard toggle)
+  if (systemMode === 'live') {
+    return false; // Force live order when admin is in live mode
+  }
+  if (systemMode === 'dev' || systemMode === 'test') {
+    return true; // Force test order when admin is in dev mode
+  }
+  
+  // Fallback to auto-detection based on payment details
   switch (payment.paymentMethod) {
     case 'stripe':
     case 'card':
       // Test Stripe payments use test keys and have payment IDs starting with pi_test_
-      return payment.paymentIntentId?.startsWith('pi_test_') || 
-             payment.currency === 'USD' || // Currently all USD is test
-             payment.currency === 'CAD';   // Currently all CAD is test
+      return payment.paymentIntentId?.startsWith('pi_test_') || false;
              
     case 'paypal':
       // Test PayPal payments use sandbox environment
       return payment.captureID?.includes('sandbox') ||
-             payment.captureID?.includes('test') ||
-             payment.currency === 'USD' || // Currently all USD is test
-             payment.currency === 'CAD';   // Currently all CAD is test
+             payment.captureID?.includes('test') || false;
              
     case 'crypto':
-      // For now, all crypto payments are test until mainnet is enabled
-      // TODO: Update this when mainnet crypto payments are enabled
-      return true; // All current crypto is test (devnet/testnet)
+      // Detect based on network/transaction details
+      if (payment.network?.includes('mainnet') || 
+          payment.network?.includes('bitcoin') ||
+          payment.network?.includes('ethereum-mainnet')) {
+        return false; // Live crypto payment
+      }
+      return payment.network?.includes('testnet') || 
+             payment.network?.includes('devnet') || 
+             payment.network?.includes('sepolia') || true;
       
     default:
       // Unknown payment method, default to test for safety
@@ -132,10 +142,14 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    // Determine if this is a test order
-    const isTestOrder = isTestOrderFromPayment(orderData);
+    // Get system mode from request headers or query params
+    const systemMode = request.headers.get('x-system-mode') || 
+                      new URL(request.url).searchParams.get('mode');
     
-    console.log(`Order detection: ${isTestOrder ? 'TEST' : 'LIVE'} order for payment method: ${orderData.payment.paymentMethod}`);
+    // Determine if this is a test order
+    const isTestOrder = isTestOrderFromPayment(orderData, systemMode || undefined);
+    
+    console.log(`Order detection: ${isTestOrder ? 'TEST' : 'LIVE'} order for payment method: ${orderData.payment.paymentMethod} (system mode: ${systemMode || 'auto'})`);
     
     // Prepare order data for database insert
     const orderRecord = {

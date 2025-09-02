@@ -2,134 +2,59 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { IconStar, IconStarFilled, IconFilter, IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
-import { ShoppingBag, Check } from 'lucide-react';
+import { Package, ArrowRight } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { useGemPouch } from '@/contexts/GemPouchContext';
-import { useWishlist } from '@/contexts/WishlistContext';
-import { useCurrency } from '@/contexts/CurrencyContext';
-import { useInventory } from '@/contexts/InventoryContext';
 
-// Product interface
-interface Product {
+// Category interface
+interface Category {
   id: string;
   name: string;
-  type: string;
-  price: number;
-  originalPrice: number;
-  image: string;
-  images: string[];
-  featuredImageIndex: number;
-  stock: number;
+  slug: string;
+  description: string | null;
+  image_url: string | null;
+  sort_order: number;
+  is_active: boolean;
+  product_count: number;
 }
 
-// Product Card Component with Navigation
-function ProductCard({ 
-  product, 
-  formatPrice, 
-  formatPriceNoSuffix, 
-  isInWishlist, 
-  toggleWishlist, 
-  isInPouch, 
-  toggleGemPouch, 
-  router 
-}: {
-  product: Product;
-  formatPrice: (price: number) => string;
-  formatPriceNoSuffix: (price: number) => string;
-  isInWishlist: (id: string) => boolean;
-  toggleWishlist: (id: string, e: React.MouseEvent) => void;
-  isInPouch: (id: string) => boolean;
-  toggleGemPouch: (id: string, e: React.MouseEvent) => void;
-  router: any;
-}) {
-  const [currentImageIndex, setCurrentImageIndex] = useState(product.featuredImageIndex);
-  const discountPercent = Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
-  
-  const goToNextImage = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setCurrentImageIndex((prev) => (prev + 1) % product.images.length);
-  };
-
-  const goToPrevImage = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setCurrentImageIndex((prev) => (prev - 1 + product.images.length) % product.images.length);
-  };
-
-  const currentImage = product.images[currentImageIndex] || product.image;
-
-  // Debug: Check if this component is rendering for sold out products
-  if (product.stock === 0 || product.name.includes('7.35 FLASHY')) {
-    console.log('🔴 RENDERING SOLD OUT PRODUCT CARD:', product.name, 'Stock:', product.stock);
-  }
-
+// Category Card Component
+function CategoryCard({ category, router }: { category: Category; router: any }) {
   return (
     <div 
-      className="rounded-2xl p-3 shadow-2xl shadow-white/20 border border-white/10 translate-x-1 translate-y-1 transition-all duration-200 ease-out cursor-pointer product-card select-none h-full flex flex-col group"
+      className="rounded-2xl p-4 shadow-2xl shadow-white/20 border border-white/10 translate-x-1 translate-y-1 transition-all duration-200 ease-out cursor-pointer category-card select-none h-full flex flex-col group hover:translate-y-[-8px] hover:shadow-3xl"
       style={{ backgroundColor: '#f0f0f0' }}
       onClick={(e) => {
         e.stopPropagation();
-        router.push(`/product/${product.id}`);
+        router.push(`/shop/${category.slug}`);
         window.scrollTo(0, 0);
       }}
     >
-      {/* Content */}
-      <div className="aspect-square bg-neutral-100 rounded-lg mb-2 overflow-hidden relative">
-        {product.price < product.originalPrice && (
-          <div className="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded z-10">
-            {discountPercent}% OFF
+      {/* Category Image */}
+      <div className="aspect-square bg-neutral-100 rounded-lg mb-4 overflow-hidden relative">
+        {category.image_url ? (
+          <Image 
+            src={category.image_url} 
+            alt={category.name}
+            fill
+            className="object-cover select-none pointer-events-none group-hover:scale-105 transition-transform duration-200"
+            draggable={false}
+            onContextMenu={(e) => e.preventDefault()}
+            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            quality={80}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-neutral-200">
+            <Package className="h-12 w-12 text-neutral-400" />
           </div>
         )}
         
-        {/* Navigation Arrows (Desktop only, and only if multiple images) */}
-        {product.images.length > 1 && (
-          <>
-            <button
-              onClick={goToPrevImage}
-              className="absolute left-1 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hidden md:flex items-center justify-center z-10"
-              aria-label="Previous image"
-            >
-              <IconChevronLeft className="h-4 w-4" />
-            </button>
-            <button
-              onClick={goToNextImage}
-              className="absolute right-1 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hidden md:flex items-center justify-center z-10"
-              aria-label="Next image"
-            >
-              <IconChevronRight className="h-4 w-4" />
-            </button>
-          </>
-        )}
-        
-        {/* Image Counter */}
-        {product.images.length > 1 && (
-          <div className="absolute top-2 right-2 bg-black/50 text-white px-1 py-0.5 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
-            {currentImageIndex + 1}/{product.images.length}
-          </div>
-        )}
-        
-        <Image 
-          src={currentImage} 
-          alt={product.name}
-          fill
-          className="object-cover select-none pointer-events-none"
-          draggable={false}
-          onContextMenu={(e) => e.preventDefault()}
-          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          quality={75}
-        />
-        {/* Sold Out Overlay */}
-        {(product.stock === 0 || product.name.includes('7.35 FLASHY')) && (
-          <div className="absolute inset-0 bg-red-500 flex items-center justify-center z-50" style={{zIndex: 9999}}>
-            <span className="text-white font-bold text-2xl">SOLD OUT</span>
-          </div>
-        )}
-        {/* Debug: Show stock value temporarily */}
-        <div className="absolute top-2 left-2 bg-blue-500 text-white text-xs px-2 py-1 rounded z-50" style={{zIndex: 10000}}>
-          Stock: {product.stock}
+        {/* Product Count Badge */}
+        <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-sm font-medium">
+          {category.product_count} {category.product_count === 1 ? 'gem' : 'gems'}
         </div>
 
+        {/* Gemsutopia Logo */}
         <div className="absolute bottom-2 right-2 z-10">
           <Image 
             src="/logos/gems-logo.png" 
@@ -140,90 +65,26 @@ function ProductCard({
           />
         </div>
       </div>
-      <h3 className="text-lg font-semibold text-black mb-1 text-center min-h-[2.5rem] flex items-center justify-center leading-tight">{product.name}</h3>
-      <div className="mt-auto pt-3 flex items-center md:justify-between justify-center">
-        <button
-          onClick={(e) => {
-            if (product.stock === 0) return; // Don't allow wishlist if sold out
-            toggleWishlist(product.id, e);
-          }}
-          disabled={product.stock === 0}
-          className={`transition-colors p-1 hidden md:block ${
-            product.stock === 0 
-              ? 'text-gray-400 cursor-not-allowed' 
-              : 'text-black hover:text-yellow-400'
-          }`}
-        >
-          {isInWishlist(product.id) ? (
-            <IconStarFilled className="h-6 w-6 text-yellow-400" />
-          ) : (
-            <IconStar className="h-6 w-6" />
-          )}
-        </button>
-        <div className="flex items-center gap-3 md:gap-2">
-          <button
-            onClick={(e) => {
-              if (product.stock === 0) return; // Don't allow wishlist if sold out
-              toggleWishlist(product.id, e);
-            }}
-            disabled={product.stock === 0}
-            className={`transition-colors p-1 md:hidden ${
-              product.stock === 0 
-                ? 'text-gray-400 cursor-not-allowed' 
-                : 'text-black hover:text-yellow-400'
-            }`}
-          >
-            {isInWishlist(product.id) ? (
-              <IconStarFilled className="h-6 w-6 text-yellow-400" />
-            ) : (
-              <IconStar className="h-6 w-6" />
-            )}
-          </button>
-          <div className="flex items-center gap-2">
-            {product.price < product.originalPrice && (
-              <>
-                <span className="text-sm text-black line-through md:hidden">{formatPriceNoSuffix(product.originalPrice)}</span>
-                <span className="text-sm text-black line-through hidden md:inline">{formatPrice(product.originalPrice)}</span>
-              </>
-            )}
-            <span className="text-lg font-bold text-black md:hidden">{formatPriceNoSuffix(product.price)}</span>
-            <span className="text-lg font-bold text-black hidden md:inline">{formatPrice(product.price)}</span>
+
+      {/* Category Info */}
+      <div className="flex-1 flex flex-col">
+        <h3 className="text-lg md:text-xl font-bold text-black mb-2 text-center leading-tight group-hover:text-neutral-700 transition-colors">
+          {category.name}
+        </h3>
+        
+        {category.description && (
+          <p className="text-sm text-neutral-600 text-center mb-4 line-clamp-2 flex-1">
+            {category.description}
+          </p>
+        )}
+
+        {/* Explore Button */}
+        <div className="mt-auto">
+          <div className="flex items-center justify-center gap-2 text-black group-hover:text-neutral-700 transition-colors">
+            <span className="font-medium">Explore Collection</span>
+            <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
           </div>
-          <button
-            onClick={(e) => {
-              if (product.stock === 0) return; // Don't allow cart if sold out
-              toggleGemPouch(product.id, e);
-            }}
-            disabled={product.stock === 0}
-            className={`transition-colors p-1 relative md:hidden ${
-              product.stock === 0 
-                ? 'text-gray-400 cursor-not-allowed' 
-                : 'text-black hover:text-neutral-600'
-            }`}
-          >
-            <ShoppingBag className="h-6 w-6" strokeWidth={2} />
-            {isInPouch(product.id) && (
-              <Check className="absolute bottom-0 right-0 h-4 w-4 text-green-500" strokeWidth={4} />
-            )}
-          </button>
         </div>
-        <button
-          onClick={(e) => {
-            if (product.stock === 0) return; // Don't allow cart if sold out
-            toggleGemPouch(product.id, e);
-          }}
-          disabled={product.stock === 0}
-          className={`transition-colors p-1 relative hidden md:block ${
-            product.stock === 0 
-              ? 'text-gray-400 cursor-not-allowed' 
-              : 'text-black hover:text-neutral-600'
-          }`}
-        >
-          <ShoppingBag className="h-6 w-6" strokeWidth={2} />
-          {isInPouch(product.id) && (
-            <Check className="absolute bottom-0 right-0 h-4 w-4 text-green-500" strokeWidth={4} />
-          )}
-        </button>
       </div>
     </div>
   );
@@ -231,120 +92,83 @@ function ProductCard({
 
 export default function Shop() {
   const router = useRouter();
-  const { addItem, removeItem, isInPouch } = useGemPouch();
-  const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist();
-  const { formatPrice, formatPriceNoSuffix } = useCurrency();
-  const { shopRefreshTrigger } = useInventory();
-  
-  const [sortBy, setSortBy] = useState('default');
-  const [priceFilter, setPriceFilter] = useState('all');
-  const [gemType, setGemType] = useState('all');
-  const [products, setProducts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  
-  const toggleWishlist = (productId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const product = products.find(p => p.id === productId);
-    if (!product) return;
-    
-    const productData = {
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image: product.image,
-      stock: product.stock
-    };
-    
-    if (isInWishlist(productId)) {
-      removeFromWishlist(productId);
-    } else {
-      addToWishlist(productData);
-    }
-  };
-  
-  const toggleGemPouch = (productId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const product = products.find(p => p.id === productId);
-    if (!product) return;
-    
-    const productData = {
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image: product.image,
-      stock: product.stock
-    };
-    
-    if (isInPouch(productId)) {
-      removeItem(productId);
-    } else {
-      addItem(productData);
-    }
-  };
-  
+  const [error, setError] = useState('');
 
-  // Remove problematic touch event listeners that interfere with scrolling
-  
-  // Fetch products from database
+  // Fetch categories from database
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchCategories = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/products');
+        setError('');
+        
+        // Fetch categories with product counts
+        const response = await fetch('/api/categories');
+        
         if (!response.ok) {
-          throw new Error('Failed to fetch products');
+          throw new Error('Failed to fetch categories');
         }
+        
         const data = await response.json();
         
         if (data.success) {
+          // Filter only active categories and add product counts
+          const activeCategories = data.categories.filter((cat: Category) => cat.is_active);
           
-          // Transform database products to match current interface
-          const transformedProducts = data.products.map((product: any) => ({
-            id: product.id, // Keep UUID as string
-            name: product.name,
-            type: product.category,
-            price: product.on_sale && product.sale_price ? product.sale_price : product.price,
-            originalPrice: product.price,
-            image: product.images?.[0] || '/images/placeholder.jpg',
-            images: product.images || [],
-            featuredImageIndex: 0,
-            stock: product.stock || product.inventory || 0 // Use API-provided stock first, then inventory fallback
-          }));
-          setProducts(transformedProducts);
+          // Get product count for each category
+          const categoriesWithCounts = await Promise.all(
+            activeCategories.map(async (category: Category) => {
+              try {
+                const productsResponse = await fetch(`/api/categories/${category.id}/products`);
+                if (productsResponse.ok) {
+                  const productsData = await productsResponse.json();
+                  return {
+                    ...category,
+                    product_count: productsData.products?.length || 0
+                  };
+                } else {
+                  return {
+                    ...category,
+                    product_count: 0
+                  };
+                }
+              } catch (error) {
+                console.error(`Error fetching products for category ${category.name}:`, error);
+                return {
+                  ...category,
+                  product_count: 0
+                };
+              }
+            })
+          );
+          
+          // Sort by sort_order then by name
+          categoriesWithCounts.sort((a, b) => {
+            if (a.sort_order !== b.sort_order) {
+              return a.sort_order - b.sort_order;
+            }
+            return a.name.localeCompare(b.name);
+          });
+          
+          setCategories(categoriesWithCounts);
+        } else {
+          setError(data.error || 'Failed to fetch categories');
         }
       } catch (error) {
-        console.error('Error fetching products:', error);
-        // Fallback to empty array if database fails
-        setProducts([]);
+        console.error('Error fetching categories:', error);
+        setError('Failed to load categories. Please try again.');
+        setCategories([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProducts();
-  }, [shopRefreshTrigger]);
-
-
-  // Filter and sort products
-  const filteredProducts = products
-    .filter(product => {
-      if (priceFilter === 'under200' && product.price >= 200) return false;
-      if (priceFilter === '200to300' && (product.price < 200 || product.price > 300)) return false;
-      if (priceFilter === 'over300' && product.price <= 300) return false;
-      if (gemType !== 'all' && product.type !== gemType) return false;
-      return true;
-    })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case 'price-low': return a.price - b.price;
-        case 'price-high': return b.price - a.price;
-        case 'name': return a.name.localeCompare(b.name);
-        default: return a.id - b.id;
-      }
-    });
+    fetchCategories();
+  }, []);
 
   return (
-    <div className="min-h-[200vh] flex flex-col relative">
+    <div className="min-h-screen flex flex-col relative">
       {/* Fixed Background */}
       <div 
         className="fixed inset-0 z-0"
@@ -364,308 +188,60 @@ export default function Shop() {
         <div className="flex-grow py-16 relative z-10 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading products...</p>
+            <p className="text-gray-600">Loading categories...</p>
+          </div>
+        </div>
+      ) : error ? (
+        <div className="flex-grow py-16 relative z-10 flex items-center justify-center">
+          <div className="text-center">
+            <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-lg max-w-md">
+              <p className="font-semibold mb-2">Error Loading Categories</p>
+              <p className="text-sm">{error}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="mt-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors"
+              >
+                Try Again
+              </button>
+            </div>
           </div>
         </div>
       ) : (
         <div className="flex-grow py-16 relative z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h1 className="text-3xl md:text-4xl font-bold text-black mb-4">Gem Collection</h1>
-            <p className="text-lg text-neutral-600 max-w-2xl mx-auto">
-              Explore our curated selection of authentic Canadian gemstones, personally mined and carefully chosen by Reese from the pristine landscapes of Alberta
-            </p>
-          </div>
-
-          {/* Filters and Sorting */}
-          <div className="bg-white/70 rounded-lg p-4 mb-8 shadow-md">
-            {/* Mobile Layout */}
-            <div className="block md:hidden">
-              <div className="flex items-center gap-2 text-black mb-4">
-                <IconFilter className="h-5 w-5" />
-                <span className="font-semibold">Filter & Sort</span>
-              </div>
-              
-              <div className="space-y-3">
-                {/* Sort By */}
-                <div>
-                  <label htmlFor="sort" className="block text-sm font-medium text-black mb-1">Sort by:</label>
-                  <select
-                    id="sort"
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white text-black"
-                  >
-                    <option value="default">Default</option>
-                    <option value="name">Name A-Z</option>
-                    <option value="price-low">Price: Low to High</option>
-                    <option value="price-high">Price: High to Low</option>
-                  </select>
-                </div>
-
-                {/* Price Filter */}
-                <div>
-                  <label htmlFor="price" className="block text-sm font-medium text-black mb-1">Price:</label>
-                  <select
-                    id="price"
-                    value={priceFilter}
-                    onChange={(e) => setPriceFilter(e.target.value)}
-                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white text-black"
-                  >
-                    <option value="all">All Prices</option>
-                    <option value="under200">Under $200</option>
-                    <option value="200to300">$200 - $300</option>
-                    <option value="over300">Over $300</option>
-                  </select>
-                </div>
-
-                {/* Gem Type Filter */}
-                <div>
-                  <label htmlFor="gemType" className="block text-sm font-medium text-black mb-1">Type:</label>
-                  <select
-                    id="gemType"
-                    value={gemType}
-                    onChange={(e) => setGemType(e.target.value)}
-                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white text-black"
-                  >
-                    <option value="all">All Types</option>
-                    <option value="sapphire">Sapphire</option>
-                    <option value="peridot">Peridot</option>
-                    <option value="ammolite">Ammolite</option>
-                    <option value="garnet">Garnet</option>
-                    <option value="quartz">Quartz</option>
-                    <option value="agate">Agate</option>
-                    <option value="jasper">Jasper</option>
-                    <option value="amethyst">Amethyst</option>
-                    <option value="topaz">Topaz</option>
-                    <option value="opal">Opal</option>
-                    <option value="tourmaline">Tourmaline</option>
-                    <option value="moonstone">Moonstone</option>
-                    <option value="labradorite">Labradorite</option>
-                    <option value="citrine">Citrine</option>
-                    <option value="jade">Jade</option>
-                  </select>
-                </div>
-              </div>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <h1 className="text-3xl md:text-4xl font-bold text-black mb-4">Gem Categories</h1>
+              <p className="text-lg text-neutral-600 max-w-2xl mx-auto">
+                Explore our curated gemstone collections, each category featuring authentic Canadian gems personally mined and carefully chosen by Reese from the pristine landscapes of Alberta
+              </p>
             </div>
 
-            {/* Desktop Layout */}
-            <div className="hidden md:flex flex-col lg:flex-row gap-4 items-center justify-between">
-              <div className="flex items-center gap-2 text-black">
-                <IconFilter className="h-5 w-5" />
-                <span className="font-semibold">Filter & Sort:</span>
+            {/* Categories Grid */}
+            {categories.length === 0 ? (
+              <div className="text-center py-16">
+                <Package className="h-16 w-16 text-neutral-400 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-black mb-2">No Categories Available</h3>
+                <p className="text-neutral-600">
+                  We're currently organizing our gemstone collections. Please check back soon!
+                </p>
               </div>
-              
-              <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
-                {/* Sort By */}
-                <div className="flex items-center gap-2">
-                  <label htmlFor="sort-desktop" className="text-sm font-medium text-black">Sort by:</label>
-                  <select
-                    id="sort-desktop"
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="border border-gray-300 rounded px-3 py-1 text-sm bg-white text-black"
-                  >
-                    <option value="default">Default</option>
-                    <option value="name">Name A-Z</option>
-                    <option value="price-low">Price: Low to High</option>
-                    <option value="price-high">Price: High to Low</option>
-                  </select>
-                </div>
-
-                {/* Price Filter */}
-                <div className="flex items-center gap-2">
-                  <label htmlFor="price-desktop" className="text-sm font-medium text-black">Price:</label>
-                  <select
-                    id="price-desktop"
-                    value={priceFilter}
-                    onChange={(e) => setPriceFilter(e.target.value)}
-                    className="border border-gray-300 rounded px-3 py-1 text-sm bg-white text-black"
-                  >
-                    <option value="all">All Prices</option>
-                    <option value="under200">Under $200</option>
-                    <option value="200to300">$200 - $300</option>
-                    <option value="over300">Over $300</option>
-                  </select>
-                </div>
-
-                {/* Gem Type Filter */}
-                <div className="flex items-center gap-2">
-                  <label htmlFor="gemType-desktop" className="text-sm font-medium text-black">Type:</label>
-                  <select
-                    id="gemType-desktop"
-                    value={gemType}
-                    onChange={(e) => setGemType(e.target.value)}
-                    className="border border-gray-300 rounded px-3 py-1 text-sm bg-white text-black"
-                  >
-                    <option value="all">All Types</option>
-                    <option value="sapphire">Sapphire</option>
-                    <option value="peridot">Peridot</option>
-                    <option value="ammolite">Ammolite</option>
-                    <option value="garnet">Garnet</option>
-                    <option value="quartz">Quartz</option>
-                    <option value="agate">Agate</option>
-                    <option value="jasper">Jasper</option>
-                    <option value="amethyst">Amethyst</option>
-                    <option value="topaz">Topaz</option>
-                    <option value="opal">Opal</option>
-                    <option value="tourmaline">Tourmaline</option>
-                    <option value="moonstone">Moonstone</option>
-                    <option value="labradorite">Labradorite</option>
-                    <option value="citrine">Citrine</option>
-                    <option value="jade">Jade</option>
-                  </select>
-                </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                {categories.map((category) => (
+                  <CategoryCard key={category.id} category={category} router={router} />
+                ))}
               </div>
-            </div>
-            
-            <div className="mt-4 text-sm text-gray-600">
-              Showing {filteredProducts.length} of {products.length} gems
-            </div>
+            )}
+
+            {/* Summary */}
+            {categories.length > 0 && (
+              <div className="mt-12 text-center">
+                <p className="text-neutral-600">
+                  {categories.length} {categories.length === 1 ? 'category' : 'categories'} • {categories.reduce((total, cat) => total + cat.product_count, 0)} total gems
+                </p>
+              </div>
+            )}
           </div>
-        </div>
-        
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">
-            {filteredProducts.map((product) => {
-              const discountPercent = Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
-              return (
-                <div 
-                  key={product.id} 
-                  className="rounded-2xl p-2 md:p-3 shadow-2xl shadow-white/20 border border-white/10 translate-x-1 translate-y-1 transition-all duration-200 ease-out cursor-pointer product-card select-none h-full flex flex-col"
-                  style={{ backgroundColor: '#f0f0f0' }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    // Navigate to product page and scroll to top
-                    router.push(`/product/${product.id}`);
-                    window.scrollTo(0, 0);
-                  }}
-                >
-                  {/* Content */}
-                  <div className="aspect-square bg-neutral-100 rounded-lg mb-2 overflow-hidden relative">
-                    {product.price < product.originalPrice && (
-                      <div className="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded z-10">
-                        {discountPercent}% OFF
-                      </div>
-                    )}
-                    <Image 
-                      src={product.image} 
-                      alt={product.name}
-                      fill
-                      className="object-cover select-none pointer-events-none"
-                      draggable={false}
-                      onContextMenu={(e) => e.preventDefault()}
-                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      quality={75}
-                    />
-                    
-                    {/* Sold Out Overlay */}
-                    {product.stock === 0 && (
-                      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-20">
-                        <span className="text-white font-bold text-3xl md:text-4xl tracking-wider">SOLD</span>
-                      </div>
-                    )}
-                    
-                    <div className="absolute bottom-2 right-2 z-10">
-                      <Image 
-                        src="/logos/gems-logo.png" 
-                        alt="Gemsutopia"
-                        width={32}
-                        height={32}
-                        className="h-8 opacity-70 object-contain"
-                      />
-                    </div>
-                  </div>
-                  <h3 className="text-sm md:text-lg font-semibold text-black mb-1 text-center min-h-[2rem] md:min-h-[2.5rem] flex items-center justify-center leading-tight">{product.name}</h3>
-                  <div className="mt-auto pt-2 md:pt-3 flex items-center md:justify-between justify-center">
-                    <button
-                      onClick={(e) => {
-                        if (product.stock === 0) return; // Don't allow wishlist if sold out
-                        toggleWishlist(product.id, e);
-                      }}
-                      disabled={product.stock === 0}
-                      className={`transition-colors p-1 hidden md:block ${
-                        product.stock === 0 
-                          ? 'text-gray-400 cursor-not-allowed' 
-                          : 'text-black hover:text-yellow-400'
-                      }`}
-                    >
-                      {isInWishlist(product.id) ? (
-                        <IconStarFilled className="h-6 w-6 text-yellow-400" />
-                      ) : (
-                        <IconStar className="h-6 w-6" />
-                      )}
-                    </button>
-                    <div className="flex items-center gap-2 md:gap-2">
-                      <button
-                        onClick={(e) => {
-                          if (product.stock === 0) return; // Don't allow wishlist if sold out
-                          toggleWishlist(product.id, e);
-                        }}
-                        disabled={product.stock === 0}
-                        className={`transition-colors p-0.5 md:hidden ${
-                          product.stock === 0 
-                            ? 'text-gray-400 cursor-not-allowed' 
-                            : 'text-black hover:text-yellow-400'
-                        }`}
-                      >
-                        {isInWishlist(product.id) ? (
-                          <IconStarFilled className="h-5 w-5 text-yellow-400" />
-                        ) : (
-                          <IconStar className="h-5 w-5" />
-                        )}
-                      </button>
-                      <div className="flex items-center gap-1 md:gap-2">
-                        {product.price < product.originalPrice && (
-                          <>
-                            <span className="text-xs md:text-sm text-black line-through md:hidden">{formatPriceNoSuffix(product.originalPrice)}</span>
-                            <span className="text-sm text-black line-through hidden md:inline">{formatPrice(product.originalPrice)}</span>
-                          </>
-                        )}
-                        <span className="text-sm md:text-lg font-bold text-black md:hidden">{formatPriceNoSuffix(product.price)}</span>
-                        <span className="text-lg font-bold text-black hidden md:inline">{formatPrice(product.price)}</span>
-                      </div>
-                      <button
-                        onClick={(e) => {
-                          if (product.stock === 0) return; // Don't allow cart if sold out
-                          toggleGemPouch(product.id, e);
-                        }}
-                        disabled={product.stock === 0}
-                        className={`transition-colors p-0.5 relative md:hidden ${
-                          product.stock === 0 
-                            ? 'text-gray-400 cursor-not-allowed' 
-                            : 'text-black hover:text-neutral-600'
-                        }`}
-                      >
-                        <ShoppingBag className="h-5 w-5" strokeWidth={2} />
-                        {isInPouch(product.id) && (
-                          <Check className="absolute bottom-0 right-0 h-3 w-3 text-green-500" strokeWidth={4} />
-                        )}
-                      </button>
-                    </div>
-                    <button
-                      onClick={(e) => {
-                        if (product.stock === 0) return; // Don't allow cart if sold out
-                        toggleGemPouch(product.id, e);
-                      }}
-                      disabled={product.stock === 0}
-                      className={`transition-colors p-1 relative hidden md:block ${
-                        product.stock === 0 
-                          ? 'text-gray-400 cursor-not-allowed' 
-                          : 'text-black hover:text-neutral-600'
-                      }`}
-                    >
-                      <ShoppingBag className="h-6 w-6" strokeWidth={2} />
-                      {isInPouch(product.id) && (
-                        <Check className="absolute bottom-0 right-0 h-4 w-4 text-green-500" strokeWidth={4} />
-                      )}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
       </div>
       )}
       
@@ -675,15 +251,15 @@ export default function Shop() {
       
       <style jsx>{`
         @media (hover: hover) and (pointer: fine) {
-          .product-card:hover {
+          .category-card:hover {
             transform: translateY(-8px) !important;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6) !important;
           }
         }
-        .product-card {
+        .category-card {
           will-change: transform;
         }
-        .product-card {
+        .category-card {
           -webkit-user-select: none;
           -moz-user-select: none;
           -ms-user-select: none;
@@ -691,12 +267,18 @@ export default function Shop() {
           -webkit-touch-callout: none;
           -webkit-tap-highlight-color: transparent;
         }
-        .product-card img {
+        .category-card img {
           -webkit-user-drag: none;
           -khtml-user-drag: none;
           -moz-user-drag: none;
           -o-user-drag: none;
           user-drag: none;
+        }
+        .line-clamp-2 {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
         }
       `}</style>
     </div>

@@ -73,25 +73,25 @@ export default function Stats() {
   }
 
   return (
-    <div className="w-full py-6 bg-black">
+    <div className="w-full pt-0 pb-2 bg-black">
       {/* Mobile: Card format */}
-      <div className="lg:hidden px-4">
-        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+      <div className="lg:hidden px-2">
+        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20 w-full">
           <div className="grid grid-cols-3 gap-x-4 gap-y-6">
             {stats.slice(0, 6).map((stat) => {
               const IconComponent = iconMap[stat.icon as keyof typeof iconMap];
               
               return (
                 <div key={stat.id} className="text-center">
-                  <div className="flex justify-center mb-2">
+                  <div className="flex justify-center mb-2.5">
                     {IconComponent && (
                       <IconComponent className="h-5 w-5 text-white opacity-80" />
                     )}
                   </div>
-                  <div className="text-lg font-bold text-white mb-1 leading-none">
+                  <div className="text-lg font-bold text-white mb-1.5 leading-normal">
                     {stat.value}
                   </div>
-                  <div className="text-xs text-white/90 font-medium leading-tight">
+                  <div className="text-xs text-white/90 font-medium leading-normal">
                     {stat.title}
                   </div>
                 </div>
@@ -109,15 +109,15 @@ export default function Stats() {
             
             return (
               <div key={stat.id} className="text-center">
-                <div className="flex justify-center mb-1">
+                <div className="flex justify-center mb-1.5">
                   {IconComponent && (
                     <IconComponent className="h-4 w-4 text-white opacity-80" />
                   )}
                 </div>
-                <div className="text-lg font-bold text-white mb-0.5 leading-none">
+                <div className="text-lg font-bold text-white mb-0.5 leading-normal">
                   {stat.value}
                 </div>
-                <div className="text-xs text-white/90 font-medium leading-tight">
+                <div className="text-xs text-white/90 font-medium leading-normal">
                   {stat.title}
                 </div>
               </div>

@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { ChevronDown, ChevronUp, HelpCircle } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 interface FAQItem {
   id: string;
@@ -64,7 +64,6 @@ export default function FAQ() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <div className="flex items-center justify-center mb-4">
-            <HelpCircle className="h-8 w-8 text-black mr-3" />
             <h2 className="text-3xl md:text-4xl font-bold text-black">Frequently Asked Questions</h2>
           </div>
           <p className="text-lg text-neutral-600 max-w-2xl mx-auto">

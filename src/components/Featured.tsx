@@ -210,9 +210,12 @@ export default function Featured() {
                   return (
                     <div key={product.id} className="flex-shrink-0 w-[280px]">
                       <div 
-                        className="rounded-2xl p-2 shadow-2xl shadow-white/20 border border-white/10 translate-x-1 translate-y-1 transition-all duration-200 ease-out cursor-pointer product-card select-none h-full flex flex-col"
+                        className={`rounded-2xl p-2 shadow-2xl shadow-white/20 border border-white/10 translate-x-1 translate-y-1 transition-all duration-200 ease-out product-card select-none h-full flex flex-col ${
+                          product.inventory === 0 ? 'cursor-not-allowed' : 'cursor-pointer'
+                        }`}
                         style={{ backgroundColor: '#f0f0f0' }}
                         onClick={(e) => {
+                          if (product.inventory === 0) return; // Don't navigate if sold out
                           e.stopPropagation();
                           const targetId = product.product_id || product.id;
                           router.push(`/product/${targetId}`);
@@ -326,9 +329,12 @@ export default function Featured() {
                     return (
                       <div key={`${product.id}-${index}`} className="inline-block flex-shrink-0 w-[calc(80vw-1rem)] md:w-[calc(33.33vw-1rem)] lg:w-[calc(25vw-1rem)] mx-2 md:mx-3">
                         <div 
-                          className="rounded-2xl p-2 shadow-2xl shadow-white/20 border border-white/10 translate-x-1 translate-y-1 transition-all duration-200 ease-out cursor-pointer product-card select-none h-full flex flex-col"
+                          className={`rounded-2xl p-2 shadow-2xl shadow-white/20 border border-white/10 translate-x-1 translate-y-1 transition-all duration-200 ease-out product-card select-none h-full flex flex-col ${
+                            product.inventory === 0 ? 'cursor-not-allowed' : 'cursor-pointer'
+                          }`}
                           style={{ backgroundColor: '#f0f0f0' }}
                           onClick={(e) => {
+                            if (product.inventory === 0) return; // Don't navigate if sold out
                             e.stopPropagation();
                             const targetId = product.product_id || product.id;
                             router.push(`/product/${targetId}`);
