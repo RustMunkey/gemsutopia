@@ -10,11 +10,11 @@ const supabaseAdmin = createClient(
 // GET /api/categories/[id]/products - Get products in a category
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = supabaseAdmin;
-    const { id } = params;
+    const { id } = await params;
     const { searchParams } = new URL(request.url);
     
     console.log(`[API] Fetching products for category ID: ${id}`);
