@@ -10,11 +10,11 @@ const supabaseAdmin = createClient(
 // GET /api/products/[id]/categories - Get categories for a product
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = supabaseAdmin;
-    const { id: productId } = params;
+    const { id: productId } = await params;
     
     const { data: categories, error } = await supabase
       .from('product_categories')
@@ -59,11 +59,11 @@ export async function GET(
 // POST /api/products/[id]/categories - Assign categories to product
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = supabaseAdmin;
-    const { id: productId } = params;
+    const { id: productId } = await params;
     const body = await request.json();
     
     const { category_ids } = body;
@@ -182,11 +182,11 @@ export async function POST(
 // DELETE /api/products/[id]/categories - Remove all categories from product
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = supabaseAdmin;
-    const { id: productId } = params;
+    const { id: productId } = await params;
     
     const { error } = await supabase
       .from('product_categories')
