@@ -122,9 +122,9 @@ export default function CheckoutFlow() {
   const [currentShippingSettings, setCurrentShippingSettings] = useState<ShippingSettings | null>(null);
   
   // Shipping calculation function (moved outside useEffect so it can be called manually)
-  const calculateShippingCost = async () => {
-      // Don't recalculate shipping once we're in payment step
-      if (shippingLocked) {
+  const calculateShippingCost = async (forceRefresh = false) => {
+      // Don't recalculate shipping once we're in payment step (unless forced)
+      if (shippingLocked && !forceRefresh) {
         console.log('SHIPPING LOCKED - NOT RECALCULATING');
         return;
       }
@@ -141,8 +141,11 @@ export default function CheckoutFlow() {
 
       try {
         // Fetch fresh shipping settings from database
-        console.log('FETCHING SHIPPING SETTINGS FROM DATABASE');
-        const response = await fetch('/api/shipping-settings');
+        console.log('FETCHING SHIPPING SETTINGS FROM DATABASE', forceRefresh ? '(FORCE REFRESH)' : '');
+        const url = forceRefresh 
+          ? `/api/shipping-settings?t=${Date.now()}` // Cache buster for force refresh
+          : '/api/shipping-settings';
+        const response = await fetch(url);
         if (!response.ok) {
           console.error('Failed to fetch shipping settings');
           setShipping(-1); // Keep showing "Calculating..."
@@ -248,6 +251,33 @@ export default function CheckoutFlow() {
     });
     setShipping(calculation.shippingCost);
   };
+
+  // Listen for settings updates
+  React.useEffect(() => {
+    const handleSettingsUpdate = () => {
+      console.log('🔄 SETTINGS UPDATED EVENT RECEIVED - REFETCHING SHIPPING SETTINGS');
+      // Reset cached settings and force refetch shipping settings when admin updates them
+      setCurrentShippingSettings(null);
+      calculateShippingCost(true); // Force refresh even if shipping is locked
+    };
+
+    // Listen for custom events from Settings component
+    window.addEventListener('settings-updated', handleSettingsUpdate);
+    
+    // Also listen for storage events (cross-tab updates)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'site-settings-updated') {
+        console.log('🔄 CROSS-TAB SETTINGS UPDATE DETECTED');
+        handleSettingsUpdate();
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('settings-updated', handleSettingsUpdate);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
 
   // UseEffect to trigger shipping calculation when dependencies change
   React.useEffect(() => {

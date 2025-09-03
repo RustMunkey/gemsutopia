@@ -33,7 +33,7 @@ export default function TermsOfService() {
     shipping_paragraph_1: "Shipping times are estimates and may vary. We are not responsible for delays caused by shipping carriers, customs, or other factors beyond our control.",
     shipping_paragraph_2: "Risk of loss and title for items purchased from Gemsutopia pass to you upon delivery to the shipping carrier.",
     returns_title: "5. Returns and Refunds",
-    returns_content: "Please refer to our Returns & Exchange policy for detailed information about returns, exchanges, and refunds. All returns must be authorized and comply with our return policy.",
+    returns_content: "Please contact us at gemsutopia@gmail.com for detailed information about returns, exchanges, and refunds. All returns must be authorized and comply with our return policy.",
     intellectual_title: "6. Intellectual Property",
     intellectual_content: "All content on this website, including text, graphics, logos, images, and software, is the property of Gemsutopia and is protected by copyright and other intellectual property laws.",
     liability_title: "7. Limitation of Liability",

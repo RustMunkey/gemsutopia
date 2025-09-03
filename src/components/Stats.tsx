@@ -73,7 +73,7 @@ export default function Stats() {
   }
 
   return (
-    <div className="w-full pt-0 pb-2 bg-black">
+    <div className="w-full pt-0 lg:pt-4 pb-2 bg-black">
       {/* Mobile: Card format */}
       <div className="lg:hidden px-2">
         <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20 w-full">

@@ -34,7 +34,7 @@ export default function Support() {
     faq_1_question: "How do I track my order?",
     faq_1_answer: "Once your order is shipped, you'll receive a tracking number via email. You can use this number to track your package on our shipping partner's website.",
     faq_2_question: "What is your return policy?",
-    faq_2_answer: "We offer a 30-day return policy for all items in original condition. Please see our Returns & Exchange page for detailed information.",
+    faq_2_answer: "We offer a 30-day return policy for all items in original condition. Please contact us at gemsutopia@gmail.com for detailed return information.",
     faq_3_question: "Are your gemstones authentic?",
     faq_3_answer: "Yes, all our gemstones come with certificates of authenticity and are sourced from trusted suppliers worldwide.",
     faq_4_question: "How long does shipping take?",
@@ -63,7 +63,7 @@ export default function Support() {
       <div className="flex-grow py-16 relative z-10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
-            <div className="text-center mb-12">
+            <div className="text-center mb-12 md:mb-20">
               <h1 className="text-3xl md:text-4xl font-bold text-black mb-4">{getContent('title')}</h1>
               <p className="text-lg text-neutral-600">{getContent('subtitle')}</p>
             </div>

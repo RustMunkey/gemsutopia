@@ -272,7 +272,7 @@ function SupportPageEditor({ pageContents, onSave, onRefresh }: AboutPageEditorP
     faq_1_question: "How do I track my order?",
     faq_1_answer: "Once your order is shipped, you'll receive a tracking number via email. You can use this number to track your package on our shipping partner's website.",
     faq_2_question: "What is your return policy?",
-    faq_2_answer: "We offer a 30-day return policy for all items in original condition. Please see our Returns & Exchange page for detailed information.",
+    faq_2_answer: "We offer a 30-day return policy for all items in original condition. Please contact us at gemsutopia@gmail.com for detailed return information.",
     faq_3_question: "Are your gemstones authentic?",
     faq_3_answer: "Yes, all our gemstones come with certificates of authenticity and are sourced from trusted suppliers worldwide.",
     faq_4_question: "How long does shipping take?",
@@ -707,172 +707,6 @@ function RefundPolicyPageEditor({ pageContents, onSave, onRefresh }: AboutPageEd
   );
 }
 
-// Returns & Exchange Page Editor
-function ReturnsExchangePageEditor({ pageContents, onSave, onRefresh }: AboutPageEditorProps) {
-  const contentMap = pageContents.reduce((acc, item) => {
-    acc[item.key] = { value: item.value, id: item.id };
-    return acc;
-  }, {} as Record<string, { value: string; id: string }>);
-
-  const defaultContent: Record<string, string> = {
-    title: "Returns & Exchange",
-    subtitle: "We want you to love your gemstones",
-    policy_title: "Our Return Policy",
-    policy_intro: "At Gemsutopia, we want you to be completely satisfied with your purchase. If for any reason you're not happy with your gemstones, we offer a hassle-free return policy.",
-    policy_window: "Return Window: You have 30 days from the date of delivery to return your items for a full refund or exchange.",
-    acceptable_title: "What Can Be Returned",
-    acceptable_intro: "We accept returns for:",
-    acceptable_item_1: "Gemstones in their original condition",
-    acceptable_item_2: "Jewelry pieces that haven't been resized or altered",
-    acceptable_item_3: "Items that are unworn and undamaged",
-    acceptable_item_4: "Products in their original packaging with all certificates",
-    unacceptable_title: "Items We Cannot Accept",
-    unacceptable_intro: "For hygiene and safety reasons, we cannot accept returns for:",
-    unacceptable_item_1: "Custom or personalized jewelry pieces",
-    unacceptable_item_2: "Items that have been resized or altered",
-    unacceptable_item_3: "Gemstones that show signs of damage or wear",
-    unacceptable_item_4: "Items without original packaging or certificates",
-    return_steps_title: "How to Start a Return",
-    return_steps_intro: "To initiate a return, please follow these simple steps:",
-    return_step_1: "Contact us at gemsutopia@gmail.com with your order number",
-    return_step_2: "Include photos of the item(s) you wish to return",
-    return_step_3: "Specify the reason for return (exchange, refund, damaged, etc.)",
-    return_step_4: "We'll provide you with return instructions and a return authorization number",
-    return_step_5: "Package the items securely with all original materials",
-    return_step_6: "Ship using a trackable method (we recommend insurance for valuable items)",
-    exchange_title: "Exchange Process",
-    exchange_intro: "If you'd like to exchange your item for a different size, style, or gemstone:",
-    exchange_item_1: "Follow the return process above and specify \"exchange\" as your reason",
-    exchange_item_2: "Let us know what you'd like to exchange it for",
-    exchange_item_3: "We'll confirm availability and any price differences",
-    exchange_item_4: "Upon receiving your return, we'll ship your new item",
-    exchange_item_5: "If there's a price difference, we'll refund or charge accordingly",
-    refund_title: "Refund Processing",
-    refund_intro: "Once we receive and inspect your returned item:",
-    refund_item_1: "We'll send you an email confirming receipt",
-    refund_item_2: "Refunds are processed within 3-5 business days",
-    refund_item_3: "Refunds are issued to your original payment method",
-    refund_item_4: "You'll receive an email confirmation when the refund is processed",
-    refund_item_5: "Please allow 5-10 business days for the refund to appear in your account",
-    shipping_title: "Shipping Costs",
-    shipping_returns: "Returns: Customers are responsible for return shipping costs unless the item was damaged or incorrectly sent.",
-    shipping_exchanges: "Exchanges: We'll cover the cost of shipping your new item to you. You cover the return shipping cost.",
-    shipping_damaged: "Damaged Items: If you received a damaged item, we'll provide a prepaid return label and cover all shipping costs.",
-    damaged_title: "Damaged or Incorrect Items",
-    damaged_intro: "If you received a damaged or incorrect item, please contact us immediately at gemsutopia@gmail.com. We'll make it right with:",
-    damaged_item_1: "A full refund including original shipping costs",
-    damaged_item_2: "A replacement item at no additional cost",
-    damaged_item_3: "Prepaid return shipping labels",
-    damaged_item_4: "Expedited processing of your replacement or refund",
-    questions_title: "Questions?",
-    questions_intro: "Our team is here to help make your return or exchange as smooth as possible. If you have any questions about our return policy, please don't hesitate to contact us at gemsutopia@gmail.com.",
-    questions_response_time: "Response Time: We typically respond to all emails within 24 hours."
-  };
-
-  const getContent = (key: string): string => contentMap[key]?.value || defaultContent[key] || '';
-  const getFieldId = (key: string): string => contentMap[key]?.id || '';
-  const { EditableText } = useEditableText();
-
-  return (
-    <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
-      <div className="text-center mb-12">
-        <EditableText fieldKey="title" className="text-3xl md:text-4xl font-bold text-black mb-4" tag="h1" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} />
-        <EditableText fieldKey="subtitle" className="text-lg text-neutral-600" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} />
-      </div>
-      
-      <div className="prose prose-lg max-w-none text-neutral-700 space-y-8">
-        <section>
-          <EditableText fieldKey="policy_title" className="text-2xl font-bold text-black mb-4" tag="h2" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} />
-          <EditableText fieldKey="policy_intro" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} />
-          <EditableText fieldKey="policy_window" className="mb-4" tag="p" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} />
-        </section>
-
-        <section>
-          <EditableText fieldKey="acceptable_title" className="text-2xl font-bold text-black mb-4" tag="h2" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} />
-          <EditableText fieldKey="acceptable_intro" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} />
-          <ul className="list-disc ml-6 space-y-2">
-            <li><EditableText fieldKey="acceptable_item_1" className="inline" tag="span" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} /></li>
-            <li><EditableText fieldKey="acceptable_item_2" className="inline" tag="span" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} /></li>
-            <li><EditableText fieldKey="acceptable_item_3" className="inline" tag="span" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} /></li>
-            <li><EditableText fieldKey="acceptable_item_4" className="inline" tag="span" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} /></li>
-          </ul>
-        </section>
-
-        <section>
-          <EditableText fieldKey="unacceptable_title" className="text-2xl font-bold text-black mb-4" tag="h2" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} />
-          <EditableText fieldKey="unacceptable_intro" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} />
-          <ul className="list-disc ml-6 space-y-2">
-            <li><EditableText fieldKey="unacceptable_item_1" className="inline" tag="span" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} /></li>
-            <li><EditableText fieldKey="unacceptable_item_2" className="inline" tag="span" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} /></li>
-            <li><EditableText fieldKey="unacceptable_item_3" className="inline" tag="span" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} /></li>
-            <li><EditableText fieldKey="unacceptable_item_4" className="inline" tag="span" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} /></li>
-          </ul>
-        </section>
-
-        <section>
-          <EditableText fieldKey="return_steps_title" className="text-2xl font-bold text-black mb-4" tag="h2" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} />
-          <EditableText fieldKey="return_steps_intro" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} />
-          <ol className="list-decimal ml-6 space-y-2">
-            <li><EditableText fieldKey="return_step_1" className="inline" tag="span" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} /></li>
-            <li><EditableText fieldKey="return_step_2" className="inline" tag="span" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} /></li>
-            <li><EditableText fieldKey="return_step_3" className="inline" tag="span" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} /></li>
-            <li><EditableText fieldKey="return_step_4" className="inline" tag="span" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} /></li>
-            <li><EditableText fieldKey="return_step_5" className="inline" tag="span" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} /></li>
-            <li><EditableText fieldKey="return_step_6" className="inline" tag="span" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} /></li>
-          </ol>
-        </section>
-
-        <section>
-          <EditableText fieldKey="exchange_title" className="text-2xl font-bold text-black mb-4" tag="h2" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} />
-          <EditableText fieldKey="exchange_intro" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} />
-          <ul className="list-disc ml-6 space-y-2">
-            <li><EditableText fieldKey="exchange_item_1" className="inline" tag="span" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} /></li>
-            <li><EditableText fieldKey="exchange_item_2" className="inline" tag="span" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} /></li>
-            <li><EditableText fieldKey="exchange_item_3" className="inline" tag="span" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} /></li>
-            <li><EditableText fieldKey="exchange_item_4" className="inline" tag="span" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} /></li>
-            <li><EditableText fieldKey="exchange_item_5" className="inline" tag="span" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} /></li>
-          </ul>
-        </section>
-
-        <section>
-          <EditableText fieldKey="refund_title" className="text-2xl font-bold text-black mb-4" tag="h2" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} />
-          <EditableText fieldKey="refund_intro" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} />
-          <ul className="list-disc ml-6 space-y-2">
-            <li><EditableText fieldKey="refund_item_1" className="inline" tag="span" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} /></li>
-            <li><EditableText fieldKey="refund_item_2" className="inline" tag="span" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} /></li>
-            <li><EditableText fieldKey="refund_item_3" className="inline" tag="span" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} /></li>
-            <li><EditableText fieldKey="refund_item_4" className="inline" tag="span" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} /></li>
-            <li><EditableText fieldKey="refund_item_5" className="inline" tag="span" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} /></li>
-          </ul>
-        </section>
-
-        <section>
-          <EditableText fieldKey="shipping_title" className="text-2xl font-bold text-black mb-4" tag="h2" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} />
-          <EditableText fieldKey="shipping_returns" tag="p" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} />
-          <EditableText fieldKey="shipping_exchanges" tag="p" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} />
-          <EditableText fieldKey="shipping_damaged" tag="p" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} />
-        </section>
-
-        <section>
-          <EditableText fieldKey="damaged_title" className="text-2xl font-bold text-black mb-4" tag="h2" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} />
-          <EditableText fieldKey="damaged_intro" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} />
-          <ul className="list-disc ml-6 space-y-2">
-            <li><EditableText fieldKey="damaged_item_1" className="inline" tag="span" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} /></li>
-            <li><EditableText fieldKey="damaged_item_2" className="inline" tag="span" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} /></li>
-            <li><EditableText fieldKey="damaged_item_3" className="inline" tag="span" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} /></li>
-            <li><EditableText fieldKey="damaged_item_4" className="inline" tag="span" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} /></li>
-          </ul>
-        </section>
-
-        <section>
-          <EditableText fieldKey="questions_title" className="text-2xl font-bold text-black mb-4" tag="h2" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} />
-          <EditableText fieldKey="questions_intro" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} />
-          <EditableText fieldKey="questions_response_time" tag="p" getContent={getContent} getFieldId={getFieldId} onSave={onSave} onRefresh={onRefresh} />
-        </section>
-      </div>
-    </div>
-  );
-}
 
 // Terms of Service Page Editor  
 function TermsOfServicePageEditor({ pageContents, onSave, onRefresh }: AboutPageEditorProps) {
@@ -896,7 +730,7 @@ function TermsOfServicePageEditor({ pageContents, onSave, onRefresh }: AboutPage
     shipping_paragraph_1: "Shipping times are estimates and may vary. We are not responsible for delays caused by shipping carriers, customs, or other factors beyond our control.",
     shipping_paragraph_2: "Risk of loss and title for items purchased from Gemsutopia pass to you upon delivery to the shipping carrier.",
     returns_title: "5. Returns and Refunds",
-    returns_content: "Please refer to our Returns & Exchange policy for detailed information about returns, exchanges, and refunds. All returns must be authorized and comply with our return policy.",
+    returns_content: "Please contact us at gemsutopia@gmail.com for detailed information about returns, exchanges, and refunds. All returns must be authorized and comply with our return policy.",
     intellectual_title: "6. Intellectual Property",
     intellectual_content: "All content on this website, including text, graphics, logos, images, and software, is the property of Gemsutopia and is protected by copyright and other intellectual property laws.",
     liability_title: "7. Limitation of Liability",
@@ -1406,7 +1240,6 @@ const AVAILABLE_PAGES = [
   { id: 'about', name: 'About', description: 'About Gemsutopia page content' },
   { id: 'support', name: 'Support', description: 'Customer support page content' },
   { id: 'refund-policy', name: 'Refund Policy', description: 'Refund policy page content' },
-  { id: 'returns-exchange', name: 'Returns & Exchange', description: 'Returns and exchange policy content' },
   { id: 'terms-of-service', name: 'Terms of Service', description: 'Terms of service page content' },
   { id: 'privacy-policy', name: 'Privacy Policy', description: 'Privacy policy page content' },
   { id: 'cookie-policy', name: 'Cookie Policy', description: 'Cookie policy page content' },
@@ -1584,12 +1417,6 @@ export default function Pages() {
               />
             ) : selectedPage === 'refund-policy' ? (
               <RefundPolicyPageEditor 
-                pageContents={pageContents} 
-                onSave={saveField}
-                onRefresh={() => fetchPageContent(selectedPage)}
-              />
-            ) : selectedPage === 'returns-exchange' ? (
-              <ReturnsExchangePageEditor 
                 pageContents={pageContents} 
                 onSave={saveField}
                 onRefresh={() => fetchPageContent(selectedPage)}

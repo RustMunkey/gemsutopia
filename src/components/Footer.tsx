@@ -96,7 +96,6 @@ export default function Footer() {
             <div className="mt-3 space-y-2">
               <a href="/support" className="block text-white text-sm hover:text-gray-300">Support</a>
               <a href="/refund-policy" className="block text-white text-sm hover:text-gray-300">Refund Policy</a>
-              <a href="/returns-exchange" className="block text-white text-sm hover:text-gray-300">Returns & Exchange</a>
             </div>
           </details>
           <details className="group py-3">
@@ -135,7 +134,6 @@ export default function Footer() {
             <div className="flex flex-col gap-2">
               <a href="/support" className="text-white text-sm hover:text-gray-300">Support</a>
               <a href="/refund-policy" className="text-white text-sm hover:text-gray-300">Refund Policy</a>
-              <a href="/returns-exchange" className="text-white text-sm hover:text-gray-300">Returns & Exchange</a>
             </div>
           </div>
           <div>
