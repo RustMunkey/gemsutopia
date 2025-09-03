@@ -6,7 +6,6 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { useWallet } from '@/contexts/WalletContext';
 import { useNotification } from '@/contexts/NotificationContext';
 import { useInventory } from '@/contexts/InventoryContext';
-import { useAnalytics } from '@/lib/contexts/AnalyticsContext';
 import CartReview from './CartReview';
 import CustomerInfo from './CustomerInfo';
 import PaymentMethods from './PaymentMethods';
@@ -46,7 +45,6 @@ export default function CheckoutFlow() {
   // Preserve items and subtotal for OrderSuccess (before clearPouch)
   const [preservedItems, setPreservedItems] = useState(items);
   const [preservedSubtotal, setPreservedSubtotal] = useState(0);
-  const analytics = useAnalytics();
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('cart');
   const [checkoutData, setCheckoutData] = useState<CheckoutData>({
     customer: {
@@ -284,25 +282,19 @@ export default function CheckoutFlow() {
     calculateShippingCost();
   }, [appliedDiscount?.free_shipping, items.length, checkoutData.customer?.country]);
 
-  // Separate effect for checkbox changes - use immediate calculation
+  // Separate effect for checkbox changes - use immediate calculation but only in customer step
   React.useEffect(() => {
-    console.log('🔍 CHECKBOX EFFECT TRIGGERED:', { useCombinedShipping, hasSettings: !!currentShippingSettings });
-    if (currentShippingSettings && !shippingLocked) {
+    console.log('🔍 CHECKBOX EFFECT TRIGGERED:', { useCombinedShipping, currentStep, hasSettings: !!currentShippingSettings });
+    if (currentShippingSettings && !shippingLocked && currentStep === 'customer') {
       console.log('🔍 CALLING IMMEDIATE CALCULATION FROM CHECKBOX');
       calculateShippingFromCurrentSettings();
     } else {
-      console.log('🔍 SKIPPING CALCULATION - LOCKED OR NO SETTINGS');
+      console.log('🔍 SKIPPING CALCULATION - LOCKED, NO SETTINGS, OR NOT IN CUSTOMER STEP');
     }
-  }, [useCombinedShipping]);
+  }, [useCombinedShipping, currentStep]);
   
   const total = subtotalAfterDiscount + shipping; // NO TAX!
 
-  // Track checkout start event when component loads and total is calculated
-  useEffect(() => {
-    if (analytics && items.length > 0 && total > 0) {
-      analytics.trackCheckoutStart(total, items.length);
-    }
-  }, [analytics, items.length, total]);
 
   // TAX REMOVED - NO CALCULATION NEEDED
 
@@ -381,11 +373,6 @@ export default function CheckoutFlow() {
           cryptoPrices: data.cryptoPrices
         });
         
-        // Track purchase completion
-        if (analytics) {
-          analytics.trackCheckoutComplete(data.orderId, data.actualAmount || total);
-        }
-        
         // PRESERVE items, subtotal, tax, and shipping for OrderSuccess BEFORE clearing pouch
         setPreservedItems(items);
         setPreservedSubtotal(subtotal);
@@ -424,6 +411,8 @@ export default function CheckoutFlow() {
         setCurrentStep('cart');
         break;
       case 'payment-method':
+        // Unlock shipping when going back to customer step
+        setShippingLocked(false);
         setCurrentStep('customer');
         break;
       case 'payment':
@@ -628,8 +617,8 @@ export default function CheckoutFlow() {
                     </div>
                   )}
                   
-                  {/* Shipping Option Selection */}
-                  {currentStep !== 'cart' && currentShippingSettings?.combinedShippingEnabled && items.length >= (currentShippingSettings?.combinedShippingThreshold || 2) && (
+                  {/* Shipping Option Selection - Only show in customer step */}
+                  {currentStep === 'customer' && currentShippingSettings?.combinedShippingEnabled && items.length >= (currentShippingSettings?.combinedShippingThreshold || 2) && (
                     <div className="border-t border-gray-200 pt-3 mb-3">
                       <div className="flex items-center space-x-2 mb-2">
                         <input
@@ -653,6 +642,32 @@ export default function CheckoutFlow() {
                             ? `Pay one flat rate (${formatPriceRaw(combinedRate)}) for all ${items.length} items` 
                             : `Pay shipping per item (${formatPriceRaw(singleRate)} each = ${formatPriceRaw(items.length * singleRate)} total)`;
                         })()}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {/* Shipping Method Display - Show locked method for steps 3+ */}
+                  {(currentStep === 'payment-method' || currentStep === 'payment') && currentShippingSettings?.combinedShippingEnabled && items.length >= (currentShippingSettings?.combinedShippingThreshold || 2) && (
+                    <div className="border-t border-gray-200 pt-3 mb-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-gray-600 font-medium">Shipping Method:</span>
+                        <span className="text-sm text-gray-900 font-medium">
+                          {useCombinedShipping ? 'Combined Shipping' : 'Per-Item Shipping'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        {(() => {
+                          const shippingCurrency = currentCurrency as 'CAD' | 'USD';
+                          const combinedRate = shippingCurrency === 'USD' ? currentShippingSettings.combinedShippingUSD : currentShippingSettings.combinedShippingCAD;
+                          const singleRate = shippingCurrency === 'USD' ? currentShippingSettings.singleItemShippingUSD : currentShippingSettings.singleItemShippingCAD;
+                          
+                          return useCombinedShipping 
+                            ? `Flat rate: ${formatPriceRaw(combinedRate)} for all ${items.length} items` 
+                            : `Per item: ${formatPriceRaw(singleRate)} each (${formatPriceRaw(items.length * singleRate)} total)`;
+                        })()}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        <em>Go back to shipping info to change method</em>
                       </p>
                     </div>
                   )}

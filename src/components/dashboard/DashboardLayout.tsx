@@ -4,7 +4,6 @@ import Image from 'next/image';
 import { 
   LayoutDashboard, 
   Package, 
-  BarChart3, 
   LogOut,
   Menu,
   X,
@@ -40,12 +39,6 @@ export default function DashboardLayout({
       label: 'Overview', 
       icon: LayoutDashboard,
       description: 'Dashboard Overview'
-    },
-    { 
-      id: 'analytics', 
-      label: 'Analytics', 
-      icon: BarChart3,
-      description: 'Sales & Insights'
     },
     { 
       id: 'products', 

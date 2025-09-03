@@ -3,8 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCcAmex, faCcApplePay, faCcDiscover, faGooglePay, faCcMastercard, faCcPaypal, faCcVisa, faInstagram, faFacebook, faXTwitter } from '@fortawesome/free-brands-svg-icons';
 import { ExchangeCoinbase } from '@web3icons/react';
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
-import { initEmailJS } from '@/lib/emailjs';
+import { useState } from 'react';
 
 export default function Footer() {
   const [email, setEmail] = useState('');
@@ -12,9 +11,6 @@ export default function Footer() {
   const [subscriptionStatus, setSubscriptionStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [statusMessage, setStatusMessage] = useState('');
 
-  useEffect(() => {
-    initEmailJS();
-  }, []);
 
   const handleNewsletterSignup = async (e: React.FormEvent) => {
     e.preventDefault();

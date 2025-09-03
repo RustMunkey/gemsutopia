@@ -330,7 +330,6 @@ function StatModal({ stat, onSave, onCancel }: StatModalProps) {
                 className="w-full px-3 py-2 bg-white/5 border border-white/20 rounded-lg text-white"
               >
                 <option value="manual">Manual</option>
-                <option value="analytics">Analytics</option>
                 <option value="reviews">Reviews</option>
                 <option value="orders">Orders</option>
                 <option value="customers">Customers</option>

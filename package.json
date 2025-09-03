@@ -10,7 +10,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@emailjs/browser": "^4.4.1",
     "@fortawesome/fontawesome-svg-core": "^7.0.0",
     "@fortawesome/free-brands-svg-icons": "^7.0.0",
     "@fortawesome/free-solid-svg-icons": "^7.0.0",
@@ -40,7 +39,6 @@
     "nodemailer": "^7.0.5",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "resend": "^6.0.1",
     "stripe": "^18.4.0",
     "tailwind-merge": "^3.3.1",
     "taxjar": "^4.1.0"

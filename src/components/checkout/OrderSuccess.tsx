@@ -1,7 +1,6 @@
 'use client';
 import { CheckCircle, Package, Mail, ArrowRight } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { initEmailJS, sendOrderReceiptEmail } from '@/lib/emailjs';
 
 interface OrderSuccessProps {
   orderId: string;
@@ -81,158 +80,58 @@ export default function OrderSuccess({
   
   
 
-  const [transactionId, setTransactionId] = useState<string>('');
-  const [walletAddress, setWalletAddress] = useState<string>('');
   const [emailSent, setEmailSent] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
 
 
 
-  useEffect(() => {
-    // Fetch order details to get transaction ID
-    const fetchOrderDetails = async () => {
-      try {
-        const response = await fetch(`/api/orders/${orderId}`);
-        if (response.ok) {
-          const orderData = await response.json();
-          const paymentDetails = orderData.order?.payment_details;
-          if (paymentDetails?.payment_id) {
-            setTransactionId(paymentDetails.payment_id);
-          }
-          if (paymentDetails?.wallet_address) {
-            setWalletAddress(paymentDetails.wallet_address);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch order details:', error);
-      }
-    };
-
-    fetchOrderDetails();
-  }, [orderId]);
 
   useEffect(() => {
-    // Initialize EmailJS
-    initEmailJS();
-
-    // Send order receipt emails (both EmailJS and Resend)
-    const sendReceiptEmails = async () => {
+    const sendReceiptEmail = async () => {
       try {
-        // Send via EmailJS (existing implementation)
-        const emailJSData = {
-          customerEmail,
-          customerName: customerName || 'Customer',
-          orderId,
-          amount,
-          items,
-        };
-
-        const emailJSResult = await sendOrderReceiptEmail(emailJSData);
+        console.log('Sending receipt email to:', customerEmail);
         
-        // Calculate proper amounts based on actual passed values
-        const calculateAmounts = () => {
-          const actualSubtotal = subtotal || (items.reduce((sum, item) => sum + (item.price * item.quantity), 0));
-          const actualTax = tax || 0;
-          const actualShipping = shipping || 0;
-          const fiatTotal = actualSubtotal + actualTax + actualShipping;
-          
-          if (cryptoCurrency && cryptoAmount) {
-            // For crypto payments: convert all amounts to crypto using the conversion ratio
-            const conversionRate = cryptoAmount / fiatTotal;
-            return {
-              subtotal: actualSubtotal * conversionRate,
-              tax: actualTax * conversionRate,
-              shipping: actualShipping * conversionRate,
-              total: cryptoAmount,
-              currency: cryptoCurrency
-            };
-          } else {
-            // For fiat payments: use actual amounts
-            return {
-              subtotal: actualSubtotal,
-              tax: actualTax,
-              shipping: actualShipping,
-              total: fiatTotal,
-              currency: currency || 'CAD'
-            };
-          }
-        };
-
-        const amounts = calculateAmounts();
-
-        // Send via Resend (new professional receipts)
-        console.log('SENDING EMAIL TO:', customerEmail);
-        const resendData = {
+        const emailData = {
           orderId,
           customerEmail,
           customerName: customerName || 'Customer',
-          items: items.map(item => {
-            if (cryptoCurrency && cryptoAmount) {
-              // For crypto: convert individual item price to crypto
-              const itemTotalFiat = item.price * item.quantity;
-              const itemTotalCrypto = itemTotalFiat * (cryptoAmount / (amounts.total || cryptoAmount));
-              const itemPriceCrypto = itemTotalCrypto / item.quantity;
-              return {
-                name: item.name,
-                price: itemPriceCrypto,
-                quantity: item.quantity
-              };
-            } else {
-              // For fiat: use original price
-              return {
-                name: item.name,
-                price: item.price,
-                quantity: item.quantity
-              };
-            }
-          }),
-          subtotal: amounts.subtotal,
-          tax: amounts.tax,
-          shipping: amounts.shipping,
-          total: amounts.total,
-          paymentMethod: cryptoCurrency ? 'crypto' : 'standard',
-          cryptoAmount,
-          cryptoCurrency,
-          currency: amounts.currency,
-          // Add additional crypto details if available
-          transactionId: transactionId || orderId,
-          network: cryptoCurrency ? getNetworkName(cryptoCurrency) : undefined,
-          walletAddress: walletAddress,
-          // Add shipping address
+          items,
+          subtotal: actualSubtotal,
+          tax: actualTax,
+          shipping: actualShipping,
+          total: amount,
+          currency: currency || 'CAD',
           shippingAddress: shippingAddress,
         };
 
-        const resendResponse = await fetch('/api/send-receipt', {
+        const response = await fetch('/api/send-receipt', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(resendData)
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(emailData),
         });
 
-        const resendResult = await resendResponse.json();
+        const result = await response.json();
         
-        if (emailJSResult.success || resendResult.success) {
+        if (result.success) {
           setEmailSent(true);
+          console.log('Receipt email sent successfully');
         } else {
-          setEmailError('Failed to send receipt email');
+          setEmailError(result.error || 'Failed to send receipt email');
+          console.error('Failed to send receipt email:', result.error);
         }
       } catch (error) {
-        console.error('Error sending receipt emails:', error);
+        console.error('Error sending receipt email:', error);
         setEmailError('Failed to send receipt email');
       }
     };
 
-    sendReceiptEmails();
-  }, [orderId, customerEmail, customerName, amount, items, subtotal, tax, cryptoAmount, cryptoCurrency, currency, shippingAddress]);
-
-  // Helper function to get network name for crypto currencies
-  const getNetworkName = (crypto: string) => {
-    switch (crypto) {
-      case 'BTC': return 'Bitcoin Testnet';
-      case 'ETH': return 'Ethereum Sepolia';
-      case 'SOL': return 'Solana Devnet';
-      default: return 'Testnet';
+    if (customerEmail && orderId) {
+      sendReceiptEmail();
     }
-  };
+  }, [orderId, customerEmail, customerName, items, amount, currency, shippingAddress]);
+
 
   useEffect(() => {
     // Simple CSS-based confetti animation instead of external script

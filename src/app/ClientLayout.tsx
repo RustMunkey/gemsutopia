@@ -9,12 +9,10 @@ import { WalletProvider } from '../contexts/WalletContext';
 import { InventoryProvider } from '../contexts/InventoryContext';
 import { ModeProvider } from '../lib/contexts/ModeContext';
 import CookieBanner from '../components/CookieBanner';
-import PageViewTracker from '../components/PageViewTracker';
 import MaintenanceOverlay from '../components/MaintenanceOverlay';
 import DynamicMetadata from '../components/DynamicMetadata';
 import DynamicTitle from '../components/DynamicTitle';
 import SoldOutItemsMonitor from '../components/SoldOutItemsMonitor';
-import { AnalyticsProvider } from '../lib/contexts/AnalyticsContext';
 
 export default function ClientLayout({
   children,
@@ -31,15 +29,12 @@ export default function ClientLayout({
                 <GemPouchProvider>
                   <WalletProvider>
                     <NotificationProvider>
-                      <AnalyticsProvider enableAutoTracking={true}>
-                        <PageViewTracker />
                         <DynamicMetadata />
                         <DynamicTitle />
                         <SoldOutItemsMonitor />
                         {children}
                         <CookieBanner />
                         <MaintenanceOverlay />
-                      </AnalyticsProvider>
                     </NotificationProvider>
                   </WalletProvider>
                 </GemPouchProvider>

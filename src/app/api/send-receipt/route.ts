@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Resend } from 'resend';
-
-// Initialize Resend only when API key is available
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+import nodemailer from 'nodemailer';
 
 interface OrderItem {
   name: string;
@@ -19,14 +16,10 @@ interface OrderData {
   tax: number;
   shipping: number;
   total: number;
-  paymentMethod: string;
+  paymentMethod?: string;
   cryptoAmount?: number;
   cryptoCurrency?: string;
-  transactionId?: string;
-  network?: string;
-  walletAddress?: string;
   currency: string;
-  // Shipping address details
   shippingAddress?: {
     firstName: string;
     lastName: string;
@@ -41,9 +34,6 @@ interface OrderData {
 }
 
 function generateReceiptHTML(order: OrderData): string {
-  const explorerLink = order.transactionId && order.cryptoCurrency ? 
-    getExplorerLink(order.cryptoCurrency, order.transactionId) : null;
-
   return `
     <!DOCTYPE html>
     <html>
@@ -63,11 +53,8 @@ function generateReceiptHTML(order: OrderData): string {
         .totals { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; }
         .total-row { display: flex; justify-content: space-between; margin: 5px 0; }
         .total-final { font-weight: bold; font-size: 18px; padding-top: 10px; border-top: 2px solid #000; }
-        .crypto-info { background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 20px 0; }
         .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; }
         .success { color: #28a745; font-weight: bold; }
-        .blockchain-link { color: #007bff; text-decoration: none; }
-        .blockchain-link:hover { text-decoration: underline; }
       </style>
     </head>
     <body>
@@ -111,33 +98,19 @@ function generateReceiptHTML(order: OrderData): string {
         <table class="items-table">
           <thead>
             <tr>
-              <th style="text-align: left; padding: 12px; border-bottom: 2px solid #ddd; background: #f8f9fa;">Item</th>
-              <th style="text-align: center; padding: 12px; border-bottom: 2px solid #ddd; background: #f8f9fa;">Qty</th>
-              <th style="text-align: right; padding: 12px; border-bottom: 2px solid #ddd; background: #f8f9fa;">Unit Price</th>
-              <th style="text-align: right; padding: 12px; border-bottom: 2px solid #ddd; background: #f8f9fa;">Total</th>
+              <th style="text-align: left;">Item</th>
+              <th style="text-align: center;">Qty</th>
+              <th style="text-align: right;">Unit Price</th>
+              <th style="text-align: right;">Total</th>
             </tr>
           </thead>
           <tbody>
             ${order.items.map(item => `
               <tr>
-                <td style="padding: 12px; border-bottom: 1px solid #ddd;">
-                  <strong>${item.name}</strong><br>
-                  <small style="color: #666;">Premium ethically sourced gemstone</small>
-                </td>
-                <td style="text-align: center; padding: 12px; border-bottom: 1px solid #ddd;">
-                  <strong style="color: #000;">${item.quantity}</strong>
-                </td>
-                ${order.paymentMethod === 'crypto' && order.cryptoCurrency ? `
-                  <td style="text-align: right; padding: 12px; border-bottom: 1px solid #ddd;">${item.price.toFixed(8)} ${order.cryptoCurrency}</td>
-                  <td style="text-align: right; padding: 12px; border-bottom: 1px solid #ddd;">
-                    <strong style="color: #000;">${(item.price * item.quantity).toFixed(8)} ${order.cryptoCurrency}</strong>
-                  </td>
-                ` : `
-                  <td style="text-align: right; padding: 12px; border-bottom: 1px solid #ddd;">$${item.price.toFixed(2)} ${order.currency}</td>
-                  <td style="text-align: right; padding: 12px; border-bottom: 1px solid #ddd;">
-                    <strong style="color: #000;">$${(item.price * item.quantity).toFixed(2)} ${order.currency}</strong>
-                  </td>
-                `}
+                <td><strong>${item.name}</strong><br><small style="color: #666;">Premium ethically sourced gemstone</small></td>
+                <td style="text-align: center;"><strong>${item.quantity}</strong></td>
+                <td style="text-align: right;">$${item.price.toFixed(2)} ${order.currency}</td>
+                <td style="text-align: right;"><strong>$${(item.price * item.quantity).toFixed(2)} ${order.currency}</strong></td>
               </tr>
             `).join('')}
           </tbody>
@@ -146,52 +119,23 @@ function generateReceiptHTML(order: OrderData): string {
 
       <div class="totals">
         <h3 style="margin: 0 0 15px 0; color: #333; font-size: 18px;">💰 Order Summary</h3>
-        ${order.paymentMethod === 'crypto' && order.cryptoCurrency ? `
-          <div class="total-row" style="display: flex; justify-content: space-between; margin: 8px 0; padding: 8px 0;">
-            <span style="color: #666;">Subtotal:</span>
-            <span style="font-weight: 500;">${order.subtotal.toFixed(8)} ${order.cryptoCurrency}</span>
-          </div>
-          <div class="total-row" style="display: flex; justify-content: space-between; margin: 8px 0; padding: 8px 0;">
-            <span style="color: #666;">Tax:</span>
-            <span style="font-weight: 500; color: #28a745;">${order.tax === 0 || order.tax.toFixed(8) === '0.00000000' ? 'TAX FREE (Crypto)' : `${order.tax.toFixed(8)} ${order.cryptoCurrency}`}</span>
-          </div>
-          <div class="total-row total-final" style="display: flex; justify-content: space-between; margin: 15px 0 0 0; padding: 15px 0 0 0; border-top: 2px solid #000; font-weight: bold; font-size: 18px;">
-            <span>TOTAL PAID:</span>
-            <span style="color: #000;">${order.total.toFixed(8)} ${order.cryptoCurrency}</span>
-          </div>
-        ` : `
-          <div class="total-row" style="display: flex; justify-content: space-between; margin: 8px 0; padding: 8px 0;">
-            <span style="color: #666;">Subtotal:</span>
-            <span style="font-weight: 500;">$${order.subtotal.toFixed(2)} ${order.currency}</span>
-          </div>
-          <div class="total-row" style="display: flex; justify-content: space-between; margin: 8px 0; padding: 8px 0;">
-            <span style="color: #666;">Tax (${order.currency === 'CAD' ? 'HST' : 'Sales Tax'}):</span>
-            <span style="font-weight: 500;">$${order.tax.toFixed(2)} ${order.currency}</span>
-          </div>
-          <div class="total-row total-final" style="display: flex; justify-content: space-between; margin: 15px 0 0 0; padding: 15px 0 0 0; border-top: 2px solid #000; font-weight: bold; font-size: 18px;">
-            <span>TOTAL PAID:</span>
-            <span style="color: #000;">$${order.total.toFixed(2)} ${order.currency}</span>
-          </div>
-        `}
-      </div>
-
-      ${order.paymentMethod === 'crypto' && order.cryptoCurrency && order.cryptoAmount ? `
-        <div class="crypto-info">
-          <h3 style="margin-top: 0; color: #1976d2;">🔗 Blockchain Payment Details</h3>
-          <p><strong>Cryptocurrency:</strong> ${order.cryptoCurrency}</p>
-          <p><strong>Amount Paid:</strong> ${order.cryptoAmount.toFixed(8)} ${order.cryptoCurrency}</p>
-          <p><strong>Network:</strong> ${order.network || 'Testnet'}</p>
-          ${order.walletAddress ? `<p><strong>Your Wallet:</strong> ${order.walletAddress.slice(0, 8)}...${order.walletAddress.slice(-6)}</p>` : ''}
-          ${order.transactionId ? `
-            <p><strong>Transaction ID:</strong><br>
-            <code style="word-break: break-all; background: #f0f0f0; padding: 5px; border-radius: 3px;">${order.transactionId}</code></p>
-          ` : ''}
-          ${explorerLink ? `
-            <p><strong>View on Blockchain:</strong><br>
-            <a href="${explorerLink}" class="blockchain-link" target="_blank">🔍 View Transaction Details</a></p>
-          ` : ''}
+        <div class="total-row">
+          <span style="color: #666;">Subtotal:</span>
+          <span style="font-weight: 500;">$${order.subtotal.toFixed(2)} ${order.currency}</span>
         </div>
-      ` : ''}
+        <div class="total-row">
+          <span style="color: #666;">Tax:</span>
+          <span style="font-weight: 500;">$${order.tax.toFixed(2)} ${order.currency}</span>
+        </div>
+        <div class="total-row">
+          <span style="color: #666;">Shipping:</span>
+          <span style="font-weight: 500;">$${order.shipping.toFixed(2)} ${order.currency}</span>
+        </div>
+        <div class="total-row total-final">
+          <span>TOTAL PAID:</span>
+          <span style="color: #000;">$${order.total.toFixed(2)} ${order.currency}</span>
+        </div>
+      </div>
 
       <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin: 20px 0;">
         <h3 style="margin-top: 0; color: #2e7d32;">📦 What's Next?</h3>
@@ -208,76 +152,70 @@ function generateReceiptHTML(order: OrderData): string {
   `;
 }
 
-function getExplorerLink(cryptoCurrency: string, transactionId: string): string {
-  switch (cryptoCurrency) {
-    case 'BTC':
-      return `https://blockstream.info/testnet/tx/${transactionId}`;
-    case 'ETH':
-      return `https://sepolia.etherscan.io/tx/${transactionId}`;
-    case 'SOL':
-      return `https://explorer.solana.com/tx/${transactionId}?cluster=devnet`;
-    default:
-      return '';
-  }
-}
-
 export async function POST(request: NextRequest) {
   try {
     const orderData: OrderData = await request.json();
     console.log('Received order data for receipt:', orderData.orderId);
     
-    if (!process.env.RESEND_API_KEY) {
-      console.error('RESEND_API_KEY environment variable not found');
-      return NextResponse.json({ error: 'Email service not configured - missing API key' }, { status: 500 });
+    // Check if Gmail credentials are available
+    if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+      console.error('Gmail credentials not found. Please set GMAIL_USER and GMAIL_APP_PASSWORD in .env.local');
+      return NextResponse.json({ 
+        error: 'Email service not configured - missing Gmail credentials',
+        success: false
+      });
     }
-    
-    if (!resend) {
-      console.error('Resend client failed to initialize');
-      return NextResponse.json({ error: 'Email service not configured - client error' }, { status: 500 });
-    }
+
+    // Create nodemailer transporter
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_APP_PASSWORD
+      }
+    });
 
     const receiptHTML = generateReceiptHTML(orderData);
     
-    console.log('Attempting to send emails...');
+    console.log('Sending emails via Gmail SMTP...');
 
     // Send to customer
-    console.log('Sending to customer:', orderData.customerEmail);
-    const customerEmail = await resend.emails.send({
-      from: 'Gemsutopia <noreply@resend.dev>',
-      to: [orderData.customerEmail],
+    const customerMailOptions = {
+      from: `"Gemsutopia" <${process.env.GMAIL_USER}>`,
+      to: orderData.customerEmail,
       subject: `Order Confirmation #${orderData.orderId.slice(-8).toUpperCase()} - Gemsutopia`,
       html: receiptHTML,
-    });
-    console.log('Customer email result:', customerEmail);
+    };
 
-    // Send to admin (gemsutopia@gmail.com)
-    console.log('Sending to admin: gemsutopia@gmail.com');
-    const adminEmail = await resend.emails.send({
-      from: 'Gemsutopia <noreply@resend.dev>',
-      to: ['gemsutopia@gmail.com'],
+    // Send to admin
+    const adminMailOptions = {
+      from: `"Gemsutopia" <${process.env.GMAIL_USER}>`,
+      to: 'gemsutopia@gmail.com',
       subject: `New Order Received #${orderData.orderId.slice(-8).toUpperCase()}`,
       html: receiptHTML,
-    });
-    console.log('Admin email result:', adminEmail);
+    };
+
+    // Send both emails
+    const customerResult = await transporter.sendMail(customerMailOptions);
+    const adminResult = await transporter.sendMail(adminMailOptions);
 
     console.log('Emails sent successfully:', {
-      customer: customerEmail.data?.id,
-      admin: adminEmail.data?.id
+      customer: customerResult.messageId,
+      admin: adminResult.messageId
     });
 
     return NextResponse.json({ 
       success: true, 
-      customerEmailId: customerEmail.data?.id,
-      adminEmailId: adminEmail.data?.id
+      customerEmailId: customerResult.messageId,
+      adminEmailId: adminResult.messageId
     });
 
   } catch (error) {
     console.error('Email sending failed:', error);
-    console.error('Full error object:', JSON.stringify(error, null, 2));
     return NextResponse.json({ 
       error: 'Failed to send email receipt',
       details: error instanceof Error ? error.message : 'Unknown error',
-      fullError: error
+      success: false
     }, { status: 500 });
   }
 }

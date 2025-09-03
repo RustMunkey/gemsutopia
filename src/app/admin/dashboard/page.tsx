@@ -8,7 +8,6 @@ import OrdersManager from '@/components/dashboard/OrdersManager';
 import SiteContent from '@/components/dashboard/SiteContent';
 import Pages from '@/components/dashboard/Pages';
 import Reviews from '@/components/dashboard/Reviews';
-import Analytics from '@/components/dashboard/Analytics';
 import Settings from '@/components/dashboard/Settings';
 import MediaManager from '@/components/dashboard/MediaManager';
 import { ModeProvider } from '@/lib/contexts/ModeContext';
@@ -83,9 +82,6 @@ export default function Dashboard() {
     }, 100);
   };
 
-  const handleNavigateToAnalytics = () => {
-    setActiveTab('analytics');
-  };
 
   const handleNavigateToOrders = () => {
     setActiveTab('orders');
@@ -96,7 +92,6 @@ export default function Dashboard() {
       case 'overview':
         return <Overview 
           onNavigateToProducts={handleNavigateToProducts}
-          onNavigateToAnalytics={handleNavigateToAnalytics}
           onNavigateToOrders={handleNavigateToOrders}
         />;
       case 'products':
@@ -109,8 +104,6 @@ export default function Dashboard() {
         return <Pages />;
       case 'reviews':
         return <Reviews />;
-      case 'analytics':
-        return <Analytics />;
       case 'media':
         return <MediaManager />;
       case 'settings':
@@ -118,7 +111,6 @@ export default function Dashboard() {
       default:
         return <Overview 
           onNavigateToProducts={handleNavigateToProducts}
-          onNavigateToAnalytics={handleNavigateToAnalytics}
           onNavigateToOrders={handleNavigateToOrders}
         />;
     }

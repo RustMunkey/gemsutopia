@@ -52,13 +52,11 @@ interface Order {
 
 interface OverviewProps {
   onNavigateToProducts?: () => void;
-  onNavigateToAnalytics?: () => void;
   onNavigateToOrders?: () => void;
 }
 
 export default function Overview({ 
   onNavigateToProducts, 
-  onNavigateToAnalytics, 
   onNavigateToOrders 
 }: OverviewProps) {
   const { mode } = useMode();
@@ -537,17 +535,6 @@ export default function Overview({
             >
               <Package className="h-4 w-4" />
               <span>Add New Product</span>
-            </button>
-            <button 
-              onClick={onNavigateToAnalytics}
-              className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors ${
-                mode === 'dev' 
-                  ? 'bg-orange-500/10 border border-orange-500/20 text-orange-400 hover:bg-orange-500/20' 
-                  : 'bg-purple-500/10 border border-purple-500/20 text-purple-400 hover:bg-purple-500/20'
-              }`}
-            >
-              <Eye className="h-4 w-4" />
-              <span>View Analytics</span>
             </button>
             <button 
               onClick={onNavigateToOrders}

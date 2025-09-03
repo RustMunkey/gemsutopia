@@ -1,6 +1,5 @@
 'use client';
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useAnalytics } from '@/lib/contexts/AnalyticsContext';
 
 interface GemPouchItem {
   id: string;
@@ -21,7 +20,7 @@ interface GemPouchContextType {
   isInPouch: (id: string) => boolean;
   itemCount: number;
   totalItems: number;
-  removeSoldOutItems: () => void;
+  removeSoldOutItems: (soldOutItemIds: string[]) => void;
 }
 
 const GemPouchContext = createContext<GemPouchContextType | undefined>(undefined);
@@ -29,7 +28,6 @@ const GemPouchContext = createContext<GemPouchContextType | undefined>(undefined
 export function GemPouchProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<GemPouchItem[]>([]);
   const [isClient, setIsClient] = useState(false);
-  const analytics = useAnalytics();
 
   // Set client flag
   useEffect(() => {
@@ -76,20 +74,12 @@ export function GemPouchProvider({ children }: { children: ReactNode }) {
       }
     });
     
-    // Track cart add event
-    if (analytics) {
-      analytics.trackCartAdd(item.id, item.name, item.price, 1);
-    }
   };
 
   const removeItem = (id: string) => {
     const itemToRemove = items.find(item => item.id === id);
     setItems(prev => prev.filter(item => item.id !== id));
     
-    // Track cart remove event
-    if (analytics && itemToRemove) {
-      analytics.trackCartRemove(itemToRemove.id, itemToRemove.name);
-    }
   };
 
   const updateQuantity = (id: string, quantity: number) => {
@@ -113,25 +103,26 @@ export function GemPouchProvider({ children }: { children: ReactNode }) {
     setItems([]);
   };
 
-  const removeSoldOutItems = () => {
-    const soldOutItems = items.filter(item => 
-      (item.inventory !== undefined && item.inventory === 0) || 
-      (item.stock !== undefined && item.stock === 0)
-    );
+  const removeSoldOutItems = (soldOutItemIds: string[]) => {
+    console.log('🛒 REMOVE SOLD OUT ITEMS - Removing items with IDs:', soldOutItemIds);
     
-    if (soldOutItems.length > 0) {
-      setItems(prev => prev.filter(item => 
-        !((item.inventory !== undefined && item.inventory === 0) || 
-          (item.stock !== undefined && item.stock === 0))
-      ));
-      
-      // Track removal events for analytics
-      if (analytics) {
-        soldOutItems.forEach(item => {
-          analytics.trackCartRemove(item.id, item.name);
-        });
-      }
+    if (soldOutItemIds.length === 0) {
+      console.log('🛒 REMOVE SOLD OUT ITEMS - No items to remove');
+      return;
     }
+    
+    const itemsToRemove = items.filter(item => soldOutItemIds.includes(item.id));
+    console.log('🛒 REMOVE SOLD OUT ITEMS - Found items to remove:', itemsToRemove.map(i => i.name));
+    
+    // Remove items immediately
+    setItems(prev => {
+      const filtered = prev.filter(item => !soldOutItemIds.includes(item.id));
+      console.log('🛒 REMOVE SOLD OUT ITEMS - Cart reduced from', prev.length, 'to', filtered.length, 'items');
+      return filtered;
+    });
+    
+    
+    console.log('🛒 REMOVE SOLD OUT ITEMS - Successfully removed', itemsToRemove.length, 'items');
   };
 
   const isInPouch = (id: string) => {
