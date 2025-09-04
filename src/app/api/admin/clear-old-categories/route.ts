@@ -39,9 +39,9 @@ export async function POST(request: NextRequest) {
     console.log('Clearing old category field values from all products...');
 
     // Update all products to clear the old category field
-    const { data, error } = await supabaseAdmin
+    const { error, count } = await supabaseAdmin
       .from('products')
-      .update({ category: 'uncategorized' }) // Set to default value to satisfy NOT NULL constraint
+      .update({ category: 'uncategorized' }, { count: 'exact' }) // Set to default value to satisfy NOT NULL constraint
       .neq('id', '00000000-0000-0000-0000-000000000000'); // This condition ensures we update all products
 
     if (error) {
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: 'Successfully cleared old category field values from all products',
-      updatedCount: data?.length || 'all products'
+      updatedCount: count || 'unknown number of products'
     });
 
   } catch (error) {
