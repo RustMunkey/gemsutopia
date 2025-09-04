@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 interface OrderItem {
   name: string;
@@ -157,57 +157,50 @@ export async function POST(request: NextRequest) {
     const orderData: OrderData = await request.json();
     console.log('Received order data for receipt:', orderData.orderId);
     
-    // Check if Gmail credentials are available
-    if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
-      console.error('Gmail credentials not found. Please set GMAIL_USER and GMAIL_APP_PASSWORD in .env.local');
+    // Check if Resend API key is available
+    if (!process.env.RESEND_API_KEY) {
+      console.error('Resend API key not found. Please set RESEND_API_KEY in .env.local');
       return NextResponse.json({ 
-        error: 'Email service not configured - missing Gmail credentials',
+        error: 'Email service not configured - missing Resend API key',
         success: false
       });
     }
 
-    // Create nodemailer transporter
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD
-      }
-    });
+    // Initialize Resend with API key
+    const resend = new Resend(process.env.RESEND_API_KEY);
 
     const receiptHTML = generateReceiptHTML(orderData);
     
-    console.log('Sending emails via Gmail SMTP...');
+    console.log('Sending emails via Resend...');
+    console.log('Customer email:', orderData.customerEmail);
+    console.log('Order ID:', orderData.orderId);
 
     // Send to customer
-    const customerMailOptions = {
-      from: `"Gemsutopia" <${process.env.GMAIL_USER}>`,
-      to: orderData.customerEmail,
+    const customerResult = await resend.emails.send({
+      from: 'Gemsutopia <orders@gemsutopia.com>',
+      to: [orderData.customerEmail],
       subject: `Order Confirmation #${orderData.orderId.slice(-8).toUpperCase()} - Gemsutopia`,
       html: receiptHTML,
-    };
+    });
 
-    // Send to admin
-    const adminMailOptions = {
-      from: `"Gemsutopia" <${process.env.GMAIL_USER}>`,
-      to: 'gemsutopia@gmail.com',
+    // Send to admin (gemsutopia@gmail.com)
+    const adminResult = await resend.emails.send({
+      from: 'Gemsutopia <orders@gemsutopia.com>',
+      to: ['gemsutopia@gmail.com'],
       subject: `New Order Received #${orderData.orderId.slice(-8).toUpperCase()}`,
       html: receiptHTML,
-    };
+    });
 
-    // Send both emails
-    const customerResult = await transporter.sendMail(customerMailOptions);
-    const adminResult = await transporter.sendMail(adminMailOptions);
-
-    console.log('Emails sent successfully:', {
-      customer: customerResult.messageId,
-      admin: adminResult.messageId
+    console.log('Emails sent successfully via Resend:', {
+      customer: customerResult.data?.id,
+      admin: adminResult.data?.id
     });
 
     return NextResponse.json({ 
       success: true, 
-      customerEmailId: customerResult.messageId,
-      adminEmailId: adminResult.messageId
+      customerEmailId: customerResult.data?.id,
+      adminEmailId: adminResult.data?.id,
+      message: 'Receipt sent to both customer and admin'
     });
 
   } catch (error) {
