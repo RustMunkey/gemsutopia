@@ -64,7 +64,7 @@ export default function Wishlist() {
   const addAllToCart = () => {
     const addedItems: any[] = [];
     itemsWithCurrentInventory.forEach(item => {
-      if (!isInPouch(item.id) && item.inventory > 0) {
+      if (!isInPouch(item.id) && (item.inventory ?? 0) > 0) {
         addToGemPouch(item);
         removeItem(item.id);
         addedItems.push(item);
@@ -126,7 +126,7 @@ export default function Wishlist() {
     }
   };
   
-  const availableItems = itemsWithCurrentInventory.filter(item => !isInPouch(item.id) && item.inventory > 0);
+  const availableItems = itemsWithCurrentInventory.filter(item => !isInPouch(item.id) && (item.inventory ?? 0) > 0);
   return (
     <div className="min-h-[200vh] flex flex-col relative">
       {/* Fixed Background */}

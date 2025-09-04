@@ -463,7 +463,6 @@ function ProductModal({ product, onClose, onSave }: {
     price: product?.price?.toString() || '',
     sale_price: product?.sale_price?.toString() || '',
     on_sale: product?.on_sale || false,
-    category: product?.category || '',
     inventory: product?.inventory?.toString() || '0',
     sku: product?.sku || '',
     weight: product?.weight?.toString() || '',
@@ -484,49 +483,10 @@ function ProductModal({ product, onClose, onSave }: {
     shipping_info: product?.metadata?.shipping_info || 'Free worldwide shipping. Delivery in 3-5 business days.'
   });
   const [loading, setLoading] = useState(false);
-  const [customCategory, setCustomCategory] = useState('');
-  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
-
-  // Fetch existing categories from products
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const token = localStorage.getItem('admin-token');
-        const response = await fetch('/api/products?includeInactive=true', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        const data = await response.json();
-        
-        if (data.success) {
-          const uniqueCategories = [...new Set(data.products.map((p: any) => p.category))].filter(Boolean) as string[];
-          setAvailableCategories(uniqueCategories);
-        }
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-      }
-    };
-    fetchCategories();
-  }, []);
-
-  const handleCategoryChange = (value: string) => {
-    if (value === 'custom') {
-      setFormData(prev => ({ ...prev, category: customCategory }));
-    } else {
-      setFormData(prev => ({ ...prev, category: value }));
-      setCustomCategory('');
-    }
-  };
-
-  const handleCustomCategoryInput = (value: string) => {
-    setCustomCategory(value);
-    setFormData(prev => ({ ...prev, category: value }));
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.price || !formData.category) {
+    if (!formData.name || !formData.price) {
       alert('Please fill in all required fields');
       return;
     }
@@ -682,54 +642,19 @@ function ProductModal({ product, onClose, onSave }: {
             </div>
           </div>
 
-          {/* Category and Weight */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Category *
-              </label>
-              <div className="space-y-2">
-                <select
-                  value={availableCategories.includes(formData.category) ? formData.category : 'custom'}
-                  onChange={(e) => handleCategoryChange(e.target.value)}
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-white"
-                  required
-                >
-                  <option value="" className="bg-slate-800">Select a category</option>
-                  {availableCategories.map(cat => (
-                    <option key={cat} value={cat} className="bg-slate-800">
-                      {cat.charAt(0).toUpperCase() + cat.slice(1).replace('-', ' ')}
-                    </option>
-                  ))}
-                  <option value="custom" className="bg-slate-800">Create new category...</option>
-                </select>
-                
-                {(!availableCategories.includes(formData.category) || availableCategories.length === 0) && (
-                  <input
-                    type="text"
-                    value={formData.category}
-                    onChange={(e) => handleCustomCategoryInput(e.target.value)}
-                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-white"
-                    placeholder="Enter custom category name"
-                    required
-                  />
-                )}
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Weight (grams)
-              </label>
-              <input
-                type="number"
-                step="0.001"
-                value={formData.weight}
-                onChange={(e) => setFormData(prev => ({...prev, weight: e.target.value}))}
-                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-white"
-                placeholder="0.000"
-              />
-            </div>
+          {/* Weight */}
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              Weight (grams)
+            </label>
+            <input
+              type="number"
+              step="0.001"
+              value={formData.weight}
+              onChange={(e) => setFormData(prev => ({...prev, weight: e.target.value}))}
+              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-white"
+              placeholder="0.000"
+            />
           </div>
 
           {/* Shipping */}
