@@ -44,61 +44,75 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    let query = supabase.from('products').select('*');
-
     console.log('GET /api/products - includeInactive:', includeInactive);
 
-    // Apply filters
-    if (!includeInactive) {
-      console.log('Filtering to only frontend visible products');
-      // For public API, filter by frontend_visible in metadata
-      const { data: allProducts, error: fetchError } = await query.order('created_at', { ascending: false });
-      if (fetchError) {
-        throw fetchError;
-      }
-      const visibleProducts = allProducts?.filter(p => p.metadata?.frontend_visible !== false) || [];
-      
-      // Transform products to add stock field for backward compatibility
-      const transformedProducts = visibleProducts.map(product => ({
-        ...product,
-        stock: product.inventory || 0 // Map inventory to stock for compatibility
-      }));
-      
-      console.log(`Returning ${visibleProducts.length} frontend visible products out of ${allProducts?.length || 0} total`);
-      return NextResponse.json({
-        success: true,
-        products: transformedProducts,
-        count: transformedProducts.length
-      });
-    } else {
-      console.log('Including ALL products (admin view)');
-    }
-    if (category) {
-      query = query.eq('category', category);
-    }
-    if (featured) {
-      query = query.eq('featured', true);
-    }
-    if (onSale) {
-      query = query.eq('on_sale', true);
-    }
-
-    const { data: products, error } = await query.order('created_at', { ascending: false });
+    // Get all products with their category information
+    const { data: products, error } = await supabase
+      .from('products')
+      .select('*')
+      .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Supabase error:', error);
+      console.error('Error fetching products:', error);
       return NextResponse.json(
         { success: false, message: 'Failed to fetch products' },
         { status: 500 }
       );
     }
 
-    console.log(`Returning ${products?.length || 0} products. Active: ${products?.filter(p => p.is_active).length}, Inactive: ${products?.filter(p => !p.is_active).length}`);
+    // Get category information for each product
+    const productIds = products?.map(p => p.id) || [];
+    const { data: productCategoryData, error: categoryError } = await supabase
+      .from('product_categories')
+      .select(`
+        product_id,
+        categories (
+          id,
+          name,
+          slug
+        )
+      `)
+      .in('product_id', productIds);
 
-    // Transform products to add stock field for backward compatibility
-    const transformedProducts = (products || []).map(product => ({
+    if (categoryError) {
+      console.error('Error fetching product categories:', categoryError);
+    }
+
+    // Create a map of product_id to category name
+    const productCategoryMap = new Map();
+    productCategoryData?.forEach(item => {
+      if (item.categories) {
+        productCategoryMap.set(item.product_id, (item.categories as any).name);
+      }
+    });
+
+    // Apply filters and transform products
+    let filteredProducts = products || [];
+    
+    if (!includeInactive) {
+      console.log('Filtering to only frontend visible products');
+      filteredProducts = filteredProducts.filter(p => p.metadata?.frontend_visible !== false);
+    } else {
+      console.log('Including ALL products (admin view)');
+    }
+    
+    if (category) {
+      filteredProducts = filteredProducts.filter(p => p.category === category);
+    }
+    if (featured) {
+      filteredProducts = filteredProducts.filter(p => p.featured);
+    }
+    if (onSale) {
+      filteredProducts = filteredProducts.filter(p => p.on_sale);
+    }
+
+    console.log(`Returning ${filteredProducts.length} products. Active: ${filteredProducts.filter(p => p.is_active).length}, Inactive: ${filteredProducts.filter(p => !p.is_active).length}`);
+
+    // Transform products to add stock field and real category names for backward compatibility
+    const transformedProducts = filteredProducts.map(product => ({
       ...product,
-      stock: product.inventory || 0 // Map inventory to stock for compatibility
+      stock: product.inventory || 0, // Map inventory to stock for compatibility
+      category: productCategoryMap.get(product.id) || 'Uncategorized' // Use ONLY real category name from category management system
     }));
 
     return NextResponse.json({
@@ -130,9 +144,9 @@ export async function POST(request: NextRequest) {
     const data = await request.json();
 
     // Validate required fields
-    if (!data.name || !data.price || !data.category) {
+    if (!data.name || !data.price) {
       return NextResponse.json(
-        { success: false, message: 'Name, price, and category are required' },
+        { success: false, message: 'Name and price are required' },
         { status: 400 }
       );
     }
@@ -170,12 +184,12 @@ export async function POST(request: NextRequest) {
       price: price,
       sale_price: salePrice,
       on_sale: data.on_sale || false,
-      category: data.category,
+      category: data.category || 'uncategorized',
       images: data.images || [],
       video_url: data.video_url || null, // Save to direct column
       tags: data.tags || [],
       inventory: parseInt(data.inventory) || 0,
-      sku: data.sku || `${data.category.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
+      sku: data.sku || `PROD-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
       weight: weight,
       dimensions: data.dimensions || null,
       is_active: data.is_active !== false,
