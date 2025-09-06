@@ -124,7 +124,6 @@ export class SecureDatabase {
       'discount_codes',
       'featured_products',
       'gem_facts',
-      'quotes',
       'faq',
       'pages',
       'page_content'

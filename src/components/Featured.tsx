@@ -8,7 +8,6 @@ import { useCMSContent } from '@/hooks/useCMSContent';
 import { useGemPouch } from '@/contexts/GemPouchContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import { extractVibrantColor } from '@/utils/colorExtraction';
 
 interface FeaturedProduct {
   id: string;

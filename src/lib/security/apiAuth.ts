@@ -182,14 +182,12 @@ export const PUBLIC_ENDPOINTS = [
   '/api/reviews', // Only GET allowed for public
   '/api/contact',
   '/api/faq',
-  '/api/quotes',
   '/api/gem-facts',
   '/api/featured-products',
   '/api/crypto-prices',
   '/api/address-suggestions',
   '/api/address-validation',
   '/api/discount-codes/validate',
-  '/api/tax-calculation',
   '/api/payments/stripe/webhook', // Webhook needs to be public but has its own validation
   '/api/payments/paypal/create-order',
   '/api/payments/paypal/capture-order',
