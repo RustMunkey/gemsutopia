@@ -70,6 +70,22 @@ export function sanitizeObject(obj: any): any {
   return sanitized;
 }
 
+// Alias for backwards compatibility
+export const sanitizeInput = sanitizeString;
+
+export function validateEmail(email: string): boolean {
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  return emailRegex.test(email.trim().toLowerCase());
+}
+
+export function validateRequiredFields(obj: any, requiredFields: string[]): { isValid: boolean; missingFields: string[] } {
+  const missingFields = requiredFields.filter(field => !obj[field] || (typeof obj[field] === 'string' && !obj[field].trim()));
+  return {
+    isValid: missingFields.length === 0,
+    missingFields
+  };
+}
+
 export function validateShippingSettings(settings: any): {
   isValid: boolean;
   errors: string[];

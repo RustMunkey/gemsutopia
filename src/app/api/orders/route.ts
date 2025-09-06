@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { filterOrdersByMode } from '@/lib/utils/orderUtils';
+import { requireAdmin, extractAuth, checkRateLimit } from '@/lib/security/apiAuth';
+import { sanitizeInput, validateEmail, validateRequiredFields, sanitizeObject, sanitizeEmail } from '@/lib/security/sanitize';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -50,7 +52,33 @@ function isTestOrderFromPayment(orderData: any, systemMode?: string): boolean {
 
 export async function POST(request: NextRequest) {
   try {
-    const orderData = await request.json();
+    // Check authentication for order creation (allow authenticated users or API key)
+    const auth = extractAuth(request);
+    const isAuthenticated = auth.isAuthenticated;
+    
+    // Get client IP for rate limiting
+    const clientIP = request.headers.get('x-forwarded-for')?.split(',')[0] || 
+                     request.headers.get('x-real-ip') || 
+                     'unknown';
+    
+    // Apply stricter rate limiting for unauthenticated requests
+    const maxRequests = isAuthenticated ? 100 : 10; // 10 orders per hour for anonymous
+    const rateLimit = checkRateLimit(clientIP, maxRequests, 3600000); // 1 hour window
+    
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { 
+          error: 'Too many order attempts',
+          message: 'Please wait before creating another order.'
+        },
+        { status: 429 }
+      );
+    }
+    
+    const rawOrderData = await request.json();
+    
+    // Sanitize all input data to prevent XSS
+    const orderData = sanitizeObject(rawOrderData);
     console.log('Received order data:', JSON.stringify(orderData, null, 2));
     
     // Validate required fields
@@ -67,14 +95,28 @@ export async function POST(request: NextRequest) {
 
     // Validate customerInfo fields
     const requiredCustomerFields = ['email', 'firstName', 'lastName', 'address', 'city', 'state', 'zipCode', 'country'];
-    const missingCustomerFields = requiredCustomerFields.filter(field => !orderData.customerInfo[field]);
-    if (missingCustomerFields.length > 0) {
-      console.error('Missing customer info fields:', missingCustomerFields);
+    const fieldValidation = validateRequiredFields(orderData.customerInfo, requiredCustomerFields);
+    
+    if (!fieldValidation.isValid) {
+      console.error('Missing customer info fields:', fieldValidation.missingFields);
       return NextResponse.json(
-        { error: `Missing customer information: ${missingCustomerFields.join(', ')}` },
+        { error: `Missing customer information: ${fieldValidation.missingFields.join(', ')}` },
         { status: 400 }
       );
     }
+
+    // Validate email format
+    if (!validateEmail(orderData.customerInfo.email)) {
+      return NextResponse.json(
+        { error: 'Invalid email address format' },
+        { status: 400 }
+      );
+    }
+
+    // Additional sanitization for customer info
+    orderData.customerInfo.email = sanitizeEmail(orderData.customerInfo.email);
+    orderData.customerInfo.firstName = sanitizeInput(orderData.customerInfo.firstName);
+    orderData.customerInfo.lastName = sanitizeInput(orderData.customerInfo.lastName);
 
     // Validate payment fields
     if (!orderData.payment.paymentMethod) {
@@ -249,7 +291,7 @@ export async function POST(request: NextRequest) {
           try {
             // Use atomic decrement with constraint check to prevent negative inventory
             // This will fail if inventory would go below 0, preventing overselling
-            const { data: updateResult, error: updateError } = await supabase
+            const { error: updateError } = await supabase
               .rpc('decrement_inventory', {
                 product_id: item.id,
                 decrement_amount: item.quantity
@@ -279,35 +321,44 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export const GET = requireAdmin(async (request: NextRequest) => {
   try {
     const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get('limit') || '50');
-    const offset = parseInt(searchParams.get('offset') || '0');
-    const modeParam = searchParams.get('mode') || 'dev';
-    const mode = (modeParam === 'live' ? 'live' : 'dev') as 'dev' | 'live'; // 'dev' or 'live'
+    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 1000); // Cap at 1000
+    const offset = Math.max(parseInt(searchParams.get('offset') || '0'), 0);
+    const modeParam = sanitizeInput(searchParams.get('mode') || 'dev');
+    const mode = (modeParam === 'live' ? 'live' : 'dev') as 'dev' | 'live';
 
-    console.log(`Fetching orders for ${mode} mode`);
+    console.log(`Admin fetching orders for ${mode} mode (limit: ${limit}, offset: ${offset})`);
 
-    // Get all orders for now (we'll filter in JavaScript if needed)
+    // Use parameterized query to prevent SQL injection
     const { data: orders, error } = await supabase
       .from('orders')
-      .select('*')
+      .select(`
+        id,
+        customer_email,
+        customer_name,
+        status,
+        subtotal,
+        shipping,
+        tax,
+        total,
+        created_at,
+        payment_details,
+        items
+      `)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
     if (error) {
       console.error('Database error details:', {
         message: error.message,
-        details: error.details,
-        hint: error.hint,
         code: error.code
       });
       return NextResponse.json(
         { 
           error: 'Failed to fetch orders',
-          details: error.message,
-          code: error.code
+          message: 'Database query failed'
         },
         { status: 500 }
       );
@@ -327,4 +378,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

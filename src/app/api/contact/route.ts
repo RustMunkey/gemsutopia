@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import { sanitizeInput } from '@/lib/security/sanitize';
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
@@ -17,6 +18,12 @@ export async function POST(request: NextRequest) {
     if (!emailRegex.test(email)) {
       return NextResponse.json({ error: 'Invalid email format' }, { status: 400 });
     }
+
+    // Sanitize all inputs to prevent XSS
+    const sanitizedName = sanitizeInput(name);
+    const sanitizedEmail = sanitizeInput(email);
+    const sanitizedSubject = subject ? sanitizeInput(subject) : '';
+    const sanitizedMessage = sanitizeInput(message);
     
     if (!process.env.RESEND_API_KEY || !resend) {
       console.error('RESEND_API_KEY not configured');
@@ -28,8 +35,8 @@ export async function POST(request: NextRequest) {
     const result = await resend.emails.send({
       from: 'Gemsutopia Contact <orders@gemsutopia.com>',
       to: ['gemsutopia@gmail.com'],
-      replyTo: email,
-      subject: subject ? `Contact Form: ${subject}` : `Contact Form from ${name}`,
+      replyTo: sanitizedEmail,
+      subject: sanitizedSubject ? `Contact Form: ${sanitizedSubject}` : `Contact Form from ${sanitizedName}`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -53,24 +60,24 @@ export async function POST(request: NextRequest) {
 
           <div class="field">
             <div class="field-label">Customer Name:</div>
-            <div>${name}</div>
+            <div>${sanitizedName}</div>
           </div>
 
           <div class="field">
             <div class="field-label">Email Address:</div>
-            <div><a href="mailto:${email}">${email}</a></div>
+            <div><a href="mailto:${sanitizedEmail}">${sanitizedEmail}</a></div>
           </div>
 
-          ${subject ? `
+          ${sanitizedSubject ? `
           <div class="field">
             <div class="field-label">Subject:</div>
-            <div>${subject}</div>
+            <div>${sanitizedSubject}</div>
           </div>
           ` : ''}
 
           <div class="field">
             <div class="field-label">Message:</div>
-            <div class="message-content">${message.replace(/\n/g, '<br>')}</div>
+            <div class="message-content">${sanitizedMessage.replace(/\n/g, '<br>')}</div>
           </div>
 
           <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 14px;">

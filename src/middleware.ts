@@ -89,34 +89,53 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const clientIP = getClientIP(request);
   const fullUrl = request.url;
+  const method = request.method;
   
-  // 🛡️ SECURITY CHECKS - Block malicious attempts
+  // 🛡️ ENHANCED SECURITY CHECKS
   
-  // 1. Light rate limiting (only for extreme abuse)
-  if (isRateLimited(clientIP, 300, 60000)) { // 300 requests per minute (very generous)
+  // 1. Stricter rate limiting
+  if (isRateLimited(clientIP, 200, 60000)) { // 200 requests per minute
     console.log(`🚫 RATE LIMITED: ${clientIP} blocked for ${pathname}`);
-    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    return NextResponse.json({ 
+      error: 'Too many requests',
+      message: 'Please slow down your requests'
+    }, { status: 429 });
   }
   
-  // 2. Only block obvious XSS attempts (not normal usage)
+  // 2. Enhanced XSS detection
   if (pathname.startsWith('/api/') && detectXSSAttempt(fullUrl, request.headers)) {
     console.log(`🚫 XSS BLOCKED: Suspicious request from ${clientIP} to ${pathname}`);
-    return NextResponse.json({ error: 'Malicious request detected' }, { status: 403 });
+    return NextResponse.json({ 
+      error: 'Malicious request detected',
+      message: 'XSS attempt blocked'
+    }, { status: 403 });
   }
   
-  // 3. Only block clear SQL injection (not normal queries)
+  // 3. Enhanced SQL injection detection
   if (pathname.startsWith('/api/') && detectSQLInjection(fullUrl)) {
     console.log(`🚫 SQL INJECTION BLOCKED: Attack from ${clientIP} to ${pathname}`);
-    return NextResponse.json({ error: 'Malicious request detected' }, { status: 403 });
+    return NextResponse.json({ 
+      error: 'Malicious request detected',
+      message: 'SQL injection attempt blocked'
+    }, { status: 403 });
   }
   
-  // 4. Only block known attack tools (not regular browsers or tools)
+  // 4. Block attack tools and suspicious user agents
   const userAgent = request.headers.get('user-agent') || '';
-  const knownAttackTools = ['sqlmap', 'nikto', 'masscan', 'nessus'];
+  const suspiciousTools = ['sqlmap', 'nikto', 'masscan', 'nessus', 'burpsuite', 'owasp', 'metasploit'];
   
-  if (knownAttackTools.some(tool => userAgent.toLowerCase().includes(tool))) {
+  if (suspiciousTools.some(tool => userAgent.toLowerCase().includes(tool))) {
     console.log(`🚫 ATTACK TOOL BLOCKED: ${userAgent} from ${clientIP}`);
     return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+  }
+  
+  // 5. Block requests with no user agent (likely bots/scripts)
+  if (!userAgent && pathname.startsWith('/api/')) {
+    console.log(`🚫 NO USER AGENT: Request blocked from ${clientIP} to ${pathname}`);
+    return NextResponse.json({ 
+      error: 'Access denied',
+      message: 'User agent required'
+    }, { status: 403 });
   }
   
   // Create response with security headers
@@ -147,12 +166,24 @@ export function middleware(request: NextRequest) {
     response.headers.set('Content-Security-Policy', csp);
   }
   
-  // 🔒 SIMPLIFIED API SECURITY - Only protect against real attacks
-  // Let the individual API routes handle their own authentication
-  // Middleware only blocks obvious attacks, not legitimate usage
-  
+  // 🔒 API SECURITY - Enhanced protection
   if (pathname.startsWith('/api/')) {
-    console.log(`✅ API ACCESS: Allowing ${pathname} - individual routes handle auth`);
+    // Import the new security functions
+    const { isPublicEndpoint } = require('@/lib/security/apiAuth');
+    
+    // Check if this is a public endpoint
+    const isPublic = isPublicEndpoint(pathname, method);
+    
+    if (!isPublic) {
+      console.log(`🔒 PROTECTED API: ${method} ${pathname} - auth required at route level`);
+      
+      // Add security warning header for non-public APIs
+      response.headers.set('X-Auth-Required', 'true');
+      response.headers.set('X-Security-Level', 'high');
+    } else {
+      console.log(`✅ PUBLIC API: ${method} ${pathname} - public access allowed`);
+      response.headers.set('X-Security-Level', 'standard');
+    }
   }
   
   // 🔒 ADMIN PAGE PROTECTION - Let client-side handle auth for now

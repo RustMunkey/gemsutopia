@@ -1,6 +1,6 @@
 'use client';
 import { IconStar, IconX } from '@tabler/icons-react';
-import { ShoppingBag, Store, Info, Mail, HelpCircle } from 'lucide-react';
+import { ShoppingBag, Store, Info, Mail, HelpCircle, Gavel } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -80,6 +80,15 @@ export default function Dropdown({ isOpen, onClose }: DropdownProps) {
             >
               <Store className="h-5 w-5" />
               Shop
+            </a>
+
+            <a
+              href="/auctions"
+              className="flex items-center gap-3 text-white hover:text-gray-300 text-lg font-semibold"
+              onClick={onClose}
+            >
+              <Gavel className="h-5 w-5" />
+              Auctions
             </a>
             
             <a

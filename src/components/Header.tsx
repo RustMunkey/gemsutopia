@@ -80,8 +80,9 @@ export default function Header() {
           
           {/* Desktop navigation */}
           <div className="flex-1 flex justify-start pl-8">
-            <div className="hidden md:flex items-center gap-6">
+            <div className="hidden md:flex items-center gap-8">
               <a href="/shop" className="text-white hover:text-gray-300 text-sm font-bold">Shop</a>
+              <a href="/auctions" className="text-white hover:text-gray-300 text-sm font-bold">Auctions</a>
               <a href="/about" className="text-white hover:text-gray-300 text-sm font-bold">About</a>
               <a href="/contact-us" className="text-white hover:text-gray-300 text-sm font-bold">Contact</a>
               <a href="/support" className="text-white hover:text-gray-300 text-sm font-bold">Support</a>

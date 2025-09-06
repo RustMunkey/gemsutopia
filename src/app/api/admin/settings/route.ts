@@ -3,6 +3,7 @@ import { updateSEOMetadata } from '@/lib/utils/seoMetadata';
 import { updateSiteInfo } from '@/lib/utils/siteInfo';
 import { getAllSettings, setMultipleSettings } from '@/lib/database/siteSettings';
 import { validateShippingSettings } from '@/lib/security/sanitize';
+import { requireAdmin } from '@/lib/security/apiAuth';
 
 // Load settings from database
 async function loadSettingsFromDB() {
@@ -89,21 +90,19 @@ async function loadSettingsFromDB() {
   }
 }
 
-export async function GET(request: NextRequest) {
+export const GET = requireAdmin(async (request: NextRequest) => {
   try {
-    // Authentication is handled by middleware.ts - no need for redundant checks
-    console.log('Settings GET request - loading from database');
+    console.log('Settings GET request - loading from database (admin authenticated)');
     const settings = await loadSettingsFromDB();
     return NextResponse.json(settings);
   } catch (error) {
     console.error('Settings GET error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = requireAdmin(async (request: NextRequest) => {
   try {
-    // Authentication is handled by middleware.ts - no need for redundant checks
     const rawUpdates = await request.json();
     
     // Validate and sanitize all inputs
@@ -201,4 +200,4 @@ export async function POST(request: NextRequest) {
     console.error('Settings POST error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});

@@ -1,6 +1,7 @@
 'use client';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCcAmex, faCcApplePay, faCcDiscover, faGooglePay, faCcMastercard, faCcPaypal, faCcVisa, faInstagram, faFacebook, faXTwitter } from '@fortawesome/free-brands-svg-icons';
+import { faCcAmex, faCcApplePay, faCcDiscover, faGooglePay, faCcMastercard, faCcPaypal, faCcVisa } from '@fortawesome/free-brands-svg-icons';
+import { faLink } from '@fortawesome/free-solid-svg-icons';
 import { ExchangeCoinbase } from '@web3icons/react';
 import Image from 'next/image';
 import { useState } from 'react';
@@ -59,17 +60,9 @@ export default function Footer() {
             height={40}
             className="w-auto h-6 object-contain"
           />
-          <div className="flex gap-4">
-            <a href="https://www.instagram.com/shop.gemsutopia?igsh=OHU4aDdmbHp6eXhp&utm_source=qr" target="_blank" rel="noopener noreferrer" className="text-white text-xl hover:text-gray-300 transition-colors">
-              <FontAwesomeIcon icon={faInstagram} />
-            </a>
-            <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-white text-xl hover:text-gray-300 transition-colors">
-              <FontAwesomeIcon icon={faXTwitter} />
-            </a>
-            <a href="/facebook" className="text-white text-xl hover:text-gray-300 transition-colors">
-              <FontAwesomeIcon icon={faFacebook} />
-            </a>
-          </div>
+          <a href="/social" className="text-white text-xl hover:text-gray-300 transition-colors">
+            <FontAwesomeIcon icon={faLink} />
+          </a>
         </div>
       </div>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full md:hidden bg-black">
