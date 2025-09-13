@@ -129,15 +129,17 @@ function PayPalButtonWrapper({
     );
   }
 
+  const paypalButtonStyle = {
+    layout: 'vertical' as const,
+    color: 'gold' as const,
+    shape: 'rect' as const,
+    label: 'paypal' as const,
+    height: 50,
+  };
+
   return (
     <PayPalButtons
-      style={{
-        layout: 'vertical',
-        color: 'gold',
-        shape: 'rect',
-        label: 'paypal',
-        height: 50,
-      }}
+      style={paypalButtonStyle}
       fundingSource={undefined} // Allow all funding sources including credit cards
       createOrder={createOrder}
       onApprove={onApprove}

@@ -286,3 +286,7 @@ export async function DELETE() {
 export async function PATCH() {
   return NextResponse.json({ success: false, message: 'Method not allowed' }, { status: 405 });
 }
+
+// Configuration for this API route
+export const runtime = 'nodejs';
+export const maxDuration = 300; // 5 minutes

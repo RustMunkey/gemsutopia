@@ -8,6 +8,7 @@ import { useCMSContent } from '@/hooks/useCMSContent';
 import { useGemPouch } from '@/contexts/GemPouchContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import '../../styles/featured.css';
 
 interface FeaturedProduct {
   id: string;
@@ -208,11 +209,10 @@ export default function Featured() {
                 {featuredProducts.map((product) => {
                   return (
                     <div key={product.id} className="flex-shrink-0 w-[280px]">
-                      <div 
+                      <div
                         className={`rounded-2xl p-2 shadow-2xl shadow-white/20 border border-white/10 translate-x-1 translate-y-1 transition-all duration-200 ease-out product-card select-none h-full flex flex-col ${
                           product.inventory === 0 ? 'cursor-not-allowed' : 'cursor-pointer'
                         }`}
-                        style={{ backgroundColor: '#f0f0f0' }}
                         onClick={(e) => {
                           if (product.inventory === 0) return; // Don't navigate if sold out
                           e.stopPropagation();
@@ -314,24 +314,17 @@ export default function Featured() {
             // Scrolling layout for more than 4 items
             return (
               <div className="overflow-hidden py-8">
-                <div 
+                <div
                   ref={containerRef}
-                  className="flex"
-                  style={{
-                    willChange: 'transform',
-                    backfaceVisibility: 'hidden',
-                    WebkitBackfaceVisibility: 'hidden',
-                    transform: 'translateZ(0)'
-                  }}
+                  className="flex featured-carousel"
                 >
                   {featuredProducts.concat(featuredProducts).concat(featuredProducts).map((product, index) => {
                     return (
                       <div key={`${product.id}-${index}`} className="inline-block flex-shrink-0 w-[calc(80vw-1rem)] md:w-[calc(33.33vw-1rem)] lg:w-[calc(25vw-1rem)] mx-2 md:mx-3">
-                        <div 
+                        <div
                           className={`rounded-2xl p-2 shadow-2xl shadow-white/20 border border-white/10 translate-x-1 translate-y-1 transition-all duration-200 ease-out product-card select-none h-full flex flex-col ${
                             product.inventory === 0 ? 'cursor-not-allowed' : 'cursor-pointer'
                           }`}
-                          style={{ backgroundColor: '#f0f0f0' }}
                           onClick={(e) => {
                             if (product.inventory === 0) return; // Don't navigate if sold out
                             e.stopPropagation();
@@ -433,33 +426,6 @@ export default function Featured() {
           }
         })()}
       </div>
-      
-      <style jsx>{`
-        @media (hover: hover) and (pointer: fine) {
-          .product-card:hover {
-            transform: translateY(-8px) !important;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6) !important;
-          }
-        }
-        .product-card {
-          will-change: transform;
-        }
-        .product-card {
-          -webkit-user-select: none;
-          -moz-user-select: none;
-          -ms-user-select: none;
-          user-select: none;
-          -webkit-touch-callout: none;
-          -webkit-tap-highlight-color: transparent;
-        }
-        .product-card img {
-          -webkit-user-drag: none;
-          -khtml-user-drag: none;
-          -moz-user-drag: none;
-          -o-user-drag: none;
-          user-drag: none;
-        }
-      `}</style>
     </section>
   );
 }

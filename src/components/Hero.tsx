@@ -2,6 +2,7 @@
 import { useRef, useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useCMSContent } from '@/hooks/useCMSContent';
+import '../../styles/hero.css';
 
 export default function Hero() {
   const { getHeroImages, loading } = useCMSContent();
@@ -155,19 +156,19 @@ export default function Hero() {
             >
               {/* Mobile: Swipeable carousel */}
               <div className="w-full h-full md:hidden relative overflow-hidden">
-                <div 
-                  className="flex h-full"
+                <div
+                  className="flex h-full hero-carousel"
                   style={{
-                    transform: `translateX(-${currentIndex * 100}vw) translateX(${touchOffset}px)`,
-                    width: `${images.length * 100}vw`,
-                    transition: isDragging ? 'none' : 'transform 0.5s ease-in-out'
-                  }}
+                    '--translate-x': `${-currentIndex * 100}vw`,
+                    '--touch-offset': `${touchOffset}px`,
+                    '--carousel-width': `${images.length * 100}vw`,
+                    '--transition': isDragging ? 'none' : 'transform 0.5s ease-in-out'
+                  } as React.CSSProperties}
                 >
                   {images.map((image, index) => (
-                    <div 
+                    <div
                       key={index}
-                      className="h-full flex-shrink-0 flex items-center justify-center"
-                      style={{ width: '100vw' }}
+                      className="h-full flex-shrink-0 flex items-center justify-center hero-slide"
                     >
                       <div className="w-full h-full px-2 py-4 flex items-center justify-center">
                         <div className="bg-neutral-700 rounded-2xl w-full h-full overflow-hidden relative">

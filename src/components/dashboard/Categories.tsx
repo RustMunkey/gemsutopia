@@ -1,7 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Eye, EyeOff, Package, Search, ArrowUpDown, ChevronDown, ChevronRight } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, EyeOff, Package, Search, ArrowUpDown, ChevronDown, ChevronRight, Grid, Star, Tag } from 'lucide-react';
 import SingleImageUpload from './SingleImageUpload';
+import { useMode } from '@/lib/contexts/ModeContext';
+import Image from 'next/image';
 
 interface Category {
   id: string;
@@ -36,6 +38,7 @@ interface Product {
 }
 
 export default function Categories() {
+  const { mode } = useMode();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -419,291 +422,290 @@ export default function Categories() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Categories</h1>
-          <p className="text-neutral-400 mt-1">Organize your products into categories</p>
+    <>
+      {/* Header */}
+      <div className="bg-black rounded-2xl p-6 border border-white/20">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-white mb-2">Categories 📂</h1>
+            <p className="text-slate-400">Organize and manage product categories</p>
+          </div>
+          <button
+            onClick={() => setShowModal(true)}
+            className="flex items-center gap-2 bg-white hover:bg-white/80 text-black px-4 py-2 rounded-lg transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+            Add Category
+          </button>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="bg-white text-black px-4 py-2 rounded-lg hover:bg-neutral-200 transition-colors flex items-center gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          Add Category
-        </button>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className={`rounded-2xl p-6 ${mode === 'dev' ? 'bg-gradient-to-br from-orange-500/10 to-orange-600/5 border border-orange-500/20' : 'bg-gradient-to-br from-purple-500/10 to-purple-600/5 border border-purple-500/20'}`}>
+          <div className="flex items-center justify-between mb-4">
+            <div className={`p-3 rounded-xl ${mode === 'dev' ? 'bg-orange-500/20' : 'bg-purple-500/20'}`}>
+              <Grid className={`h-6 w-6 ${mode === 'dev' ? 'text-orange-400' : 'text-purple-400'}`} />
+            </div>
+            <div className={`flex items-center text-sm ${mode === 'dev' ? 'text-orange-400' : 'text-purple-400'}`}>
+              <Grid className="h-4 w-4" />
+              <span className="ml-1">{mode === 'live' ? 'Live' : 'Dev'}</span>
+            </div>
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-white mb-1">{categories.length}</p>
+            <p className="text-slate-400 text-sm">Total Categories</p>
+          </div>
+        </div>
+
+        <div className={`rounded-2xl p-6 ${mode === 'dev' ? 'bg-gradient-to-br from-orange-500/10 to-orange-600/5 border border-orange-500/20' : 'bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border border-emerald-500/20'}`}>
+          <div className="flex items-center justify-between mb-4">
+            <div className={`p-3 rounded-xl ${mode === 'dev' ? 'bg-orange-500/20' : 'bg-emerald-500/20'}`}>
+              <Eye className={`h-6 w-6 ${mode === 'dev' ? 'text-orange-400' : 'text-emerald-400'}`} />
+            </div>
+            <div className={`flex items-center text-sm ${mode === 'dev' ? 'text-orange-400' : 'text-emerald-400'}`}>
+              <Eye className="h-4 w-4" />
+              <span className="ml-1">Active</span>
+            </div>
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-white mb-1">{categories.filter(c => c.is_active).length}</p>
+            <p className="text-slate-400 text-sm">Active Categories</p>
+          </div>
+        </div>
+
+        <div className={`rounded-2xl p-6 ${mode === 'dev' ? 'bg-gradient-to-br from-orange-500/10 to-orange-600/5 border border-orange-500/20' : 'bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/20'}`}>
+          <div className="flex items-center justify-between mb-4">
+            <div className={`p-3 rounded-xl ${mode === 'dev' ? 'bg-orange-500/20' : 'bg-blue-500/20'}`}>
+              <Package className={`h-6 w-6 ${mode === 'dev' ? 'text-orange-400' : 'text-blue-400'}`} />
+            </div>
+            <div className={`flex items-center text-sm ${mode === 'dev' ? 'text-orange-400' : 'text-blue-400'}`}>
+              <Package className="h-4 w-4" />
+              <span className="ml-1">Products</span>
+            </div>
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-white mb-1">{Object.values(categoryProductCounts).reduce((sum, count) => sum + count, 0)}</p>
+            <p className="text-slate-400 text-sm">Total Products</p>
+          </div>
+        </div>
+
+        <div className={`rounded-2xl p-6 ${mode === 'dev' ? 'bg-gradient-to-br from-orange-500/10 to-orange-600/5 border border-orange-500/20' : 'bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 border border-yellow-500/20'}`}>
+          <div className="flex items-center justify-between mb-4">
+            <div className={`p-3 rounded-xl ${mode === 'dev' ? 'bg-orange-500/20' : 'bg-yellow-500/20'}`}>
+              <Star className={`h-6 w-6 ${mode === 'dev' ? 'text-orange-400' : 'text-yellow-400'}`} />
+            </div>
+            <div className={`flex items-center text-sm ${mode === 'dev' ? 'text-orange-400' : 'text-yellow-400'}`}>
+              <Star className="h-4 w-4" />
+              <span className="ml-1">Avg</span>
+            </div>
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-white mb-1">
+              {categories.length > 0 ? Math.round(Object.values(categoryProductCounts).reduce((sum, count) => sum + count, 0) / categories.length) : 0}
+            </p>
+            <p className="text-slate-400 text-sm">Avg Products/Category</p>
+          </div>
+        </div>
       </div>
 
       {error && (
-        <div className="bg-red-900/50 border border-red-700 text-red-200 px-4 py-3 rounded-lg">
-          {error}
+        <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-lg max-w-md">
+          <p className="font-semibold mb-2">Error Loading Categories</p>
+          <p className="text-sm">{error}</p>
         </div>
       )}
 
-      {/* Search and Sort */}
-      <div className="flex gap-4 items-center">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-neutral-400" />
-          <input
-            type="text"
-            placeholder="Search categories..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-white placeholder-neutral-400 focus:outline-none focus:border-white"
-          />
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => handleSort('sort_order')}
-            className={`px-3 py-2 rounded-lg flex items-center gap-1 transition-colors ${
-              sortBy === 'sort_order' ? 'bg-white text-black' : 'bg-neutral-800 text-white hover:bg-neutral-700'
-            }`}
-          >
-            <ArrowUpDown className="h-3 w-3" />
-            Order
-          </button>
-          <button
-            onClick={() => handleSort('name')}
-            className={`px-3 py-2 rounded-lg flex items-center gap-1 transition-colors ${
-              sortBy === 'name' ? 'bg-white text-black' : 'bg-neutral-800 text-white hover:bg-neutral-700'
-            }`}
-          >
-            <ArrowUpDown className="h-3 w-3" />
-            Name
-          </button>
-          <button
-            onClick={() => handleSort('created_at')}
-            className={`px-3 py-2 rounded-lg flex items-center gap-1 transition-colors ${
-              sortBy === 'created_at' ? 'bg-white text-black' : 'bg-neutral-800 text-white hover:bg-neutral-700'
-            }`}
-          >
-            <ArrowUpDown className="h-3 w-3" />
-            Date
-          </button>
+      {/* Filters */}
+      <div className="bg-black rounded-2xl p-6 border border-white/20">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search categories..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-white"
+              />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => handleSort('sort_order')}
+              className={`px-3 py-2 rounded-lg flex items-center gap-1 transition-colors ${
+                sortBy === 'sort_order' ? 'bg-white text-black' : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              <ArrowUpDown className="h-3 w-3" />
+              Order
+            </button>
+            <button
+              onClick={() => handleSort('name')}
+              className={`px-3 py-2 rounded-lg flex items-center gap-1 transition-colors ${
+                sortBy === 'name' ? 'bg-white text-black' : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              <ArrowUpDown className="h-3 w-3" />
+              Name
+            </button>
+            <button
+              onClick={() => handleSort('created_at')}
+              className={`px-3 py-2 rounded-lg flex items-center gap-1 transition-colors ${
+                sortBy === 'created_at' ? 'bg-white text-black' : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              <ArrowUpDown className="h-3 w-3" />
+              Date
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Categories List */}
-      <div className="bg-neutral-900 rounded-lg overflow-hidden">
-        {filteredAndSortedCategories.length === 0 ? (
-          <div className="p-8 text-center">
-            <Package className="h-12 w-12 text-neutral-600 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-white mb-2">No Categories Found</h3>
-            <p className="text-neutral-400 mb-4">
-              {searchTerm ? 'No categories match your search.' : 'Create your first category to organize products.'}
-            </p>
-            {!searchTerm && (
-              <button
-                onClick={() => setShowModal(true)}
-                className="bg-white text-black px-4 py-2 rounded-lg hover:bg-neutral-200 transition-colors"
-              >
-                Create Category
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="divide-y divide-neutral-800">
-            {filteredAndSortedCategories.map((category) => (
-              <div key={category.id} className="hover:bg-neutral-800/50 transition-colors">
-                <div className="p-4">
-                  <div className="flex items-center gap-4">
-                    {/* Category Image */}
-                    <div className="w-16 h-16 bg-neutral-800 rounded-lg flex items-center justify-center overflow-hidden">
-                      {category.image_url ? (
-                        <img 
-                          src={category.image_url} 
-                          alt={category.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <Package className="h-6 w-6 text-neutral-500" />
-                      )}
+      {/* Categories Table */}
+      <div className="bg-black rounded-2xl border border-white/20 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="border-b border-white/10">
+              <tr>
+                <th className="text-left p-4 text-slate-400 font-medium">Category</th>
+                <th className="text-left p-4 text-slate-400 font-medium">Products</th>
+                <th className="text-left p-4 text-slate-400 font-medium">Order</th>
+                <th className="text-left p-4 text-slate-400 font-medium">Status</th>
+                <th className="text-left p-4 text-slate-400 font-medium">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredAndSortedCategories.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="text-center p-8">
+                    <div className="flex flex-col items-center gap-3">
+                      <Grid className="h-12 w-12 text-slate-500" />
+                      <p className="text-slate-400">No categories found</p>
+                      <button
+                        onClick={() => setShowModal(true)}
+                        className="text-white hover:text-white/80"
+                      >
+                        Add your first category
+                      </button>
                     </div>
-
-                    {/* Category Details */}
-                    <div className="flex-1">
+                  </td>
+                </tr>
+              ) : (
+                filteredAndSortedCategories.map((category) => (
+                  <tr key={category.id} className="border-b border-white/5 hover:bg-white/5">
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-slate-700 rounded-lg flex items-center justify-center overflow-hidden">
+                          {category.image_url ? (
+                            <Image
+                              src={category.image_url}
+                              alt={category.name}
+                              width={40}
+                              height={40}
+                              className="w-10 h-10 object-cover rounded-lg"
+                            />
+                          ) : (
+                            <Grid className="h-5 w-5 text-slate-400" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-medium text-white">{category.name}</p>
+                          <p className="text-sm text-slate-400">/shop/{category.slug}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4">
                       <div className="flex items-center gap-2">
+                        <span className="text-white font-medium">{categoryProductCounts[category.id] || 0}</span>
                         <button
                           onClick={() => toggleCategoryExpansion(category)}
-                          className="flex items-center gap-2 hover:text-white transition-colors"
+                          className="p-1 text-slate-400 hover:text-white transition-colors"
+                          title="View products in category"
                         >
                           {expandedCategories.has(category.id) ? (
-                            <ChevronDown className="h-4 w-4 text-neutral-400" />
+                            <ChevronDown className="h-3 w-3" />
                           ) : (
-                            <ChevronRight className="h-4 w-4 text-neutral-400" />
+                            <ChevronRight className="h-3 w-3" />
                           )}
-                          <h3 className="text-white font-semibold">{category.name}</h3>
                         </button>
-                        <span className="text-xs bg-blue-900/50 text-blue-300 px-2 py-1 rounded">
-                          {categoryProductCounts[category.id] || 0} {(categoryProductCounts[category.id] || 0) === 1 ? 'product' : 'products'}
-                        </span>
-                        <span className="text-xs text-neutral-500">#{category.sort_order}</span>
-                        {!category.is_active && (
-                          <span className="text-xs bg-red-900/50 text-red-300 px-2 py-1 rounded">
-                            Inactive
-                          </span>
-                        )}
                       </div>
-                      <p className="text-sm text-neutral-400 mt-1">
-                        Slug: <span className="font-mono">/shop/{category.slug}</span>
-                      </p>
-                      {category.description && (
-                        <p className="text-sm text-neutral-400 mt-1">{category.description}</p>
-                      )}
-                      <p className="text-xs text-neutral-500 mt-1">
-                        Created: {new Date(category.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => openProductModal(category)}
-                        className="p-2 bg-blue-900/50 text-blue-300 rounded-lg hover:bg-blue-900/70 hover:text-blue-200 transition-colors"
-                        title="Add/remove products in this category"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => toggleCategoryStatus(category)}
-                        className={`p-2 rounded-lg transition-colors ${
-                          category.is_active 
-                            ? 'bg-green-900/50 text-green-300 hover:bg-green-900/70' 
-                            : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'
-                        }`}
-                        title={category.is_active ? 'Deactivate category' : 'Activate category'}
-                      >
-                        {category.is_active ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                      </button>
-                      <button
-                        onClick={() => handleEdit(category)}
-                        className="p-2 bg-neutral-800 text-neutral-400 rounded-lg hover:bg-neutral-700 hover:text-white transition-colors"
-                        title="Edit category"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(category)}
-                        className="p-2 bg-neutral-800 text-neutral-400 rounded-lg hover:bg-red-900/50 hover:text-red-300 transition-colors"
-                        title="Delete category"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Expanded Products View */}
-                {expandedCategories.has(category.id) && (
-                  <div className="px-4 pb-4 border-t border-neutral-700/50">
-                    <div className="mt-4">
-                      <h4 className="text-sm font-medium text-neutral-300 mb-3">
-                        Products in this category:
-                      </h4>
-                      {categoryProductsCache[category.id] ? (
-                        categoryProductsCache[category.id].length > 0 ? (
-                          <div className="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto">
-                            {categoryProductsCache[category.id].map((product) => (
-                              <div key={product.id} className="flex items-center gap-3 p-2 bg-neutral-800/50 rounded-lg">
-                                {/* Product Image */}
-                                <div className="w-12 h-12 bg-neutral-700 rounded-lg overflow-hidden flex-shrink-0">
-                                  {product.images && product.images.length > 0 ? (
-                                    <img 
-                                      src={product.images[product.metadata?.featured_image_index || 0]} 
-                                      alt={product.name}
-                                      className="w-full h-full object-cover"
-                                    />
-                                  ) : (
-                                    <div className="w-full h-full flex items-center justify-center bg-neutral-600">
-                                      <Package className="h-6 w-6 text-neutral-400" />
-                                    </div>
-                                  )}
-                                </div>
-
-                                {/* Product Details */}
-                                <div className="flex-1 min-w-0">
-                                  <h5 className="text-white font-medium truncate text-sm">{product.name}</h5>
-                                  <div className="flex items-center gap-3 text-xs text-neutral-400">
-                                    <span>Stock: {product.inventory || 0}</span>
-                                    <span>${product.price}</span>
-                                    {!product.is_active && (
-                                      <span className="text-red-400">Inactive</span>
-                                    )}
-                                  </div>
-                                </div>
-
-                                {/* Remove from category button */}
-                                <button
-                                  onClick={async () => {
-                                    // Remove this product from the current category
-                                    try {
-                                      const currentCategoriesResponse = await fetch(`/api/products/${product.id}/categories`);
-                                      let currentCategoryIds: string[] = [];
-                                      
-                                      if (currentCategoriesResponse.ok) {
-                                        const currentCategoriesData = await currentCategoriesResponse.json();
-                                        currentCategoryIds = currentCategoriesData.categories?.map((cat: any) => cat.id) || [];
-                                      }
-                                      
-                                      const newCategoryIds = currentCategoryIds.filter(id => id !== category.id);
-                                      
-                                      const response = await fetch(`/api/products/${product.id}/categories`, {
-                                        method: 'POST',
-                                        headers: {
-                                          'Content-Type': 'application/json',
-                                        },
-                                        body: JSON.stringify({
-                                          category_ids: newCategoryIds
-                                        }),
-                                      });
-
-                                      if (response.ok) {
-                                        // Update the category product count
-                                        setCategoryProductCounts(prev => ({
-                                          ...prev,
-                                          [category.id]: (prev[category.id] || 1) - 1
-                                        }));
-                                        
-                                        // Update the cache
-                                        setCategoryProductsCache(prev => ({
-                                          ...prev,
-                                          [category.id]: prev[category.id]?.filter(p => p.id !== product.id) || []
-                                        }));
-                                      }
-                                    } catch (error) {
-                                      console.error('Error removing product from category:', error);
-                                    }
-                                  }}
-                                  className="p-1 text-neutral-400 hover:text-red-400 transition-colors"
-                                  title="Remove from this category"
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-sm text-neutral-500 italic">No products in this category yet.</p>
-                        )
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-400"></div>
-                          <span className="text-sm text-neutral-400">Loading products...</span>
+                      {expandedCategories.has(category.id) && categoryProductsCache[category.id] && (
+                        <div className="mt-2 space-y-1">
+                          {categoryProductsCache[category.id].slice(0, 3).map((product) => (
+                            <div key={product.id} className="text-xs text-slate-400 truncate">
+                              • {product.name}
+                            </div>
+                          ))}
+                          {categoryProductsCache[category.id].length > 3 && (
+                            <div className="text-xs text-slate-500">
+                              +{categoryProductsCache[category.id].length - 3} more...
+                            </div>
+                          )}
                         </div>
                       )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+                    </td>
+                    <td className="p-4">
+                      <span className="px-2 py-1.5 rounded text-xs bg-white/20 text-white leading-relaxed">
+                        #{category.sort_order}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-1 rounded text-xs ${
+                          category.is_active 
+                            ? 'bg-white/20 text-white' 
+                            : 'bg-red-500/20 text-red-400'
+                        }`}>
+                          {category.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => openProductModal(category)}
+                          className="p-1 text-slate-400 hover:text-white"
+                          title="Manage products"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleEdit(category)}
+                          className="p-1 text-slate-400 hover:text-white"
+                          title="Edit category"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => toggleCategoryStatus(category)}
+                          className="p-1 text-slate-400 hover:text-white"
+                          title={(category.is_active) ? 'Deactivate' : 'Activate'}
+                        >
+                          {category.is_active ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                        </button>
+                        <button
+                          onClick={() => handleDelete(category)}
+                          className="p-1 text-slate-400 hover:text-red-400"
+                          title="Delete category"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-neutral-900 rounded-lg p-6 w-full max-w-md">
+          <div className="bg-black border border-white/20 rounded-2xl p-6 w-full max-w-md">
             <h2 className="text-xl font-bold text-white mb-4">
               {editingCategory ? 'Edit Category' : 'Add New Category'}
             </h2>
@@ -718,7 +720,7 @@ export default function Categories() {
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-white placeholder-neutral-400 focus:outline-none focus:border-white"
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-white"
                   placeholder="e.g., BlueJay Sapphires"
                 />
               </div>
@@ -730,7 +732,7 @@ export default function Categories() {
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-white placeholder-neutral-400 focus:outline-none focus:border-white"
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-white"
                   placeholder="Category description..."
                   rows={3}
                 />
@@ -752,7 +754,7 @@ export default function Categories() {
                   type="number"
                   value={formData.sort_order}
                   onChange={(e) => setFormData({ ...formData, sort_order: parseInt(e.target.value) || 0 })}
-                  className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-white placeholder-neutral-400 focus:outline-none focus:border-white"
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-white"
                   placeholder="0"
                 />
               </div>
@@ -770,17 +772,17 @@ export default function Categories() {
                 </label>
               </div>
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-3 pt-4 border-t border-white/10">
                 <button
                   type="button"
                   onClick={handleCloseModal}
-                  className="flex-1 px-4 py-2 bg-neutral-800 text-white rounded-lg hover:bg-neutral-700 transition-colors"
+                  className="flex-1 px-4 py-2 text-slate-400 hover:text-white"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-white text-black rounded-lg hover:bg-neutral-200 transition-colors"
+                  className="flex-1 px-4 py-2 bg-white hover:bg-white/80 text-black rounded-lg font-medium"
                 >
                   {editingCategory ? 'Update' : 'Create'}
                 </button>
@@ -793,7 +795,7 @@ export default function Categories() {
       {/* Product Assignment Modal */}
       {showProductModal && selectedCategory && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-neutral-900 rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+          <div className="bg-black border border-white/20 rounded-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-white">
                 Manage Products in "{selectedCategory.name}"
@@ -806,7 +808,7 @@ export default function Categories() {
                   setCategoryProducts([]);
                   setProductSearchTerm('');
                 }}
-                className="text-neutral-400 hover:text-white"
+                className="text-slate-400 hover:text-white"
               >
                 ✕
               </button>
@@ -815,13 +817,13 @@ export default function Categories() {
             {/* Search Products */}
             <div className="mb-4">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-neutral-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <input
                   type="text"
                   placeholder="Search products..."
                   value={productSearchTerm}
                   onChange={(e) => setProductSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-white placeholder-neutral-400 focus:outline-none focus:border-white"
+                  className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-white"
                 />
               </div>
             </div>
@@ -840,9 +842,9 @@ export default function Categories() {
                     .map((product) => {
                       const isAssigned = categoryProducts.includes(product.id);
                       return (
-                        <div key={product.id} className="flex items-center gap-4 p-3 bg-neutral-800 rounded-lg">
+                        <div key={product.id} className="flex items-center gap-4 p-3 bg-white/5 rounded-lg">
                           {/* Product Image */}
-                          <div className="w-12 h-12 bg-neutral-700 rounded-lg overflow-hidden flex-shrink-0">
+                          <div className="w-12 h-12 bg-slate-700 rounded-lg overflow-hidden flex-shrink-0">
                             {product.images && product.images.length > 0 ? (
                               <img 
                                 src={product.images[product.metadata?.featured_image_index || 0]} 
@@ -850,8 +852,8 @@ export default function Categories() {
                                 className="w-full h-full object-cover"
                               />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-neutral-600">
-                                <Package className="h-6 w-6 text-neutral-400" />
+                              <div className="w-full h-full flex items-center justify-center bg-slate-600">
+                                <Package className="h-6 w-6 text-slate-400" />
                               </div>
                             )}
                           </div>
@@ -859,7 +861,7 @@ export default function Categories() {
                           {/* Product Details */}
                           <div className="flex-1 min-w-0">
                             <h4 className="text-white font-medium truncate">{product.name}</h4>
-                            <div className="flex items-center gap-4 text-sm text-neutral-400">
+                            <div className="flex items-center gap-4 text-sm text-slate-400">
                               <span>Stock: {product.inventory}</span>
                               <span>${product.price}</span>
                               {!product.is_active && (
@@ -876,7 +878,7 @@ export default function Categories() {
                               onChange={() => toggleProductAssignment(product.id)}
                               className="w-4 h-4 text-blue-600 bg-neutral-700 border-neutral-600 rounded focus:ring-blue-500"
                             />
-                            <span className="text-sm text-neutral-400">
+                            <span className="text-sm text-slate-400">
                               {isAssigned ? 'In Category' : 'Add to Category'}
                             </span>
                           </div>
@@ -888,8 +890,8 @@ export default function Categories() {
             )}
 
             {/* Footer */}
-            <div className="mt-4 pt-4 border-t border-neutral-700 flex justify-between items-center">
-              <p className="text-sm text-neutral-400">
+            <div className="mt-4 pt-4 border-t border-white/10 flex justify-between items-center">
+              <p className="text-sm text-slate-400">
                 {categoryProducts.length} products assigned to this category
               </p>
               <button
@@ -900,7 +902,7 @@ export default function Categories() {
                   setCategoryProducts([]);
                   setProductSearchTerm('');
                 }}
-                className="px-4 py-2 bg-white text-black rounded-lg hover:bg-neutral-200 transition-colors"
+                className="px-4 py-2 bg-white text-black rounded-lg hover:bg-white/80 transition-colors"
               >
                 Done
               </button>
@@ -908,6 +910,6 @@ export default function Categories() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

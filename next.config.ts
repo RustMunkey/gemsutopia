@@ -7,6 +7,14 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
+  // Increase body size limits for video uploads
+  experimental: {
+    largePageDataBytes: 128 * 1024, // 128kb
+  },
+  // Configure API routes
+  async rewrites() {
+    return [];
+  },
   images: {
     remotePatterns: [
       {

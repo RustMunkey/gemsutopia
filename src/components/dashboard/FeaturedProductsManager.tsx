@@ -1,4 +1,5 @@
 'use client';
+import '../../../styles/featuredproductsmanager.css';
 import { useState, useEffect } from 'react';
 import { Edit2, Plus, Trash2, Eye, EyeOff, Package } from 'lucide-react';
 import Image from 'next/image';
@@ -188,8 +189,8 @@ export default function FeaturedProductsManager() {
                     <div className="flex items-center gap-1">
                       <span className="text-gray-400">Color:</span>
                       <div
-                        className="w-4 h-4 rounded border border-white/20"
-                        style={{ backgroundColor: product.card_color }}
+                        className="w-4 h-4 rounded border border-white/20 product-color-indicator"
+                        style={{ '--product-color': product.card_color } as React.CSSProperties}
                       />
                     </div>
                   )}

@@ -1,4 +1,4 @@
-'use client';
+ 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { getAddressSuggestions } from '@/lib/utils/addressValidation';
 import { MapPin, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';

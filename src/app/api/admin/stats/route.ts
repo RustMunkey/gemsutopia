@@ -8,7 +8,7 @@ const supabase = createClient(
 );
 
 // 🔐 SECURE GET - Admin auth required + Rate limited
-async function getStatsHandler(request: NextRequest) {
+async function getStatsHandler() {
   try {
     const { data: stats, error } = await supabase
       .from('stats')

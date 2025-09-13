@@ -5,6 +5,7 @@ import { faLink } from '@fortawesome/free-solid-svg-icons';
 import { ExchangeCoinbase } from '@web3icons/react';
 import Image from 'next/image';
 import { useState } from 'react';
+import '../../styles/footer.css';
 
 export default function Footer() {
   const [email, setEmail] = useState('');
@@ -47,10 +48,7 @@ export default function Footer() {
   };
 
   return (
-    <div className="bg-black text-white w-full h-[50vh] flex flex-col justify-between border-t border-white/20 relative z-10" style={{ 
-      filter: 'drop-shadow(0 -10px 20px rgba(0, 0, 0, 0.3))',
-      borderRadius: '0px'
-    }}>
+    <div className="bg-black text-white w-full h-[50vh] flex flex-col justify-between border-t border-white/20 relative z-10 footer-container">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-8 bg-black">
         <div className="flex justify-between items-center bg-black">
           <Image 

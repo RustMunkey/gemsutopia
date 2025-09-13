@@ -1,4 +1,5 @@
 'use client';
+import '../../../styles/sitecontent.css';
 import { useState, useEffect, useCallback } from 'react';
 import { Edit2, X, ImageIcon, Type, Code } from 'lucide-react';
 import Image from 'next/image';
@@ -1083,13 +1084,13 @@ function EditContentModal({ content, onClose, onSave }: {
                       )}
 
                       {/* Preview */}
-                      <div 
-                        className="h-12 rounded-lg border border-white/10"
+                      <div
+                        className="h-12 rounded-lg border border-white/10 gradient-preview"
                         style={{
-                          background: isSingleColor 
+                          '--gradient-bg': isSingleColor
                             ? colors[0] || '#9333ea'
                             : `linear-gradient(to right, ${colors[0] || '#9333ea'}, ${colors[1] || '#db2777'})`
-                        }}
+                        } as React.CSSProperties}
                       />
                     </>
                   );

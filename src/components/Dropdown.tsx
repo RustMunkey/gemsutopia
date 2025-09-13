@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import '../../styles/dropdown.css';
 
 interface DropdownProps {
   isOpen: boolean;
@@ -22,9 +23,8 @@ export default function Dropdown({ isOpen, onClose }: DropdownProps) {
   if (!isOpen || !mounted) return null;
 
   const dropdownContent = (
-    <div 
-      className="fixed inset-0 bg-black/50 backdrop-blur-lg md:hidden transform transition-all duration-300 ease-in-out"
-      style={{ zIndex: 999999 }}
+    <div
+      className="fixed inset-0 bg-black/50 backdrop-blur-lg md:hidden transform transition-all duration-300 ease-in-out dropdown-overlay"
       onClick={onClose}
     >
         <div className="h-full flex flex-col relative" onClick={(e) => e.stopPropagation()}>

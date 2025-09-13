@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useMode } from '@/lib/contexts/ModeContext';
 import { usePathname } from 'next/navigation';
 import { Settings, RefreshCw } from 'lucide-react';
+import '../../styles/maintenanceoverlay.css';
 
 const maintenanceMessages = [
   "Counting our gems twice",
@@ -63,29 +64,20 @@ export default function MaintenanceOverlay() {
   if (!isVisible) return null;
 
   return (
-    <div 
-      className={`fixed inset-0 z-[9999] transition-all duration-500 ${
-        mode === 'dev' 
-          ? 'opacity-100 backdrop-blur-md' 
+    <div
+      className={`fixed inset-0 z-[9999] transition-all duration-500 maintenance-overlay ${
+        mode === 'dev'
+          ? 'opacity-100 backdrop-blur-md'
           : 'opacity-0 pointer-events-none'
       }`}
-      style={{ 
-        touchAction: 'none',
-        userSelect: 'none',
-        overscrollBehavior: 'none'
-      }}
       onWheel={(e) => e.preventDefault()}
       onTouchMove={(e) => e.preventDefault()}
       onScroll={(e) => e.preventDefault()}
       onContextMenu={(e) => e.preventDefault()}
     >
       {/* Background overlay with glass effect */}
-      <div 
-        className="absolute inset-0 bg-black/30 backdrop-blur-md"
-        style={{ 
-          touchAction: 'none',
-          overflowY: 'hidden'
-        }}
+      <div
+        className="absolute inset-0 bg-black/30 backdrop-blur-md maintenance-background"
       />
       
       {/* Content container */}

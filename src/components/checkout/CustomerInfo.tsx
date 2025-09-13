@@ -1,6 +1,5 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { validateAddress, AddressData } from '@/lib/utils/addressValidation';
 import AddressInput from './AddressInput';
 
 interface CustomerData {
@@ -54,9 +53,7 @@ const CANADIAN_PROVINCES = [
 export default function CustomerInfo({ data, onContinue, onAddressChange }: CustomerInfoProps) {
   const [formData, setFormData] = useState<CustomerData>(data);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isValidatingAddress, setIsValidatingAddress] = useState(false);
   const [isClient, setIsClient] = useState(false);
-  const [addressSuggestions, setAddressSuggestions] = useState<string[]>([]);
   
   // Dynamic labels based on country
   const isUS = formData.country === 'United States';
@@ -106,43 +103,6 @@ export default function CustomerInfo({ data, onContinue, onAddressChange }: Cust
     }
   };
 
-  const handleAddressSelect = (addressComponents: any) => {
-    console.log('handleAddressSelect called with:', addressComponents); // Debug log
-    
-    if (addressComponents) {
-      // Update all available address components for full autofill
-      const newFormData = {
-        ...formData,
-        address: addressComponents.address || formData.address,
-        city: addressComponents.city || formData.city,
-        state: addressComponents.state || formData.state,
-        zipCode: addressComponents.zipCode || formData.zipCode,
-        country: addressComponents.country || formData.country,
-      };
-      
-      console.log('Updating form data with all components:', newFormData); // Debug log
-      setFormData(newFormData);
-      
-      // Clear related errors
-      setErrors(prev => ({
-        ...prev,
-        address: '',
-        city: addressComponents.city ? '' : prev.city,
-        state: addressComponents.state ? '' : prev.state,
-        zipCode: addressComponents.zipCode ? '' : prev.zipCode,
-      }));
-    }
-  };
-
-  const handleAddressValidation = (result: { isValid: boolean; formattedAddress?: string; error?: string }) => {
-    if (result.isValid && result.formattedAddress) {
-      // Clear any address errors
-      setErrors(prev => ({
-        ...prev,
-        address: ''
-      }));
-    }
-  };
 
   const validateForm = async () => {
     const newErrors: Record<string, string> = {};
@@ -157,32 +117,6 @@ export default function CustomerInfo({ data, onContinue, onAddressChange }: Cust
     if (!formData.state) newErrors.state = 'Province/State is required';
     if (!formData.zipCode) newErrors.zipCode = 'Postal/Zip code is required';
 
-    // Validate address using free OpenStreetMap validation
-    if (formData.address && formData.city && formData.state && formData.zipCode) {
-      setIsValidatingAddress(true);
-      try {
-        const addressValidation = await validateAddress({
-          address: formData.address,
-          apartment: formData.apartment,
-          city: formData.city,
-          state: formData.state,
-          zipCode: formData.zipCode,
-          country: formData.country
-        });
-        
-        if (!addressValidation.isValid) {
-          newErrors.address = addressValidation.error || 'Address validation failed';
-          if (addressValidation.suggestions && addressValidation.suggestions.length > 0) {
-            setAddressSuggestions(addressValidation.suggestions);
-          }
-        }
-      } catch (error) {
-        console.error('Address validation error:', error);
-        // Don't block submission if validation service fails
-      } finally {
-        setIsValidatingAddress(false);
-      }
-    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -278,37 +212,10 @@ export default function CustomerInfo({ data, onContinue, onAddressChange }: Cust
               <AddressInput
                 value={formData.address}
                 onChange={(value) => setFormData(prev => ({ ...prev, address: value }))}
-                onAddressSelect={handleAddressSelect}
-                onValidationResult={handleAddressValidation}
                 className={`${inputClasses} ${errors.address ? errorClasses : ''}`}
-                placeholder="Start typing your address..."
+                placeholder="Enter your complete address..."
                 error={errors.address}
-                country={formData.country as 'Canada' | 'United States'}
               />
-              {addressSuggestions.length > 0 && (
-                <div className="mt-2">
-                  <p className="text-xs text-gray-600 mb-1">Did you mean:</p>
-                  {addressSuggestions.map((suggestion, index) => (
-                    <button
-                      key={index}
-                      type="button"
-                      onClick={() => {
-                        const components = suggestion.split(', ');
-                        if (components.length >= 2) {
-                          setFormData(prev => ({
-                            ...prev,
-                            city: components[1] || prev.city
-                          }));
-                        }
-                        setAddressSuggestions([]);
-                      }}
-                      className="block text-xs text-blue-600 hover:text-blue-800 underline mb-1"
-                    >
-                      {suggestion}
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
 
             <div>
@@ -441,10 +348,9 @@ export default function CustomerInfo({ data, onContinue, onAddressChange }: Cust
 
         <button
           type="submit"
-          disabled={isValidatingAddress}
-          className="w-full bg-black text-white py-3 px-6 rounded-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-black text-white py-3 px-6 rounded-lg font-medium hover:bg-gray-800 transition-colors"
         >
-          {isValidatingAddress ? 'Validating Address...' : 'Continue to Payment Method'}
+          Continue to Payment Method
         </button>
       </form>
     </div>

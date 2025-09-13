@@ -5,7 +5,6 @@ import { useGemPouch } from '@/contexts/GemPouchContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useInventory } from '@/contexts/InventoryContext';
-import CurrencySwitcher from '@/components/CurrencySwitcher';
 import { useState, useEffect, useRef } from 'react';
 
 interface Product {
@@ -46,7 +45,7 @@ export default function ProductContent({ product: initialProduct }: ProductConte
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [showZoomModal, setShowZoomModal] = useState(false);
   const [zoomImageIndex, setZoomImageIndex] = useState(0);
-  const [viewCount, setViewCount] = useState(product.metadata?.view_count || 0);
+  const [, setViewCount] = useState(product.metadata?.view_count || 0);
   const [wishlistCount, setWishlistCount] = useState(product.metadata?.wishlist_count || 0);
   const imageContainerRef = useRef<HTMLDivElement>(null);
   
@@ -128,12 +127,6 @@ export default function ProductContent({ product: initialProduct }: ProductConte
     document.body.style.overflow = 'hidden';
   };
 
-  const openZoomModalAtIndex = (index: number) => {
-    setZoomImageIndex(index);
-    setShowZoomModal(true);
-    // Prevent background scrolling
-    document.body.style.overflow = 'hidden';
-  };
 
   const closeZoomModal = () => {
     setShowZoomModal(false);

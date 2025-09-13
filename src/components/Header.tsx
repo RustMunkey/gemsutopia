@@ -11,6 +11,7 @@ import { useWishlist } from '../contexts/WishlistContext';
 import { useCMSContent } from '@/hooks/useCMSContent';
 import { useAuth } from '../contexts/AuthContext';
 import CurrencySwitcher from './CurrencySwitcher';
+import '../../styles/header.css';
 
 export default function Header() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -37,9 +38,12 @@ export default function Header() {
   return (
     <header className={headerClass}>
       {marqueeEnabled && (
-        <div 
-          className="text-white py-2 overflow-hidden relative"
-          style={{ background: `linear-gradient(to right, ${gradientFrom}, ${gradientTo})` }}
+        <div
+          className="text-white py-2 overflow-hidden relative marquee-gradient"
+          style={{
+            '--gradient-from': gradientFrom,
+            '--gradient-to': gradientTo
+          } as React.CSSProperties}
         >
           <div className="animate-scroll-forward whitespace-nowrap">
             <span className="inline-block text-xs sm:text-sm font-medium">

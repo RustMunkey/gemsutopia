@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { Star, Mail, TextCursorInput } from 'lucide-react';
+import '../../styles/reviews.css';
 
 interface Review {
   id: string;
@@ -216,15 +217,9 @@ export default function Reviews() {
             // Scrolling layout for more than 4 items
             return (
               <div className="overflow-hidden py-8">
-                <div 
+                <div
                   ref={containerRef}
-                  className="flex"
-                  style={{
-                    willChange: 'transform',
-                    backfaceVisibility: 'hidden',
-                    WebkitBackfaceVisibility: 'hidden',
-                    transform: 'translateZ(0)'
-                  }}
+                  className="flex reviews-carousel"
                 >
                   {displayReviews.concat(displayReviews).concat(displayReviews).map((review, index) => {
                     const displayName = review.customer_name;
@@ -290,7 +285,7 @@ export default function Reviews() {
 
       {/* Review Modal */}
       {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/30 backdrop-blur-md" style={{ zIndex: 999999 }}>
+        <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/30 backdrop-blur-md review-modal">
           <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-lg w-full relative">
             <div className="text-center mb-6">
               <h3 className="text-2xl font-bold text-black mb-2">Share Your Experience</h3>
@@ -374,7 +369,7 @@ export default function Reviews() {
                   rows={3}
                   className="w-full px-3 py-2 border-2 border-black bg-white text-black rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-300 resize-none text-sm"
                   placeholder="Share your experience with Gemsutopia..."
-maxLength={500}
+                  maxLength={500}
                   required
                 />
                 <p className="text-xs text-gray-500 mt-1">{reviewForm.review.length}/500 characters</p>

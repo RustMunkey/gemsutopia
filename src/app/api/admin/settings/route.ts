@@ -90,7 +90,7 @@ async function loadSettingsFromDB() {
   }
 }
 
-export const GET = requireAdmin(async (request: NextRequest) => {
+export const GET = requireAdmin(async () => {
   try {
     console.log('Settings GET request - loading from database (admin authenticated)');
     const settings = await loadSettingsFromDB();
