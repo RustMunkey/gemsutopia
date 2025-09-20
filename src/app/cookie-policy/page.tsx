@@ -70,7 +70,7 @@ export default function CookiePolicy() {
       <div 
         className="fixed inset-0 z-0"
         style={{
-          backgroundImage: "url('/images/whitemarble.jpg')",
+          backgroundImage: "url('/images/background.jpg')",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat"
@@ -81,22 +81,22 @@ export default function CookiePolicy() {
       
       <div className="flex-grow py-16 relative z-10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
+          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-white/10">
             <div className="text-center mb-12">
-              <h1 className="text-3xl md:text-4xl font-bold text-black mb-4">{getContent('title')}</h1>
-              <p className="text-lg text-neutral-600">{getContent('last_updated')}</p>
+              <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">{getContent('title')}</h1>
+              <p className="text-lg text-white">{getContent('last_updated')}</p>
             </div>
             
-            <div className="prose prose-lg max-w-none text-neutral-700 space-y-8">
+            <div className="prose prose-lg max-w-none text-white space-y-8">
             <section>
-              <h2 className="text-2xl font-bold text-black mb-4">{getContent('what_are_title')}</h2>
+              <h2 className="text-2xl font-bold text-white mb-4">{getContent('what_are_title')}</h2>
               <p>
                 {getContent('what_are_content')}
               </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold text-black mb-4">{getContent('how_use_title')}</h2>
+              <h2 className="text-2xl font-bold text-white mb-4">{getContent('how_use_title')}</h2>
               <p>{getContent('how_use_intro')}</p>
               <ul className="list-disc ml-6 space-y-2">
                 <li><strong>{getContent('how_use_essential')}</strong></li>
@@ -107,26 +107,26 @@ export default function CookiePolicy() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold text-black mb-4">{getContent('types_title')}</h2>
+              <h2 className="text-2xl font-bold text-white mb-4">{getContent('types_title')}</h2>
               
-              <h3 className="text-lg font-semibold text-black mb-2">{getContent('essential_subtitle')}</h3>
+              <h3 className="text-lg font-semibold text-white mb-2">{getContent('essential_subtitle')}</h3>
               <p className="mb-4">
                 {getContent('essential_content')}
               </p>
 
-              <h3 className="text-lg font-semibold text-black mb-2">{getContent('analytics_subtitle')}</h3>
+              <h3 className="text-lg font-semibold text-white mb-2">{getContent('analytics_subtitle')}</h3>
               <p className="mb-4">
                 {getContent('analytics_content')}
               </p>
 
-              <h3 className="text-lg font-semibold text-black mb-2">{getContent('marketing_subtitle')}</h3>
+              <h3 className="text-lg font-semibold text-white mb-2">{getContent('marketing_subtitle')}</h3>
               <p className="mb-4">
                 {getContent('marketing_content')}
               </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold text-black mb-4">{getContent('managing_title')}</h2>
+              <h2 className="text-2xl font-bold text-white mb-4">{getContent('managing_title')}</h2>
               <p>
                 {getContent('managing_intro')}
               </p>
@@ -141,7 +141,7 @@ export default function CookiePolicy() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold text-black mb-4">{getContent('third_party_title')}</h2>
+              <h2 className="text-2xl font-bold text-white mb-4">{getContent('third_party_title')}</h2>
               <p>
                 {getContent('third_party_intro')}
               </p>
@@ -154,7 +154,7 @@ export default function CookiePolicy() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold text-black mb-4">{getContent('retention_title')}</h2>
+              <h2 className="text-2xl font-bold text-white mb-4">{getContent('retention_title')}</h2>
               <p>
                 {getContent('retention_intro')}
               </p>
@@ -167,21 +167,21 @@ export default function CookiePolicy() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold text-black mb-4">{getContent('consent_title')}</h2>
+              <h2 className="text-2xl font-bold text-white mb-4">{getContent('consent_title')}</h2>
               <p>
                 {getContent('consent_content')}
               </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold text-black mb-4">{getContent('updates_title')}</h2>
+              <h2 className="text-2xl font-bold text-white mb-4">{getContent('updates_title')}</h2>
               <p>
                 {getContent('updates_content')}
               </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold text-black mb-4">{getContent('contact_title')}</h2>
+              <h2 className="text-2xl font-bold text-white mb-4">{getContent('contact_title')}</h2>
               <p>
                 {getContent('contact_content')}
               </p>

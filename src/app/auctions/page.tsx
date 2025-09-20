@@ -61,9 +61,8 @@ function AuctionCard({ auction, router }: { auction: Auction; router: { push: (u
   const hasReserve = auction.reserve_price && auction.current_bid < auction.reserve_price;
 
   return (
-    <div 
-      className="rounded-2xl p-4 shadow-2xl shadow-white/20 border border-white/10 translate-x-1 translate-y-1 transition-all duration-200 ease-out cursor-pointer auction-card select-none h-full flex flex-col group hover:translate-y-[-8px] hover:shadow-3xl"
-      style={{ backgroundColor: '#f0f0f0' }}
+    <div
+      className="bg-white/5 backdrop-blur-sm rounded-2xl p-2 md:p-3 shadow-2xl border border-white/10 translate-x-1 translate-y-1 transition-all duration-200 ease-out cursor-pointer auction-card select-none h-full flex flex-col group hover:translate-y-[-8px] hover:shadow-3xl"
       onClick={(e) => {
         e.stopPropagation();
         router.push(`/auctions/${auction.id}`);
@@ -71,10 +70,10 @@ function AuctionCard({ auction, router }: { auction: Auction; router: { push: (u
       }}
     >
       {/* Auction Image */}
-      <div className="aspect-square bg-neutral-100 rounded-lg mb-4 overflow-hidden relative">
+      <div className="aspect-square bg-neutral-100 rounded-lg mb-2 overflow-hidden relative">
         {auction.images && auction.images.length > 0 ? (
-          <Image 
-            src={auction.images[auction.featured_image_index || 0]} 
+          <Image
+            src={auction.images[auction.featured_image_index || 0]}
             alt={auction.title}
             fill
             className="object-cover select-none pointer-events-none group-hover:scale-105 transition-transform duration-200"
@@ -85,23 +84,23 @@ function AuctionCard({ auction, router }: { auction: Auction; router: { push: (u
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-neutral-200">
-            <Gavel className="h-12 w-12 text-neutral-400" />
+            <Gavel className="h-12 w-12 text-white/60" />
           </div>
         )}
-        
+
         {/* Status Badge */}
-        <div className={`absolute top-2 left-2 px-2 py-1 rounded text-sm font-medium ${
-          isActive 
-            ? 'bg-green-500 text-white' 
-            : auction.status === 'ended' 
-            ? 'bg-red-500 text-white' 
+        <div className={`absolute top-2 left-2 px-2 py-1 rounded text-xs md:text-sm font-medium ${
+          isActive
+            ? 'bg-green-500 text-white'
+            : auction.status === 'ended'
+            ? 'bg-red-500 text-white'
             : 'bg-yellow-500 text-black'
         }`}>
           {isActive ? 'Live' : auction.status === 'ended' ? 'Ended' : 'Pending'}
         </div>
 
         {/* Time Left Badge */}
-        <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-sm font-medium flex items-center gap-1">
+        <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs md:text-sm font-medium flex items-center gap-1">
           <Clock className="h-3 w-3" />
           {timeLeft}
         </div>
@@ -115,8 +114,8 @@ function AuctionCard({ auction, router }: { auction: Auction; router: { push: (u
 
         {/* Gemsutopia Logo */}
         <div className="absolute bottom-2 right-2 z-10">
-          <Image 
-            src="/logos/gems-logo.png" 
+          <Image
+            src="/logos/gems-logo.png"
             alt="Gemsutopia"
             width={32}
             height={32}
@@ -127,36 +126,36 @@ function AuctionCard({ auction, router }: { auction: Auction; router: { push: (u
 
       {/* Auction Info */}
       <div className="flex-1 flex flex-col">
-        <h3 className="text-lg md:text-xl font-bold text-black mb-2 text-center leading-tight group-hover:text-neutral-700 transition-colors">
+        <h3 className="text-sm md:text-lg font-semibold text-white mb-1 text-center min-h-[2rem] md:min-h-[2.5rem] flex items-center justify-center leading-tight group-hover:text-gray-300 transition-colors">
           {auction.title}
         </h3>
-        
+
         {auction.description && (
-          <p className="text-sm text-neutral-600 text-center mb-4 line-clamp-2 flex-1">
+          <p className="text-xs md:text-sm text-white/80 text-center mb-2 md:mb-4 line-clamp-2 flex-1">
             {auction.description}
           </p>
         )}
 
         {/* Bidding Info */}
-        <div className="space-y-2 mb-4">
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-neutral-600">Current Bid:</span>
+        <div className="space-y-1 md:space-y-2 mb-2 md:mb-4">
+          <div className="flex justify-between items-center text-xs md:text-sm">
+            <span className="text-white/80">Current Bid:</span>
             <span className="font-bold text-green-600 flex items-center gap-1">
               <DollarSign className="h-3 w-3" />
               {auction.current_bid.toFixed(2)}
             </span>
           </div>
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-neutral-600">Bids:</span>
-            <span className="font-medium text-neutral-800">{auction.bid_count}</span>
+          <div className="flex justify-between items-center text-xs md:text-sm">
+            <span className="text-white/80">Bids:</span>
+            <span className="font-medium text-white">{auction.bid_count}</span>
           </div>
         </div>
 
         {/* Bid Button */}
         <div className="mt-auto">
-          <div className="flex items-center justify-center gap-2 text-black group-hover:text-neutral-700 transition-colors">
-            <span className="font-medium">{isActive ? 'Place Bid' : 'View Auction'}</span>
-            <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+          <div className="flex items-center justify-center gap-2 text-white group-hover:text-gray-300 transition-colors">
+            <span className="font-medium text-xs md:text-sm">{isActive ? 'Place Bid' : 'View Auction'}</span>
+            <ArrowRight className="h-3 w-3 md:h-4 md:w-4 group-hover:translate-x-1 transition-transform" />
           </div>
         </div>
       </div>
@@ -223,7 +222,7 @@ export default function Auctions() {
       <div 
         className="fixed inset-0 z-0"
         style={{
-          backgroundImage: "url('/images/whitemarble.jpg')",
+          backgroundImage: "url('/images/background.jpg')",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat"
@@ -237,8 +236,8 @@ export default function Auctions() {
       {loading ? (
         <div className="flex-grow py-16 relative z-10 flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading auctions...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+            <p className="text-white">Loading auctions...</p>
           </div>
         </div>
       ) : error ? (
@@ -260,15 +259,15 @@ export default function Auctions() {
         <div className="flex-grow py-16 relative z-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
-              <h1 className="text-3xl md:text-4xl font-bold text-black mb-4">Gem Auctions</h1>
-              <p className="text-lg text-neutral-600 max-w-2xl mx-auto">
+              <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">Gem Auctions</h1>
+              <p className="text-lg text-white max-w-2xl mx-auto">
                 Bid on exceptional gemstone specimens from Alberta&apos;s pristine landscapes. Each auction features authentic gems personally mined and carefully selected by Reese
               </p>
             </div>
 
             {/* Filter Buttons */}
             <div className="flex justify-center mb-8">
-              <div className="bg-white/80 backdrop-blur-sm rounded-lg p-1 flex gap-1">
+              <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 shadow-2xl border border-white/10 flex gap-1">
                 {[
                   { key: 'all', label: 'All Auctions' },
                   { key: 'active', label: 'Active' },
@@ -279,8 +278,8 @@ export default function Auctions() {
                     onClick={() => setFilter(key as 'all' | 'active' | 'ending-soon')}
                     className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
                       filter === key
-                        ? 'bg-black text-white shadow-sm'
-                        : 'text-neutral-600 hover:text-black hover:bg-white/50'
+                        ? 'bg-white text-black shadow-sm'
+                        : 'text-white hover:text-black hover:bg-white/50'
                     }`}
                   >
                     {label}
@@ -292,9 +291,9 @@ export default function Auctions() {
             {/* Auctions Grid */}
             {filteredAuctions.length === 0 ? (
               <div className="text-center py-16">
-                <Gavel className="h-16 w-16 text-neutral-400 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-black mb-2">No Auctions Available</h3>
-                <p className="text-neutral-600">
+                <Gavel className="h-16 w-16 text-white/60 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-white mb-2">No Auctions Available</h3>
+                <p className="text-white/80">
                   {filter === 'all' 
                     ? "We're preparing exciting auction listings. Check back soon!"
                     : `No ${filter === 'active' ? 'active' : 'ending soon'} auctions at the moment.`
@@ -302,7 +301,7 @@ export default function Auctions() {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">
                 {filteredAuctions.map((auction) => (
                   <AuctionCard key={auction.id} auction={auction} router={router} />
                 ))}
@@ -312,8 +311,8 @@ export default function Auctions() {
             {/* Summary */}
             {filteredAuctions.length > 0 && (
               <div className="mt-12 text-center">
-                <p className="text-neutral-600">
-                  {filteredAuctions.length} {filteredAuctions.length === 1 ? 'auction' : 'auctions'} 
+                <p className="text-white">
+                  {filteredAuctions.length} {filteredAuctions.length === 1 ? 'auction' : 'auctions'}
                   {filter !== 'all' && ` (${filter.replace('-', ' ')})`}
                 </p>
               </div>

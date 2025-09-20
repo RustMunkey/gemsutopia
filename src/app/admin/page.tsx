@@ -61,17 +61,27 @@ export default function AdminLogin() {
   // If authenticated, this will be handled by redirect in useEffect
 
   return (
-    <div className="h-screen bg-black flex items-center justify-center px-4">
-      <div className="max-w-md w-full space-y-8">
+    <div className="h-screen flex items-center justify-center px-4 relative">
+      {/* Fixed Background */}
+      <div
+        className="fixed inset-0 z-0"
+        style={{
+          backgroundImage: "url('/images/background.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat"
+        }}
+      />
+      <div className="relative z-10 max-w-md w-full space-y-8">
         <div className="text-center">
           <h2 className="text-3xl font-bold text-white mb-2">Admin Access</h2>
-          <p className="text-neutral-400">Gemsutopia Content Management</p>
+          <p className="text-white">Gemsutopia Content Management</p>
         </div>
 
         <form onSubmit={handleLogin} className="mt-8 space-y-12" autoComplete="off">
           <div className="space-y-8">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-neutral-300 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-white mb-2">
                 Authorized Email
               </label>
               <div className="relative">
@@ -84,15 +94,14 @@ export default function AdminLogin() {
                   autoComplete="off"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 rounded-lg placeholder-neutral-400 focus:outline-none"
-                  style={{ backgroundColor: '#000000', color: '#ffffff', border: '1px solid #ffffff' }}
+                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-white bg-transparent text-white placeholder-white focus:outline-none"
                   placeholder="Enter authorized email"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="passcode" className="block text-sm font-medium text-neutral-300 mb-2">
+              <label htmlFor="passcode" className="block text-sm font-medium text-white mb-2">
                 Access Passcode
               </label>
               <div className="relative">
@@ -105,14 +114,13 @@ export default function AdminLogin() {
                   autoComplete="new-password"
                   value={passcode}
                   onChange={(e) => setPasscode(e.target.value)}
-                  className="w-full pl-10 pr-12 py-3 bg-black border border-white rounded-lg text-white placeholder-neutral-400 focus:outline-none"
-                  style={{ backgroundColor: '#000000', color: '#ffffff' }}
+                  className="w-full pl-10 pr-12 py-3 bg-transparent border border-white rounded-lg text-white placeholder-white focus:outline-none"
                   placeholder="Enter access passcode"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPasscode(!showPasscode)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-neutral-400 hover:text-white"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300"
                 >
                   {showPasscode ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>

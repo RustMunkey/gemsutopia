@@ -54,7 +54,7 @@ export default function TermsOfService() {
       <div 
         className="fixed inset-0 z-0"
         style={{
-          backgroundImage: "url('/images/whitemarble.jpg')",
+          backgroundImage: "url('/images/background.jpg')",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat"
@@ -65,22 +65,22 @@ export default function TermsOfService() {
       
       <div className="flex-grow py-16 relative z-10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
+          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-white/10">
             <div className="text-center mb-12">
-              <h1 className="text-3xl md:text-4xl font-bold text-black mb-4">{getContent('title')}</h1>
-              <p className="text-lg text-neutral-600">{getContent('last_updated')}</p>
+              <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">{getContent('title')}</h1>
+              <p className="text-lg text-white">{getContent('last_updated')}</p>
             </div>
             
-            <div className="prose prose-lg max-w-none text-neutral-700 space-y-8">
+            <div className="prose prose-lg max-w-none text-white space-y-8">
             <section>
-              <h2 className="text-2xl font-bold text-black mb-4">{getContent('acceptance_title')}</h2>
+              <h2 className="text-2xl font-bold text-white mb-4">{getContent('acceptance_title')}</h2>
               <p>
                 {getContent('acceptance_content')}
               </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold text-black mb-4">{getContent('products_title')}</h2>
+              <h2 className="text-2xl font-bold text-white mb-4">{getContent('products_title')}</h2>
               <p>
                 {getContent('products_paragraph_1')}
               </p>
@@ -90,7 +90,7 @@ export default function TermsOfService() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold text-black mb-4">{getContent('orders_title')}</h2>
+              <h2 className="text-2xl font-bold text-white mb-4">{getContent('orders_title')}</h2>
               <p>
                 {getContent('orders_paragraph_1')}
               </p>
@@ -100,7 +100,7 @@ export default function TermsOfService() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold text-black mb-4">{getContent('shipping_title')}</h2>
+              <h2 className="text-2xl font-bold text-white mb-4">{getContent('shipping_title')}</h2>
               <p>
                 {getContent('shipping_paragraph_1')}
               </p>
@@ -110,42 +110,42 @@ export default function TermsOfService() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold text-black mb-4">{getContent('returns_title')}</h2>
+              <h2 className="text-2xl font-bold text-white mb-4">{getContent('returns_title')}</h2>
               <p>
                 {getContent('returns_content')}
               </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold text-black mb-4">{getContent('intellectual_title')}</h2>
+              <h2 className="text-2xl font-bold text-white mb-4">{getContent('intellectual_title')}</h2>
               <p>
                 {getContent('intellectual_content')}
               </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold text-black mb-4">{getContent('liability_title')}</h2>
+              <h2 className="text-2xl font-bold text-white mb-4">{getContent('liability_title')}</h2>
               <p>
                 {getContent('liability_content')}
               </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold text-black mb-4">{getContent('privacy_title')}</h2>
+              <h2 className="text-2xl font-bold text-white mb-4">{getContent('privacy_title')}</h2>
               <p>
                 {getContent('privacy_content')}
               </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold text-black mb-4">{getContent('contact_title')}</h2>
+              <h2 className="text-2xl font-bold text-white mb-4">{getContent('contact_title')}</h2>
               <p>
                 {getContent('contact_content')}
               </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold text-black mb-4">{getContent('changes_title')}</h2>
+              <h2 className="text-2xl font-bold text-white mb-4">{getContent('changes_title')}</h2>
               <p>
                 {getContent('changes_content')}
               </p>

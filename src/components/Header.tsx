@@ -31,9 +31,9 @@ export default function Header() {
   const isHomePage = pathname === '/';
   const isShopPage = pathname === '/shop';
   const isProductPage = pathname.startsWith('/product/');
-  const headerClass = isHomePage 
-    ? "bg-black text-white relative m-0 border-b border-white/20"
-    : "bg-black text-white relative m-0 border-b border-white/20 shadow-lg";
+  const headerClass = isHomePage
+    ? "bg-black/80 backdrop-blur-md text-white relative m-0"
+    : "bg-black/80 backdrop-blur-md text-white relative m-0 shadow-lg";
 
   return (
     <header className={headerClass}>
@@ -61,8 +61,8 @@ export default function Header() {
           </div>
         </div>
       )}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center h-16">
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="flex items-center h-20">
           {/* Logo (left side) / Back button on product pages */}
           <div className="flex items-center">
             {isProductPage ? (
@@ -70,18 +70,18 @@ export default function Header() {
                 <ArrowLeft className="h-6 w-6" strokeWidth={2} />
               </Link>
             ) : (
-              <Link href="/" className="cursor-pointer">
-                <Image 
-                  src="/logos/gem.png" 
-                  alt="Gem"
-                  width={32}
-                  height={32}
-                  className="w-auto h-6 object-contain"
+              <Link href="/" className="cursor-pointer -ml-6 relative z-50 transition-transform duration-200 hover:scale-105">
+                <Image
+                  src="/logos/gemlogo.svg"
+                  alt="Gemsutopia"
+                  width={400}
+                  height={400}
+                  className="w-auto h-32 object-contain"
                 />
               </Link>
             )}
           </div>
-          
+
           {/* Desktop navigation */}
           <div className="flex-1 flex justify-start pl-8">
             <div className="hidden md:flex items-center gap-8">
@@ -89,7 +89,6 @@ export default function Header() {
               <a href="/auctions" className="text-white hover:text-gray-300 text-sm font-bold">Auctions</a>
               <a href="/about" className="text-white hover:text-gray-300 text-sm font-bold">About</a>
               <a href="/contact-us" className="text-white hover:text-gray-300 text-sm font-bold">Contact</a>
-              <a href="/support" className="text-white hover:text-gray-300 text-sm font-bold">Support</a>
             </div>
           </div>
           
@@ -119,8 +118,8 @@ export default function Header() {
               ) : !isShopPage ? (
                 <>
                   <CurrencySwitcher variant="header" />
-                  <a href="/shop" className="border border-white text-white md:bg-transparent md:text-white hover:bg-white hover:text-black active:bg-white active:text-black text-sm font-bold px-10 py-2 rounded-full transition-all">
-                    Shop
+                  <a href="/signup" className="border border-white text-white hover:bg-white hover:text-black text-sm font-bold px-10 py-2 rounded-full transition-all">
+                    Sign Up
                   </a>
                 </>
               ) : (

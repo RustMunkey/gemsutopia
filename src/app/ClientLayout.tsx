@@ -7,6 +7,7 @@ import { AuthProvider } from '../contexts/AuthContext';
 import { NotificationProvider } from '../contexts/NotificationContext';
 import { WalletProvider } from '../contexts/WalletContext';
 import { InventoryProvider } from '../contexts/InventoryContext';
+import { RealtimeProvider } from '../contexts/RealtimeContext';
 import { ModeProvider } from '../lib/contexts/ModeContext';
 import CookieBanner from '../components/CookieBanner';
 import MaintenanceOverlay from '../components/MaintenanceOverlay';
@@ -23,24 +24,26 @@ export default function ClientLayout({
     <ModeProvider>
       <CookieProvider>
         <AuthProvider>
-          <CurrencyProvider>
-            <InventoryProvider>
-              <WishlistProvider>
-                <GemPouchProvider>
-                  <WalletProvider>
-                    <NotificationProvider>
-                        <DynamicMetadata />
-                        <DynamicTitle />
-                        <SoldOutItemsMonitor />
-                        {children}
-                        <CookieBanner />
-                        <MaintenanceOverlay />
-                    </NotificationProvider>
-                  </WalletProvider>
-                </GemPouchProvider>
-              </WishlistProvider>
-            </InventoryProvider>
-          </CurrencyProvider>
+          <RealtimeProvider>
+            <CurrencyProvider>
+              <InventoryProvider>
+                <WishlistProvider>
+                  <GemPouchProvider>
+                    <WalletProvider>
+                      <NotificationProvider>
+                          <DynamicMetadata />
+                          <DynamicTitle />
+                          <SoldOutItemsMonitor />
+                          {children}
+                          <CookieBanner />
+                          <MaintenanceOverlay />
+                      </NotificationProvider>
+                    </WalletProvider>
+                  </GemPouchProvider>
+                </WishlistProvider>
+              </InventoryProvider>
+            </CurrencyProvider>
+          </RealtimeProvider>
         </AuthProvider>
       </CookieProvider>
     </ModeProvider>

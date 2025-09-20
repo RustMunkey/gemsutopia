@@ -161,8 +161,8 @@ export default function Reviews() {
     <section className="relative z-10 py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-black mb-4">Reviews From Our Friends!</h2>
-          <p className="text-lg text-neutral-600 max-w-2xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Reviews From Our Friends!</h2>
+          <p className="text-lg text-white max-w-2xl mx-auto">
             See what our customers are saying about our authentic gemstone collection
           </p>
         </div>
@@ -185,26 +185,26 @@ export default function Reviews() {
                   
                   return (
                     <div key={index} className="flex-shrink-0 w-80">
-                      <div className="bg-white rounded-2xl p-4 shadow-lg drop-shadow-lg h-[140px] flex flex-col">
+                      <div className="bg-black/80 backdrop-blur-md rounded-2xl p-4 h-[140px] flex flex-col">
                         <div className="flex items-center mb-3">
-                          <div className="flex-shrink-0 w-10 h-10 bg-black rounded-full flex items-center justify-center">
-                            <span className="text-white font-semibold text-sm">
+                          <div className="flex-shrink-0 w-10 h-10 bg-white rounded-full flex items-center justify-center">
+                            <span className="text-black font-semibold text-sm">
                               {displayName[0]}
                             </span>
                           </div>
                           <div className="ml-3">
-                            <h3 className="font-semibold text-black text-sm">{displayName}</h3>
+                            <h3 className="font-semibold text-white text-sm">{displayName}</h3>
                             <div className="flex items-center">
                               {[...Array(review.rating)].map((_, i) => (
                                 <span key={i} className="text-yellow-400 text-sm">★</span>
                               ))}
                               {isVerified && (
-                                <span className="ml-2 text-xs text-green-600 font-medium">✓ Verified</span>
+                                <span className="ml-2 text-xs text-green-400 font-medium">✓ Verified</span>
                               )}
                             </div>
                           </div>
                         </div>
-                        <p className="text-neutral-700 leading-relaxed text-xs flex-grow overflow-hidden">
+                        <p className="text-white/80 leading-relaxed text-xs flex-grow overflow-hidden">
                           {displayContent}
                         </p>
                       </div>
@@ -228,26 +228,26 @@ export default function Reviews() {
                     
                     return (
                       <div key={index} className="inline-block flex-shrink-0 w-80 mx-4">
-                        <div className="bg-white rounded-2xl p-4 shadow-lg drop-shadow-lg h-[140px] flex flex-col">
+                        <div className="bg-black/80 backdrop-blur-md rounded-2xl p-4 h-[140px] flex flex-col">
                           <div className="flex items-center mb-3">
-                            <div className="flex-shrink-0 w-10 h-10 bg-black rounded-full flex items-center justify-center">
-                              <span className="text-white font-semibold text-sm">
+                            <div className="flex-shrink-0 w-10 h-10 bg-white rounded-full flex items-center justify-center">
+                              <span className="text-black font-semibold text-sm">
                                 {displayName[0]}
                               </span>
                             </div>
                             <div className="ml-3">
-                              <h3 className="font-semibold text-black text-sm">{displayName}</h3>
+                              <h3 className="font-semibold text-white text-sm">{displayName}</h3>
                               <div className="flex items-center">
                                 {[...Array(review.rating)].map((_, i) => (
                                   <span key={i} className="text-yellow-400 text-sm">★</span>
                                 ))}
                                 {isVerified && (
-                                  <span className="ml-2 text-xs text-green-600 font-medium">✓ Verified</span>
+                                  <span className="ml-2 text-xs text-green-400 font-medium">✓ Verified</span>
                                 )}
                               </div>
                             </div>
                           </div>
-                          <p className="text-neutral-700 leading-relaxed text-xs flex-grow overflow-hidden">
+                          <p className="text-white/80 leading-relaxed text-xs flex-grow overflow-hidden">
                             {displayContent}
                           </p>
                         </div>
@@ -264,7 +264,7 @@ export default function Reviews() {
       {/* Leave a Review Section */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mt-16">
         <div className="text-center">
-          <h3 className="text-3xl md:text-4xl font-bold text-black mb-6">Leave a Review!</h3>
+          <h3 className="text-3xl md:text-4xl font-bold text-white mb-6">Leave a Review!</h3>
           
           {/* 5 Stars */}
           <div className="flex justify-center mb-8">
@@ -276,7 +276,7 @@ export default function Reviews() {
           {/* Review Button */}
           <button
             onClick={() => setShowModal(true)}
-            className="bg-black text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-gray-800 transition-colors"
+            className="bg-black/80 backdrop-blur-md text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-white/10 transition-colors"
           >
             Review
           </button>

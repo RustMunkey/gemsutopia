@@ -511,27 +511,50 @@ function AuctionsManager() {
   const [editingAuction, setEditingAuction] = useState<Auction | null>(null);
   const [error, setError] = useState('');
 
+  const getDefaultFormData = () => {
+    // Get current time in Mountain Time (MST/MDT)
+    const now = new Date();
+    const mountainTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Denver"}));
+    const endTime = new Date(mountainTime.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    // Format for datetime-local inputs (YYYY-MM-DD and HH:MM)
+    const formatDate = (date: Date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    const formatTime = (date: Date) => {
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${hours}:${minutes}`;
+    };
+
+    return {
+      title: '',
+      description: '',
+      images: [],
+      video_url: '',
+      featured_image_index: 0,
+      starting_bid: 0,
+      reserve_price: null,
+      start_date: formatDate(mountainTime),
+      start_time: formatTime(mountainTime),
+      end_date: formatDate(endTime),
+      end_time: formatTime(endTime),
+      details: [
+        'Premium quality gemstone',
+        'Authentically sourced',
+        'Lifetime guarantee',
+        'Certificate of authenticity included'
+      ].join('\n'),
+      shipping_info: 'Free worldwide shipping. Delivery in 3-5 business days.'
+    };
+  };
+
   // Form data state
-  const [formData, setFormData] = useState<AuctionFormData>({
-    title: '',
-    description: '',
-    images: [],
-    video_url: '',
-    featured_image_index: 0,
-    starting_bid: 0,
-    reserve_price: null,
-    start_date: new Date().toISOString().split('T')[0], // Today's date
-    start_time: new Date(Date.now() + 60 * 60 * 1000).toISOString().split('T')[1].slice(0, 5), // 1 hour from now
-    end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 7 days from now
-    end_time: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[1].slice(0, 5), // Same time 7 days later
-    details: [
-      'Premium quality gemstone',
-      'Authentically sourced',
-      'Lifetime guarantee',
-      'Certificate of authenticity included'
-    ].join('\n'),
-    shipping_info: 'Free worldwide shipping. Delivery in 3-5 business days.'
-  });
+  const [formData, setFormData] = useState<AuctionFormData>(getDefaultFormData());
 
   // Load auctions data from API
   useEffect(() => {
@@ -803,26 +826,7 @@ function AuctionsManager() {
   const handleCloseModal = () => {
     setShowAuctionModal(false);
     setEditingAuction(null);
-    setFormData({
-      title: '',
-      description: '',
-      images: [],
-      video_url: '',
-      featured_image_index: 0,
-      starting_bid: 0,
-      reserve_price: null,
-      start_date: new Date().toISOString().split('T')[0],
-      start_time: new Date(Date.now() + 60 * 60 * 1000).toISOString().split('T')[1].slice(0, 5),
-      end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      end_time: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[1].slice(0, 5),
-      details: [
-        'Premium quality gemstone',
-        'Authentically sourced',
-        'Lifetime guarantee',
-        'Certificate of authenticity included'
-      ].join('\n'),
-      shipping_info: 'Free worldwide shipping. Delivery in 3-5 business days.'
-    });
+    setFormData(getDefaultFormData());
     setError('');
   };
 
@@ -844,7 +848,10 @@ function AuctionsManager() {
             <p className="text-slate-400">Manage auction listings and bidding</p>
           </div>
           <button
-            onClick={() => setShowAuctionModal(true)}
+            onClick={() => {
+              setFormData(getDefaultFormData()); // Reset form with current time
+              setShowAuctionModal(true);
+            }}
             className="flex items-center gap-2 bg-white hover:bg-white/80 text-black px-4 py-2 rounded-lg transition-colors"
           >
             <Plus className="h-4 w-4" />

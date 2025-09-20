@@ -10,7 +10,7 @@ export default function Checkout() {
       <div 
         className="fixed inset-0 z-0"
         style={{
-          backgroundImage: "url('/images/whitemarble.jpg')",
+          backgroundImage: "url('/images/background.jpg')",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat"

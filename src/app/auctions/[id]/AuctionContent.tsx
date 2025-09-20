@@ -1,13 +1,13 @@
 'use client';
 import Image from 'next/image';
 import { IconStar, IconStarFilled, IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
-import { useGemPouch } from '@/contexts/GemPouchContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import { useInventory } from '@/contexts/InventoryContext';
+import { useRealtimeAuction } from '@/hooks/useRealtimeData';
 import { useState, useEffect, useRef } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import BiddingModal from '@/components/BiddingModal';
 
 interface Auction {
   id: string;
@@ -34,54 +34,58 @@ interface AuctionContentProps {
 }
 
 export default function AuctionContent({ auction: initialAuction }: AuctionContentProps) {
-  const { addItem, removeItem, items } = useGemPouch();
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist();
   const { formatPrice } = useCurrency();
-  const { productRefreshTrigger } = useInventory();
-  const [auction, setAuction] = useState(initialAuction);
+
+  // Use real-time auction data
+  const { data: auction, loading, update: updateAuction } = useRealtimeAuction(initialAuction.id);
+
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [showZoomModal, setShowZoomModal] = useState(false);
   const [zoomImageIndex, setZoomImageIndex] = useState(0);
-  const [, setViewCount] = useState(typeof auction.metadata?.view_count === 'number' ? auction.metadata.view_count : 0);
-  const [wishlistCount, setWishlistCount] = useState(typeof auction.metadata?.wishlist_count === 'number' ? auction.metadata.wishlist_count : 0);
+  const [showBiddingModal, setShowBiddingModal] = useState(false);
+  const [, setViewCount] = useState(typeof auction?.metadata?.view_count === 'number' ? auction.metadata.view_count : 0);
+  const [wishlistCount, setWishlistCount] = useState(typeof auction?.metadata?.wishlist_count === 'number' ? auction.metadata.wishlist_count : 0);
   const imageContainerRef = useRef<HTMLDivElement>(null);
-  
-  // Get actual quantity from gem pouch context
-  const cartQuantity = items.filter(item => item.id === auction.id).length;
+
+  // Fallback to initial auction if real-time data isn't loaded yet
+  const currentAuction = auction || initialAuction;
 
   // Helper to check if auction is available for bidding
   const isAuctionAvailable = () => {
     const now = new Date();
-    const endTime = new Date(auction.end_time);
-    return auction.is_active && auction.status === 'active' && endTime > now;
+    const endTime = new Date(currentAuction.end_time);
+    return currentAuction.is_active && currentAuction.status === 'active' && endTime > now;
   };
-  
+
   // Calculate current price (use current_bid as the display price for auctions)
-  const currentPrice = auction.current_bid;
-  const originalPrice = auction.starting_bid !== auction.current_bid ? auction.starting_bid : null;
-  
+  const currentPrice = currentAuction.current_bid;
+  const originalPrice = currentAuction.starting_bid !== currentAuction.current_bid ? currentAuction.starting_bid : null;
+
   // Get the main auction image (use featured image index as default)
-  const auctionImage = auction.images && auction.images.length > 0 
-    ? auction.images[selectedImageIndex] || auction.images[0] 
+  const auctionImage = currentAuction.images && currentAuction.images.length > 0
+    ? currentAuction.images[selectedImageIndex] || currentAuction.images[0]
     : '/images/placeholder.jpg';
   
   // Set the initial selected image to the first image (always the featured image)
   useEffect(() => {
-    if (auction.images?.length > 0) {
+    if (currentAuction.images?.length > 0) {
       setSelectedImageIndex(0);
     }
-  }, [auction.images]);
+  }, [currentAuction.images]);
 
   // Track auction view on component mount
   useEffect(() => {
+    if (!auction?.id) return;
+
     const trackView = async () => {
       try {
-        const response = await fetch(`/api/auctions/${auction.id}/view`, {
+        const response = await fetch(`/api/auctions/${auction?.id}/view`, {
           method: 'POST'
         });
-        
+
         if (response.ok) {
           const data = await response.json();
           if (data.success) {
@@ -94,14 +98,14 @@ export default function AuctionContent({ auction: initialAuction }: AuctionConte
     };
 
     trackView();
-  }, [auction.id, auction.title, currentPrice]);
+  }, [auction?.id, auction?.title, currentPrice]);
 
   // Get video URL from metadata or direct property
-  const videoUrl = auction.video_url || (typeof auction.metadata?.video_url === 'string' ? auction.metadata.video_url : null);
-  
+  const videoUrl = auction?.video_url || (typeof auction?.metadata?.video_url === 'string' ? auction.metadata.video_url : null);
+
   // Get all available media (images + video)
   const allMedia = [
-    ...auction.images,
+    ...(auction?.images || []),
     ...(videoUrl ? ['video'] : [])
   ];
 
@@ -190,26 +194,7 @@ export default function AuctionContent({ auction: initialAuction }: AuctionConte
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [allMedia.length, showZoomModal, goToPrevZoomImage, goToNextZoomImage, closeZoomModal, goToPrevImage, goToNextImage]);
 
-  // Refresh auction data when status changes
-  useEffect(() => {
-    const refreshTrigger = productRefreshTrigger[auction.id];
-    if (refreshTrigger && refreshTrigger > 0) {
-      const fetchUpdatedAuction = async () => {
-        try {
-          const response = await fetch(`/api/auctions/${auction.id}`);
-          if (response.ok) {
-            const data = await response.json();
-            if (data.success) {
-              setAuction(data.auction);
-            }
-          }
-        } catch (error) {
-          console.error('Error refreshing auction data:', error);
-        }
-      };
-      fetchUpdatedAuction();
-    }
-  }, [productRefreshTrigger, auction.id]);
+  // Real-time updates are handled by useRealtimeAuction hook
 
   // Cleanup effect to restore scrolling if component unmounts while modal is open
   useEffect(() => {
@@ -219,23 +204,25 @@ export default function AuctionContent({ auction: initialAuction }: AuctionConte
   }, []);
 
   const toggleWishlist = async () => {
+    if (!auction?.id) return;
+
     const auctionData = {
-      id: auction.id,
+      id: auction?.id,
       name: auction.title,
       price: currentPrice,
       image: auctionImage
     };
-    
-    const wasInWishlist = isInWishlist(auction.id);
+
+    const wasInWishlist = isInWishlist(auction?.id || '');
     
     if (wasInWishlist) {
-      removeFromWishlist(auction.id);
+      removeFromWishlist(auction?.id || '');
     } else {
       addToWishlist(auctionData);
     }
 
     try {
-      const response = await fetch(`/api/auctions/${auction.id}/wishlist`, {
+      const response = await fetch(`/api/auctions/${auction?.id}/wishlist`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -256,23 +243,71 @@ export default function AuctionContent({ auction: initialAuction }: AuctionConte
     }
   };
 
-  const handleIncreaseQuantity = () => {
-    if (cartQuantity < 1) { // Auctions are unique items
-      const auctionData = {
-        id: auction.id,
-        name: auction.title,
-        price: currentPrice,
-        image: auctionImage,
-        stock: 1 // Auctions always have stock of 1
-      };
-      
-      addItem(auctionData);
+  const handlePlaceBid = () => {
+    if (!isAuctionAvailable()) return;
+    setShowBiddingModal(true);
+  };
+
+  const handleBidPlaced = async (newBid: number) => {
+    // Use optimistic update - this will show immediately and sync with server
+    await updateAuction({
+      current_bid: newBid,
+      bid_count: currentAuction.bid_count + 1,
+      updated_at: new Date().toISOString()
+    });
+  };
+
+  // Calculate Buy Now price
+  const getBuyNowPrice = () => {
+    if (!currentAuction.reserve_price) {
+      // No reserve price: Buy Now = current bid + $10
+      return currentAuction.current_bid + 10;
+    }
+
+    if (currentAuction.current_bid < currentAuction.reserve_price) {
+      // Reserve not met: Buy Now = reserve price
+      return currentAuction.reserve_price;
+    } else {
+      // Reserve met: Buy Now = current bid + $10
+      return currentAuction.current_bid + 10;
     }
   };
 
-  const handleDecreaseQuantity = () => {
-    if (cartQuantity > 0) {
-      removeItem(auction.id);
+  const handleBuyNow = async () => {
+    if (!isAuctionAvailable()) return;
+
+    const buyNowPrice = getBuyNowPrice();
+
+    try {
+      const response = await fetch(`/api/auctions/${currentAuction.id}/buy-now`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          buy_now_price: buyNowPrice
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Use optimistic update for immediate feedback
+        await updateAuction({
+          current_bid: buyNowPrice,
+          status: 'ended',
+          is_active: false,
+          updated_at: new Date().toISOString()
+        });
+
+        // Navigate to success page or checkout
+        window.location.href = `/auctions/${currentAuction.id}/success?price=${buyNowPrice}`;
+      } else {
+        alert(data.message || 'Failed to complete Buy Now purchase');
+      }
+    } catch (error) {
+      console.error('Buy Now error:', error);
+      alert('Failed to complete purchase. Please try again.');
     }
   };
 
@@ -282,7 +317,7 @@ export default function AuctionContent({ auction: initialAuction }: AuctionConte
       <div 
         className="fixed inset-0 z-0"
         style={{
-          backgroundImage: "url('/images/whitemarble.jpg')",
+          backgroundImage: "url('/images/background.jpg')",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat"
@@ -304,14 +339,16 @@ export default function AuctionContent({ auction: initialAuction }: AuctionConte
                 toggleWishlist();
               }}
               disabled={!isAuctionAvailable()}
-              className={`hidden md:block absolute top-4 right-4 z-10 transition-colors p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-lg ${
-                !isAuctionAvailable() 
-                  ? 'text-gray-400 cursor-not-allowed' 
-                  : 'text-black hover:text-neutral-600'
+              className={`hidden md:block absolute top-4 right-4 z-10 transition-colors p-2 border-2 border-white backdrop-blur-sm rounded-full shadow-lg ${
+                !isAuctionAvailable()
+                  ? 'text-gray-400 cursor-not-allowed bg-white/80'
+                  : isInWishlist(auction?.id || '')
+                  ? 'bg-white text-black'
+                  : 'text-white hover:bg-white hover:text-black'
               }`}
             >
-              {isInWishlist(auction.id) ? (
-                <IconStarFilled className="h-8 w-8 text-yellow-400" />
+              {isInWishlist(auction?.id || '') ? (
+                <IconStarFilled className="h-8 w-8 text-black" />
               ) : (
                 <IconStar className="h-8 w-8" strokeWidth={2} />
               )}
@@ -321,16 +358,15 @@ export default function AuctionContent({ auction: initialAuction }: AuctionConte
               {/* Auction Image Gallery */}
               <div className="space-y-4">
                 {/* Main Image/Video Display */}
-                <div 
+                <div
                   ref={imageContainerRef}
-                  className="w-full aspect-square rounded-2xl p-4 md:p-6 relative group"
-                  style={{ backgroundColor: '#f0f0f0' }}
+                  className="w-full aspect-square bg-white/5 backdrop-blur-sm rounded-2xl p-4 md:p-6 shadow-2xl border border-white/10 relative group"
                   onTouchStart={handleTouchStart}
                   onTouchMove={handleTouchMove}
                   onTouchEnd={handleTouchEnd}
                 >
                   <div 
-                    className={`w-full h-full bg-neutral-100 rounded-lg overflow-hidden relative ${
+                    className={`w-full h-full bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg overflow-hidden relative ${
                       !isAuctionAvailable() 
                         ? 'cursor-default' 
                         : selectedImageIndex >= auction.images.length && videoUrl 
@@ -415,7 +451,7 @@ export default function AuctionContent({ auction: initialAuction }: AuctionConte
                 {/* Thumbnails */}
                 {allMedia.length > 1 && (
                   <div className="flex gap-2 overflow-x-auto pb-2">
-                    {auction.images.map((image, index) => (
+                    {auction.images.map((image: string, index: number) => (
                       <button
                         key={index}
                         onClick={() => {
@@ -425,10 +461,10 @@ export default function AuctionContent({ auction: initialAuction }: AuctionConte
                             setZoomImageIndex(index);
                           }
                         }}
-                        className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors relative ${
+                        className={`flex-shrink-0 w-16 h-16 bg-white/5 backdrop-blur-sm rounded-lg overflow-hidden border-2 transition-colors relative ${
                           selectedImageIndex === index
-                            ? 'border-black'
-                            : 'border-gray-300 hover:border-gray-400'
+                            ? 'border-white'
+                            : 'border-white/30 hover:border-white/50'
                         }`}
                       >
                         <Image
@@ -452,13 +488,13 @@ export default function AuctionContent({ auction: initialAuction }: AuctionConte
                             setZoomImageIndex(auction.images.length);
                           }
                         }}
-                        className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors flex items-center justify-center bg-gray-100 relative ${
+                        className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors flex items-center justify-center bg-white/5 backdrop-blur-sm relative ${
                           selectedImageIndex >= auction.images.length
-                            ? 'border-black'
-                            : 'border-gray-300 hover:border-gray-400'
+                            ? 'border-white'
+                            : 'border-white/30 hover:border-white/50'
                         }`}
                       >
-                        <div className="text-xs font-medium text-gray-600">VIDEO</div>
+                        <div className="text-xs font-medium text-white">VIDEO</div>
                         {!isAuctionAvailable() && (
                           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
                         )}
@@ -470,23 +506,23 @@ export default function AuctionContent({ auction: initialAuction }: AuctionConte
               
               {/* Auction Details */}
               <div className="flex flex-col justify-center">
-                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-black mb-4 md:mb-6">{auction.title}</h1>
-                <p className="text-base md:text-lg text-neutral-600 mb-6 md:mb-8 leading-relaxed">
+                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 md:mb-6">{auction.title}</h1>
+                <p className="text-base md:text-lg text-white mb-6 md:mb-8 leading-relaxed">
                   {auction.description || 'Premium quality gemstone from Alberta, Canada. This exceptional gemstone features clarity and natural beauty, ethically sourced with care.'}
                 </p>
                 
                 <div className="mb-4 md:mb-6">
                   <div className="flex items-center gap-4 mb-2">
                     {originalPrice && (
-                      <span className="text-sm md:text-lg text-neutral-500 line-through">{formatPrice(originalPrice)}</span>
+                      <span className="text-sm md:text-lg text-white/70 line-through">{formatPrice(originalPrice)}</span>
                     )}
-                    <span className="text-2xl md:text-3xl font-bold text-black">{formatPrice(currentPrice)}</span>
+                    <span className="text-2xl md:text-3xl font-bold text-white">{formatPrice(currentPrice)}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm md:text-lg text-neutral-700">
+                    <span className="text-sm md:text-lg text-white">
                       <span className="font-semibold">1</span> available (auction)
                     </span>
-                    <div className="text-sm md:text-lg text-neutral-500">
+                    <div className="text-sm md:text-lg text-white/80">
                       {wishlistCount > 0 && (
                         <div className="flex items-center gap-1">
                           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -498,58 +534,54 @@ export default function AuctionContent({ auction: initialAuction }: AuctionConte
                       )}
                     </div>
                   </div>
+
+                  {/* Reserve Price & Buy Now Info */}
+                  {auction.reserve_price && (
+                    <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="text-sm text-blue-800">
+                        <strong>Reserve Price:</strong> {formatPrice(auction.reserve_price)}
+                        {auction.current_bid < auction.reserve_price ? (
+                          <span className="block mt-1">
+                            Buy Now available at reserve price for instant purchase
+                          </span>
+                        ) : (
+                          <span className="block mt-1 text-green-800">
+                            ✓ Reserve met - Buy Now available at current bid + $10
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 
                 <div className="space-y-3 md:space-y-4">
-                  <div className={`w-full py-3 md:py-4 px-6 md:px-8 rounded-full font-semibold text-base md:text-lg flex items-center justify-between min-h-[52px] md:min-h-[60px] ${
-                    !isAuctionAvailable() 
-                      ? 'bg-gray-400 text-gray-600 cursor-not-allowed' 
-                      : 'bg-black text-white'
-                  }`}>
-                    <button
-                      type="button"
-                      onClick={handleDecreaseQuantity}
-                      disabled={!isAuctionAvailable()}
-                      className={`hover:text-gray-300 text-xl font-bold w-8 h-8 flex items-center justify-center ${
-                        cartQuantity === 0 || !isAuctionAvailable() ? 'invisible' : ''
-                      }`}
-                    >
-                      -
-                    </button>
-                    <button
-                      onClick={handleIncreaseQuantity}
-                      disabled={cartQuantity >= 1 || !isAuctionAvailable()}
-                      className="flex-1 flex items-center justify-center disabled:cursor-not-allowed"
-                    >
-                      {!isAuctionAvailable() ? 'SOLD' : (cartQuantity > 0 ? `Place Bid (${cartQuantity})` : 'Place Bid')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleIncreaseQuantity}
-                      disabled={cartQuantity >= 1 || !isAuctionAvailable()}
-                      className={`text-xl font-bold w-8 h-8 flex items-center justify-center ${
-                        cartQuantity === 0 || !isAuctionAvailable() ? 'invisible' : ''
-                      } ${cartQuantity >= 1 || !isAuctionAvailable() ? 'opacity-30' : 'hover:text-gray-300'}`}
-                    >
-                      +
-                    </button>
-                  </div>
-                  <button 
+                  <button
+                    onClick={handlePlaceBid}
+                    disabled={!isAuctionAvailable()}
+                    className={`w-full border-2 py-3 md:py-4 px-6 md:px-8 rounded-full font-semibold text-base md:text-lg transition-colors ${
+                      !isAuctionAvailable()
+                        ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                        : 'border-white bg-white text-black hover:bg-transparent hover:text-white'
+                    }`}
+                  >
+                    {!isAuctionAvailable() ? 'Auction Ended' : 'Place Bid'}
+                  </button>
+                  <button
                     onClick={() => {
                       if (!isAuctionAvailable()) return;
-                      if (cartQuantity === 0) {
-                        handleIncreaseQuantity();
-                      }
-                      window.location.href = '/checkout';
+                      handleBuyNow();
                     }}
                     disabled={!isAuctionAvailable()}
                     className={`w-full border-2 py-3 md:py-4 px-6 md:px-8 rounded-full font-semibold text-base md:text-lg transition-colors ${
-                      !isAuctionAvailable() 
-                        ? 'border-gray-400 text-gray-600 bg-gray-100 cursor-not-allowed' 
-                        : 'border-black text-black hover:bg-black hover:text-white'
+                      !isAuctionAvailable()
+                        ? 'border-gray-400 text-gray-600 bg-gray-100 cursor-not-allowed'
+                        : 'border-white text-white hover:bg-white hover:text-black'
                     }`}
                   >
-                    {!isAuctionAvailable() ? 'SOLD' : 'Buy Now'}
+                    {!isAuctionAvailable()
+                      ? 'Auction Ended'
+                      : `Buy Now - ${formatPrice(getBuyNowPrice())}`
+                    }
                   </button>
                   
                   {/* Mobile Wishlist - Simple link style */}
@@ -565,7 +597,7 @@ export default function AuctionContent({ auction: initialAuction }: AuctionConte
                         : 'text-black hover:text-neutral-600'
                     }`}
                   >
-                    {isInWishlist(auction.id) ? (
+                    {isInWishlist(auction?.id || '') ? (
                       <>
                         <IconStarFilled className="h-5 w-5 text-yellow-400" />
                         <span className="text-sm">Remove from Wishlist</span>
@@ -581,8 +613,8 @@ export default function AuctionContent({ auction: initialAuction }: AuctionConte
                 
                 <div className="mt-8 md:mt-12 space-y-4 md:space-y-6">
                   <div>
-                    <h3 className="text-base md:text-lg font-semibold text-black mb-2">Details</h3>
-                    <ul className="text-sm md:text-base text-neutral-600 space-y-1">
+                    <h3 className="text-base md:text-lg font-semibold text-white mb-2">Details</h3>
+                    <ul className="text-sm md:text-base text-white space-y-1">
                       {(Array.isArray(auction.metadata?.details) ? auction.metadata.details : [
                         'Premium quality gemstone',
                         'Authentically sourced',
@@ -595,8 +627,8 @@ export default function AuctionContent({ auction: initialAuction }: AuctionConte
                   </div>
                   
                   <div>
-                    <h3 className="text-base md:text-lg font-semibold text-black mb-2">Shipping</h3>
-                    <p className="text-sm md:text-base text-neutral-600">
+                    <h3 className="text-base md:text-lg font-semibold text-white mb-2">Shipping</h3>
+                    <p className="text-sm md:text-base text-white">
                       {typeof auction.metadata?.shipping_info === 'string' ? auction.metadata.shipping_info : 'Free worldwide shipping. Delivery in 3-5 business days.'}
                     </p>
                   </div>
@@ -690,7 +722,7 @@ export default function AuctionContent({ auction: initialAuction }: AuctionConte
             {/* Thumbnail strip */}
             {allMedia.length > 1 && (
               <div className="flex justify-center gap-2 mt-4 overflow-x-auto pb-2">
-                {auction.images.map((image, index) => (
+                {auction.images.map((image: string, index: number) => (
                   <button
                     key={index}
                     onClick={(e) => {
@@ -700,7 +732,7 @@ export default function AuctionContent({ auction: initialAuction }: AuctionConte
                     className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors ${
                       zoomImageIndex === index
                         ? 'border-white'
-                        : 'border-gray-500 hover:border-gray-300'
+                        : 'border-white/30 hover:border-white/50'
                     }`}
                   >
                     <Image
@@ -721,7 +753,7 @@ export default function AuctionContent({ auction: initialAuction }: AuctionConte
                     className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors flex items-center justify-center bg-gray-700 ${
                       zoomImageIndex >= auction.images.length
                         ? 'border-white'
-                        : 'border-gray-500 hover:border-gray-300'
+                        : 'border-white/30 hover:border-white/50'
                     }`}
                   >
                     <div className="text-xs font-medium text-white">VIDEO</div>
@@ -736,6 +768,14 @@ export default function AuctionContent({ auction: initialAuction }: AuctionConte
       <div className="relative z-10">
         <Footer />
       </div>
+
+      {/* Bidding Modal */}
+      <BiddingModal
+        auction={currentAuction}
+        isOpen={showBiddingModal}
+        onClose={() => setShowBiddingModal(false)}
+        onBidPlaced={handleBidPlaced}
+      />
     </div>
   );
 }

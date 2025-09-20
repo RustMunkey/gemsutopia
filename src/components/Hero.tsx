@@ -111,7 +111,7 @@ export default function Hero() {
   // Show loading state or empty state
   if (loading || images.length === 0) {
     return (
-      <section className="bg-black h-[68vh] sm:h-[63vh] md:h-[72vh] lg:h-[77vh] flex-shrink-0 overflow-hidden">
+      <section className="bg-black h-[70vh] sm:h-[65vh] md:h-[75vh] lg:h-[80vh] flex-shrink-0 overflow-hidden">
         <div className="w-full h-full flex items-center justify-center">
           {loading ? (
             <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white"></div>
@@ -127,7 +127,7 @@ export default function Hero() {
   }
 
   return (
-    <section className="bg-black h-[68vh] sm:h-[63vh] md:h-[72vh] lg:h-[77vh] flex-shrink-0 overflow-hidden">
+    <section className="bg-black h-[70vh] sm:h-[65vh] md:h-[75vh] lg:h-[80vh] flex-shrink-0 overflow-hidden">
         <div className="w-full h-full flex items-center justify-center">
           <div 
             className="w-full h-full flex items-center justify-center relative"

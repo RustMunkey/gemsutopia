@@ -62,7 +62,7 @@ export default function ContactUs() {
       <div 
         className="fixed inset-0 z-0"
         style={{
-          backgroundImage: "url('/images/whitemarble.jpg')",
+          backgroundImage: "url('/images/background.jpg')",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat"
@@ -75,23 +75,23 @@ export default function ContactUs() {
       
       <div className="flex-grow py-16 relative z-10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
+          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-white/10">
           <div className="text-center mb-12">
-            <h1 className="text-3xl md:text-4xl font-bold text-black mb-4">Get in Touch</h1>
-            <p className="text-lg text-neutral-600">We&apos;d love to hear from you!</p>
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">Get in Touch</h1>
+            <p className="text-lg text-white">We&apos;d love to hear from you!</p>
           </div>
           
           <div className="flex flex-col items-center max-w-2xl mx-auto">
             <div className="w-full">
-              <h2 className="text-2xl font-bold text-black mb-6 text-center">Send a Message</h2>
+              <h2 className="text-2xl font-bold text-white mb-6 text-center">Send a Message</h2>
               <div className="flex items-center justify-center gap-2 mb-6">
-                <IconMail className="h-5 w-5 text-black" />
-                <span className="font-semibold text-black">Email:</span>
-                <a 
-                  href="mailto:gemsutopia@gmail.ca" 
-                  className="text-neutral-600 hover:text-black underline transition-colors"
+                <IconMail className="h-5 w-5 text-white" />
+                <span className="font-semibold text-white">Email:</span>
+                <a
+                  href="mailto:gemsutopia@gmail.com"
+                  className="text-white hover:text-white underline transition-colors"
                 >
-                  {getContent('contact', 'email') || 'gemsutopia@gmail.ca'}
+                  {getContent('contact', 'email') || 'gemsutopia@gmail.com'}
                 </a>
               </div>
               {message && (
@@ -105,7 +105,7 @@ export default function ContactUs() {
               )}
               <form ref={form} onSubmit={sendEmail} className="space-y-6">
                 <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-black mb-2">
+                  <label htmlFor="name" className="block text-sm font-medium text-white mb-2">
                     Name
                   </label>
                   <input
@@ -113,13 +113,13 @@ export default function ContactUs() {
                     id="name"
                     name="name"
                     required
-                    className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                    className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black placeholder-white"
                     placeholder="Your name"
                   />
                 </div>
                 
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-black mb-2">
+                  <label htmlFor="email" className="block text-sm font-medium text-white mb-2">
                     Email
                   </label>
                   <input
@@ -127,13 +127,13 @@ export default function ContactUs() {
                     id="email"
                     name="email"
                     required
-                    className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                    className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black placeholder-white"
                     placeholder="your@email.com"
                   />
                 </div>
                 
                 <div>
-                  <label htmlFor="subject" className="block text-sm font-medium text-black mb-2">
+                  <label htmlFor="subject" className="block text-sm font-medium text-white mb-2">
                     Subject
                   </label>
                   <input
@@ -141,13 +141,13 @@ export default function ContactUs() {
                     id="subject"
                     name="subject"
                     required
-                    className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                    className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black placeholder-white"
                     placeholder="What is this regarding?"
                   />
                 </div>
                 
                 <div>
-                  <label htmlFor="message" className="block text-sm font-medium text-black mb-2">
+                  <label htmlFor="message" className="block text-sm font-medium text-white mb-2">
                     Message
                   </label>
                   <textarea
@@ -155,7 +155,7 @@ export default function ContactUs() {
                     name="message"
                     rows={5}
                     required
-                    className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                    className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black placeholder-white"
                     placeholder="Your message"
                   />
                 </div>
@@ -163,27 +163,27 @@ export default function ContactUs() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-black text-white py-3 px-6 rounded-lg font-semibold hover:bg-neutral-800 transition-colors disabled:bg-neutral-400 disabled:cursor-not-allowed"
+                  className="w-full bg-white text-black py-3 px-6 rounded-lg font-semibold hover:bg-gray-200 transition-colors disabled:bg-neutral-400 disabled:cursor-not-allowed"
                 >
                   {isLoading ? 'Sending...' : 'Send Message'}
                 </button>
               </form>
               
               {/* Additional Contact Information */}
-              <div className="mt-8 pt-8 border-t border-neutral-200">
+              <div className="mt-8 pt-8">
                 {getContent('contact', 'phone') && (
                   <div className="flex items-center justify-center gap-2 mb-4">
-                    <IconPhone className="h-5 w-5 text-black" />
-                    <span className="font-semibold text-black">Phone:</span>
-                    <span className="text-neutral-600">{getContent('contact', 'phone')}</span>
+                    <IconPhone className="h-5 w-5 text-white" />
+                    <span className="font-semibold text-white">Phone:</span>
+                    <span className="text-white">{getContent('contact', 'phone')}</span>
                   </div>
                 )}
                 
                 {getContent('contact', 'address') && (
                   <div className="flex items-center justify-center gap-2">
-                    <IconMapPin className="h-5 w-5 text-black" />
-                    <span className="font-semibold text-black">Address:</span>
-                    <span className="text-neutral-600 text-center">{getContent('contact', 'address')}</span>
+                    <IconMapPin className="h-5 w-5 text-white" />
+                    <span className="font-semibold text-white">Address:</span>
+                    <span className="text-white text-center">{getContent('contact', 'address')}</span>
                   </div>
                 )}
               </div>

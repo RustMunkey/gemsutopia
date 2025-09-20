@@ -124,13 +124,13 @@ export default function GemFacts() {
 
   return (
     <section className="pt-32 pb-16">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-1">
         <div className="text-center">
           <div className="mb-6">
             <h2 className="text-3xl md:text-4xl font-bold text-white">Gem Facts</h2>
           </div>
           
-          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-white/10 max-w-2xl md:max-w-none mx-auto w-full">
+          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-white/10 w-full">
             <div className="mb-4">
               <span className="inline-block bg-white/10 text-white px-3 py-1 rounded-full text-sm font-medium">
                 {gemFact.gem_type || 'General'}

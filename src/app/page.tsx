@@ -15,14 +15,14 @@ export default function Home() {
       <div 
         className="fixed inset-0 z-0"
         style={{
-          backgroundImage: "url('/images/whitemarble.jpg')",
+          backgroundImage: "url('/images/background.jpg')",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat"
         }}
       />
       
-      <div className="relative z-10">
+      <div className="relative z-20">
         <Header />
       </div>
       <div className="relative z-10">
@@ -31,15 +31,13 @@ export default function Home() {
       <div className="relative z-10">
         <Stats />
       </div>
-      <div className="relative z-10">
+      <div className="relative z-10 bg-gradient-to-b from-black to-transparent">
         <Featured />
-      </div>
-      <div className="relative z-10">
         <About />
         <Reviews />
         <FAQ />
+        <div className="flex-grow max-h-20"></div>
       </div>
-      <div className="flex-grow max-h-20 relative z-10"></div>
       <div className="relative z-10">
         <Footer />
       </div>

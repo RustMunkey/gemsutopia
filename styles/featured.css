@@ -1,6 +1,5 @@
 /* Product card styling */
 .product-card {
-  background-color: #f0f0f0;
   will-change: transform;
   -webkit-user-select: none;
   -moz-user-select: none;
@@ -22,7 +21,6 @@
 @media (hover: hover) and (pointer: fine) {
   .product-card:hover {
     transform: translateY(-8px) !important;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6) !important;
   }
 }
 

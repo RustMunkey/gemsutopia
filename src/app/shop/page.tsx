@@ -21,9 +21,8 @@ interface Category {
 // Category Card Component
 function CategoryCard({ category, router }: { category: Category; router: any }) {
   return (
-    <div 
-      className="rounded-2xl p-4 shadow-2xl shadow-white/20 border border-white/10 translate-x-1 translate-y-1 transition-all duration-200 ease-out cursor-pointer category-card select-none h-full flex flex-col group hover:translate-y-[-8px] hover:shadow-3xl"
-      style={{ backgroundColor: '#f0f0f0' }}
+    <div
+      className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 shadow-2xl border border-white/10 translate-x-1 translate-y-1 transition-all duration-200 ease-out cursor-pointer category-card select-none h-full flex flex-col group hover:translate-y-[-8px] hover:shadow-3xl"
       onClick={(e) => {
         e.stopPropagation();
         router.push(`/shop/${category.slug}`);
@@ -45,7 +44,7 @@ function CategoryCard({ category, router }: { category: Category; router: any })
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-neutral-200">
-            <Package className="h-12 w-12 text-neutral-400" />
+            <Package className="h-12 w-12 text-white/60" />
           </div>
         )}
         
@@ -68,19 +67,19 @@ function CategoryCard({ category, router }: { category: Category; router: any })
 
       {/* Category Info */}
       <div className="flex-1 flex flex-col">
-        <h3 className="text-lg md:text-xl font-bold text-black mb-2 text-center leading-tight group-hover:text-neutral-700 transition-colors">
+        <h3 className="text-lg md:text-xl font-bold text-white mb-2 text-center leading-tight group-hover:text-gray-300 transition-colors">
           {category.name}
         </h3>
         
         {category.description && (
-          <p className="text-sm text-neutral-600 text-center mb-4 line-clamp-2 flex-1">
+          <p className="text-sm text-white/80 text-center mb-4 line-clamp-2 flex-1">
             {category.description}
           </p>
         )}
 
         {/* Explore Button */}
         <div className="mt-auto">
-          <div className="flex items-center justify-center gap-2 text-black group-hover:text-neutral-700 transition-colors">
+          <div className="flex items-center justify-center gap-2 text-white group-hover:text-gray-300 transition-colors">
             <span className="font-medium">Explore Collection</span>
             <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
           </div>
@@ -173,7 +172,7 @@ export default function Shop() {
       <div 
         className="fixed inset-0 z-0"
         style={{
-          backgroundImage: "url('/images/whitemarble.jpg')",
+          backgroundImage: "url('/images/background.jpg')",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat"
@@ -187,8 +186,8 @@ export default function Shop() {
       {loading ? (
         <div className="flex-grow py-16 relative z-10 flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading categories...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+            <p className="text-white">Loading categories...</p>
           </div>
         </div>
       ) : error ? (
@@ -210,8 +209,8 @@ export default function Shop() {
         <div className="flex-grow py-16 relative z-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
-              <h1 className="text-3xl md:text-4xl font-bold text-black mb-4">Gem Categories</h1>
-              <p className="text-lg text-neutral-600 max-w-2xl mx-auto">
+              <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">Gem Categories</h1>
+              <p className="text-lg text-white max-w-2xl mx-auto">
                 Explore our curated gemstone collections, each category featuring authentic Canadian gems personally mined and carefully chosen by Reese from the pristine landscapes of Alberta
               </p>
             </div>
@@ -219,9 +218,9 @@ export default function Shop() {
             {/* Categories Grid */}
             {categories.length === 0 ? (
               <div className="text-center py-16">
-                <Package className="h-16 w-16 text-neutral-400 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-black mb-2">No Categories Available</h3>
-                <p className="text-neutral-600">
+                <Package className="h-16 w-16 text-white/60 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-white mb-2">No Categories Available</h3>
+                <p className="text-white/80">
                   We're currently organizing our gemstone collections. Please check back soon!
                 </p>
               </div>
@@ -236,7 +235,7 @@ export default function Shop() {
             {/* Summary */}
             {categories.length > 0 && (
               <div className="mt-12 text-center">
-                <p className="text-neutral-600">
+                <p className="text-white">
                   {categories.length} {categories.length === 1 ? 'category' : 'categories'} • {categories.reduce((total, cat) => total + cat.product_count, 0)} total gems
                 </p>
               </div>

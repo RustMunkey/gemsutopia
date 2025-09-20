@@ -42,7 +42,7 @@ export default function About() {
       <div 
         className="fixed inset-0 z-0"
         style={{
-          backgroundImage: "url('/images/whitemarble.jpg')",
+          backgroundImage: "url('/images/background.jpg')",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat"
@@ -55,12 +55,12 @@ export default function About() {
       
       <div className="flex-grow py-16 relative z-10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
+          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-white/10">
             <div className="text-center mb-12">
-              <h1 className="text-3xl md:text-4xl font-bold text-black mb-4">{getContent('title')}</h1>
+              <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">{getContent('title')}</h1>
             </div>
             
-            <div className="prose prose-lg max-w-none text-neutral-700">
+            <div className="prose prose-lg max-w-none text-white">
               <p className="text-xl leading-relaxed mb-8">
                 {getContent('intro_paragraph')}
               </p>
@@ -81,7 +81,7 @@ export default function About() {
                 {getContent('paragraph_4')}
               </p>
               
-              <h2 className="text-2xl font-bold text-black mt-8 mb-4">{getContent('shipping_title')}</h2>
+              <h2 className="text-2xl font-bold text-white mt-8 mb-4">{getContent('shipping_title')}</h2>
               <ul className="mb-6">
                 <li>{getContent('shipping_item_1')}</li>
                 <li>{getContent('shipping_item_2')}</li>
@@ -96,7 +96,7 @@ export default function About() {
                 {getContent('closing_paragraph')}
               </p>
               
-              <p className="text-right font-semibold text-black">
+              <p className="text-right font-semibold text-white">
                 {getContent('signature')}
               </p>
             </div>

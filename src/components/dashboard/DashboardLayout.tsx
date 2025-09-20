@@ -84,7 +84,17 @@ export default function DashboardLayout({
   ];
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen relative">
+      {/* Fixed Background */}
+      <div
+        className="fixed inset-0 z-0"
+        style={{
+          backgroundImage: "url('/images/background.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat"
+        }}
+      />
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div 
@@ -98,7 +108,7 @@ export default function DashboardLayout({
         fixed top-0 left-0 z-50 w-72 h-full transition-transform duration-300 ease-in-out
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         lg:translate-x-0
-        bg-black border-r border-white/20
+        bg-black/80 backdrop-blur-md border-r border-white/20
       `}>
         <div className="flex flex-col h-full">
           {/* Header */}
@@ -171,9 +181,9 @@ export default function DashboardLayout({
       </aside>
 
       {/* Main Content */}
-      <main className="lg:pl-72 min-h-screen">
+      <main className="lg:pl-72 min-h-screen relative z-10">
         {/* Top Bar */}
-        <header className="bg-black border-b border-white/20 sticky top-0 z-30 h-[65px]">
+        <header className="bg-black/80 backdrop-blur-md border-b border-white/20 sticky top-0 z-30 h-[65px]">
           <div className="flex items-center justify-between px-6 h-full">
             <div className="flex items-center gap-4">
               <button

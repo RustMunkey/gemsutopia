@@ -1,30 +1,33 @@
 'use client';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInstagram, faXTwitter, faFacebook, faYoutube, faTiktok, faPatreon } from '@fortawesome/free-brands-svg-icons';
-import { faMugHot, faArrowLeft, faGem } from '@fortawesome/free-solid-svg-icons';
+import { faMugHot, faGem } from '@fortawesome/free-solid-svg-icons';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 
 export default function Social() {
   return (
-    <div 
-      className="min-h-screen py-12 relative"
-      style={{
-        backgroundImage: 'url(/images/whitemarble.jpg)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
-      }}
-    >
-      <button 
-        onClick={() => window.history.back()}
-        className="absolute top-6 left-6 p-2 bg-white rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200"
-      >
-        <FontAwesomeIcon icon={faArrowLeft} className="text-gray-700 text-xl" />
-      </button>
-      
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-[150vh] flex flex-col relative">
+      {/* Fixed Background */}
+      <div
+        className="fixed inset-0 z-0"
+        style={{
+          backgroundImage: "url('/images/background.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat"
+        }}
+      />
+
+      <div className="relative z-10">
+        <Header />
+      </div>
+
+      <div className="flex-grow py-16 relative z-10">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Connect With Us</h1>
-          <p className="text-xl text-gray-600">Follow us on social media for the latest updates and exclusive content</p>
+          <h1 className="text-4xl font-bold text-white mb-4">Connect With Us</h1>
+          <p className="text-xl text-white">Follow us on social media for the latest updates and exclusive content</p>
         </div>
         
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
@@ -35,7 +38,7 @@ export default function Social() {
                 <FontAwesomeIcon icon={faInstagram} className="text-white text-3xl" />
               </div>
             </a>
-            <span className="mt-3 text-gray-700 font-medium">Instagram</span>
+            <span className="mt-3 text-white font-medium">Instagram</span>
           </div>
 
           {/* X/Twitter */}
@@ -45,7 +48,7 @@ export default function Social() {
                 <FontAwesomeIcon icon={faXTwitter} className="text-white text-3xl" />
               </div>
             </a>
-            <span className="mt-3 text-gray-700 font-medium">X (Twitter)</span>
+            <span className="mt-3 text-white font-medium">X (Twitter)</span>
           </div>
 
           {/* Facebook - Friends */}
@@ -55,7 +58,7 @@ export default function Social() {
                 <FontAwesomeIcon icon={faFacebook} className="text-white text-3xl" />
               </div>
             </a>
-            <span className="mt-3 text-gray-700 font-medium">Facebook</span>
+            <span className="mt-3 text-white font-medium">Facebook</span>
           </div>
 
           {/* Facebook - Business */}
@@ -65,7 +68,7 @@ export default function Social() {
                 <FontAwesomeIcon icon={faFacebook} className="text-white text-3xl" />
               </div>
             </a>
-            <span className="mt-3 text-gray-700 font-medium">Facebook Business</span>
+            <span className="mt-3 text-white font-medium">Facebook Business</span>
           </div>
 
           {/* YouTube */}
@@ -75,7 +78,7 @@ export default function Social() {
                 <FontAwesomeIcon icon={faYoutube} className="text-white text-3xl" />
               </div>
             </a>
-            <span className="mt-3 text-gray-700 font-medium">YouTube</span>
+            <span className="mt-3 text-white font-medium">YouTube</span>
           </div>
 
           {/* TikTok */}
@@ -85,7 +88,7 @@ export default function Social() {
                 <FontAwesomeIcon icon={faTiktok} className="text-white text-3xl" />
               </div>
             </a>
-            <span className="mt-3 text-gray-700 font-medium">TikTok</span>
+            <span className="mt-3 text-white font-medium">TikTok</span>
           </div>
 
           {/* Patreon */}
@@ -95,7 +98,7 @@ export default function Social() {
                 <FontAwesomeIcon icon={faPatreon} className="text-white text-3xl" />
               </div>
             </a>
-            <span className="mt-3 text-gray-700 font-medium">Patreon</span>
+            <span className="mt-3 text-white font-medium">Patreon</span>
           </div>
 
           {/* Gem Rock Auctions */}
@@ -105,7 +108,7 @@ export default function Social() {
                 <FontAwesomeIcon icon={faGem} className="text-white text-3xl" />
               </div>
             </a>
-            <span className="mt-3 text-gray-700 font-medium">Gem Rock Auctions</span>
+            <span className="mt-3 text-white font-medium">Gem Rock Auctions</span>
           </div>
 
           {/* Buy Me A Coffee */}
@@ -115,9 +118,14 @@ export default function Social() {
                 <FontAwesomeIcon icon={faMugHot} className="text-white text-3xl" />
               </div>
             </a>
-            <span className="mt-3 text-gray-700 font-medium">Buy Me A Coffee</span>
+            <span className="mt-3 text-white font-medium">Buy Me A Coffee</span>
           </div>
         </div>
+        </div>
+      </div>
+
+      <div className="relative z-10">
+        <Footer />
       </div>
     </div>
   );

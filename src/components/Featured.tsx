@@ -149,7 +149,7 @@ export default function Featured() {
 
   if (isLoading) {
     return (
-      <section className="bg-black py-16">
+      <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-6 md:mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
@@ -169,7 +169,7 @@ export default function Featured() {
 
   if (featuredProducts.length === 0) {
     return (
-      <section className="bg-black py-16">
+      <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
@@ -185,7 +185,7 @@ export default function Featured() {
   }
 
   return (
-    <section className="bg-black py-16">
+    <section className="py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-6 md:mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
@@ -196,9 +196,9 @@ export default function Featured() {
           </p>
         </div>
       </div>
-        
+
       {/* Featured Products Display */}
-      <div className="py-8 -mx-4 sm:-mx-6 lg:-mx-8">
+      <div className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
         {(() => {
           const shouldCenter = featuredProducts.length <= 4;
           
@@ -210,7 +210,7 @@ export default function Featured() {
                   return (
                     <div key={product.id} className="flex-shrink-0 w-[280px]">
                       <div
-                        className={`rounded-2xl p-2 shadow-2xl shadow-white/20 border border-white/10 translate-x-1 translate-y-1 transition-all duration-200 ease-out product-card select-none h-full flex flex-col ${
+                        className={`bg-white/5 backdrop-blur-sm rounded-2xl p-4 shadow-2xl border border-white/10 translate-x-1 translate-y-1 transition-all duration-200 ease-out product-card select-none h-full flex flex-col ${
                           product.inventory === 0 ? 'cursor-not-allowed' : 'cursor-pointer'
                         }`}
                         onClick={(e) => {
@@ -223,7 +223,7 @@ export default function Featured() {
                           }
                         }}
                       >
-                        <div className="aspect-square bg-neutral-100 rounded-lg mb-2 overflow-hidden relative">
+                        <div className="aspect-square bg-white/10 rounded-lg mb-2 overflow-hidden relative">
                           {product.price < product.original_price && (
                             <div className="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded z-10">
                               {Math.round(((product.original_price - product.price) / product.original_price) * 100)}% OFF
@@ -256,7 +256,7 @@ export default function Featured() {
                             />
                           </div>
                         </div>
-                        <h3 className="text-base font-semibold text-black mb-1 text-center min-h-[3rem] flex items-center justify-center leading-tight">{product.name}</h3>
+                        <h3 className="text-base font-semibold text-white mb-1 text-center min-h-[3rem] flex items-center justify-center leading-tight">{product.name}</h3>
                         <div className="mt-auto pt-2">
                           <div className="flex items-center justify-between relative">
                             <button
@@ -268,7 +268,7 @@ export default function Featured() {
                               className={`transition-colors p-1 ${
                                 product.inventory === 0 
                                   ? 'text-gray-400 cursor-not-allowed' 
-                                  : 'text-black hover:text-yellow-400'
+                                  : 'text-white hover:text-yellow-400'
                               }`}
                             >
                               {isInWishlist(product.product_id || product.id) ? (
@@ -280,9 +280,9 @@ export default function Featured() {
                             
                             <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-2">
                               {product.price < product.original_price && (
-                                <span className="text-sm text-black line-through">{formatPriceNoSuffix(product.original_price)}</span>
+                                <span className="text-sm text-white/60 line-through">{formatPriceNoSuffix(product.original_price)}</span>
                               )}
-                              <span className="text-lg font-bold text-black">{formatPriceNoSuffix(product.price)}</span>
+                              <span className="text-lg font-bold text-white">{formatPriceNoSuffix(product.price)}</span>
                             </div>
                             
                             <button
@@ -294,7 +294,7 @@ export default function Featured() {
                               className={`transition-colors p-1 relative ${
                                 product.inventory === 0 
                                   ? 'text-gray-400 cursor-not-allowed' 
-                                  : 'text-black hover:text-neutral-600'
+                                  : 'text-white hover:text-neutral-300'
                               }`}
                             >
                               <ShoppingBag className="h-6 w-6" strokeWidth={2} />
@@ -320,9 +320,9 @@ export default function Featured() {
                 >
                   {featuredProducts.concat(featuredProducts).concat(featuredProducts).map((product, index) => {
                     return (
-                      <div key={`${product.id}-${index}`} className="inline-block flex-shrink-0 w-[calc(80vw-1rem)] md:w-[calc(33.33vw-1rem)] lg:w-[calc(25vw-1rem)] mx-2 md:mx-3">
+                      <div key={`${product.id}-${index}`} className="inline-block flex-shrink-0 w-[80vw] md:w-[33.33vw] lg:w-[25vw] pr-4">
                         <div
-                          className={`rounded-2xl p-2 shadow-2xl shadow-white/20 border border-white/10 translate-x-1 translate-y-1 transition-all duration-200 ease-out product-card select-none h-full flex flex-col ${
+                          className={`bg-white/5 backdrop-blur-sm rounded-2xl p-4 shadow-2xl border border-white/10 translate-x-1 translate-y-1 transition-all duration-200 ease-out product-card select-none h-full flex flex-col ${
                             product.inventory === 0 ? 'cursor-not-allowed' : 'cursor-pointer'
                           }`}
                           onClick={(e) => {
@@ -335,7 +335,7 @@ export default function Featured() {
                           }
                           }}
                         >
-                          <div className="aspect-square bg-neutral-100 rounded-lg mb-2 overflow-hidden relative">
+                          <div className="aspect-square bg-white/10 rounded-lg mb-2 overflow-hidden relative">
                             {product.price < product.original_price && (
                               <div className="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded z-10">
                                 {Math.round(((product.original_price - product.price) / product.original_price) * 100)}% OFF
@@ -368,7 +368,7 @@ export default function Featured() {
                               />
                             </div>
                           </div>
-                          <h3 className="text-base font-semibold text-black mb-1 text-center min-h-[3rem] flex items-center justify-center leading-tight">{product.name}</h3>
+                          <h3 className="text-base font-semibold text-white mb-1 text-center min-h-[3rem] flex items-center justify-center leading-tight">{product.name}</h3>
                           <div className="mt-auto pt-2">
                             <div className="flex items-center justify-between relative">
                               <button
@@ -380,7 +380,7 @@ export default function Featured() {
                                 className={`transition-colors p-1 ${
                                   product.inventory === 0 
                                     ? 'text-gray-400 cursor-not-allowed' 
-                                    : 'text-black hover:text-yellow-400'
+                                    : 'text-white hover:text-yellow-400'
                                 }`}
                               >
                                 {isInWishlist(product.product_id || product.id) ? (
@@ -392,9 +392,9 @@ export default function Featured() {
                               
                               <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-2">
                                 {product.price < product.original_price && (
-                                  <span className="text-sm text-black line-through">{formatPriceNoSuffix(product.original_price)}</span>
+                                  <span className="text-sm text-white/60 line-through">{formatPriceNoSuffix(product.original_price)}</span>
                                 )}
-                                <span className="text-lg font-bold text-black">{formatPriceNoSuffix(product.price)}</span>
+                                <span className="text-lg font-bold text-white">{formatPriceNoSuffix(product.price)}</span>
                               </div>
                               
                               <button
@@ -406,7 +406,7 @@ export default function Featured() {
                                 className={`transition-colors p-1 relative ${
                                   product.inventory === 0 
                                     ? 'text-gray-400 cursor-not-allowed' 
-                                    : 'text-black hover:text-neutral-600'
+                                    : 'text-white hover:text-neutral-300'
                                 }`}
                               >
                                 <ShoppingBag className="h-6 w-6" strokeWidth={2} />

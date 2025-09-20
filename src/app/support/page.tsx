@@ -49,7 +49,7 @@ export default function Support() {
       <div 
         className="fixed inset-0 z-0"
         style={{
-          backgroundImage: "url('/images/whitemarble.jpg')",
+          backgroundImage: "url('/images/background.jpg')",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat"
@@ -62,66 +62,66 @@ export default function Support() {
       
       <div className="flex-grow py-16 relative z-10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
+          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-white/10">
             <div className="text-center mb-12 md:mb-20">
-              <h1 className="text-3xl md:text-4xl font-bold text-black mb-4">{getContent('title')}</h1>
-              <p className="text-lg text-neutral-600">{getContent('subtitle')}</p>
+              <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">{getContent('title')}</h1>
+              <p className="text-lg text-white">{getContent('subtitle')}</p>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-              <div className="text-center p-6 bg-white rounded-lg shadow-sm">
-                <Mail className="h-12 w-12 text-black mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-black mb-2">{getContent('email_support_title')}</h3>
-                <p className="text-neutral-600 mb-4">{getContent('email_support_description')}</p>
-                <a href={`mailto:${getContent('email_address')}`} className="text-black font-semibold hover:underline">
+              <div className="text-center p-6 bg-white/10 backdrop-blur-sm rounded-lg shadow-lg border border-white/20">
+                <Mail className="h-12 w-12 text-white mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-white mb-2">{getContent('email_support_title')}</h3>
+                <p className="text-white mb-4">{getContent('email_support_description')}</p>
+                <a href={`mailto:${getContent('email_address')}`} className="text-white font-semibold hover:underline">
                   {getContent('email_address')}
                 </a>
               </div>
               
-              <div className="text-center p-6 bg-white rounded-lg shadow-sm">
-                <Clock className="h-12 w-12 text-black mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-black mb-2">{getContent('response_time_title')}</h3>
-                <p className="text-neutral-600 mb-4">{getContent('response_time_description')}</p>
-                <p className="text-black font-semibold">{getContent('response_time_value')}</p>
+              <div className="text-center p-6 bg-white/10 backdrop-blur-sm rounded-lg shadow-lg border border-white/20">
+                <Clock className="h-12 w-12 text-white mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-white mb-2">{getContent('response_time_title')}</h3>
+                <p className="text-white mb-4">{getContent('response_time_description')}</p>
+                <p className="text-white font-semibold">{getContent('response_time_value')}</p>
               </div>
               
-              <div className="text-center p-6 bg-white rounded-lg shadow-sm">
-                <CircleAlert className="h-12 w-12 text-black mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-black mb-2">{getContent('faq_title')}</h3>
-                <p className="text-neutral-600 mb-4">{getContent('faq_description')}</p>
-                <a href="#faq" className="text-black font-semibold hover:underline">
+              <div className="text-center p-6 bg-white/10 backdrop-blur-sm rounded-lg shadow-lg border border-white/20">
+                <CircleAlert className="h-12 w-12 text-white mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-white mb-2">{getContent('faq_title')}</h3>
+                <p className="text-white mb-4">{getContent('faq_description')}</p>
+                <a href="#faq" className="text-white font-semibold hover:underline">
                   View FAQ
                 </a>
               </div>
             </div>
             
             <div id="faq">
-              <h2 className="text-2xl font-bold text-black mb-8 text-center">{getContent('faq_section_title')}</h2>
+              <h2 className="text-2xl font-bold text-white mb-8 text-center">{getContent('faq_section_title')}</h2>
               <div className="space-y-6">
-                <div className="bg-white rounded-lg p-6 shadow-sm">
-                  <h3 className="text-lg font-semibold text-black mb-3">{getContent('faq_1_question')}</h3>
-                  <p className="text-neutral-600">
+                <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 shadow-lg border border-white/20">
+                  <h3 className="text-lg font-semibold text-white mb-3">{getContent('faq_1_question')}</h3>
+                  <p className="text-white">
                     {getContent('faq_1_answer')}
                   </p>
                 </div>
                 
-                <div className="bg-white rounded-lg p-6 shadow-sm">
-                  <h3 className="text-lg font-semibold text-black mb-3">{getContent('faq_2_question')}</h3>
-                  <p className="text-neutral-600">
+                <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 shadow-lg border border-white/20">
+                  <h3 className="text-lg font-semibold text-white mb-3">{getContent('faq_2_question')}</h3>
+                  <p className="text-white">
                     {getContent('faq_2_answer')}
                   </p>
                 </div>
                 
-                <div className="bg-white rounded-lg p-6 shadow-sm">
-                  <h3 className="text-lg font-semibold text-black mb-3">{getContent('faq_3_question')}</h3>
-                  <p className="text-neutral-600">
+                <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 shadow-lg border border-white/20">
+                  <h3 className="text-lg font-semibold text-white mb-3">{getContent('faq_3_question')}</h3>
+                  <p className="text-white">
                     {getContent('faq_3_answer')}
                   </p>
                 </div>
                 
-                <div className="bg-white rounded-lg p-6 shadow-sm">
-                  <h3 className="text-lg font-semibold text-black mb-3">{getContent('faq_4_question')}</h3>
-                  <p className="text-neutral-600">
+                <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 shadow-lg border border-white/20">
+                  <h3 className="text-lg font-semibold text-white mb-3">{getContent('faq_4_question')}</h3>
+                  <p className="text-white">
                     {getContent('faq_4_answer')}
                   </p>
                 </div>

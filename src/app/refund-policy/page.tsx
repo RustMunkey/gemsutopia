@@ -44,7 +44,7 @@ export default function RefundPolicy() {
       <div 
         className="fixed inset-0 z-0"
         style={{
-          backgroundImage: "url('/images/whitemarble.jpg')",
+          backgroundImage: "url('/images/background.jpg')",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat"
@@ -55,22 +55,22 @@ export default function RefundPolicy() {
       
       <div className="flex-grow py-16 relative z-10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
+          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-white/10">
             <div className="text-center mb-12">
-              <h1 className="text-3xl md:text-4xl font-bold text-black mb-4">{getContent('title')}</h1>
-              <p className="text-lg text-neutral-600">{getContent('subtitle')}</p>
+              <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">{getContent('title')}</h1>
+              <p className="text-lg text-white">{getContent('subtitle')}</p>
             </div>
             
-            <div className="prose prose-lg max-w-none text-neutral-700 space-y-8">
+            <div className="prose prose-lg max-w-none text-white space-y-8">
               <div>
-                <h2 className="text-2xl font-bold text-black mb-4">{getContent('guarantee_title')}</h2>
+                <h2 className="text-2xl font-bold text-white mb-4">{getContent('guarantee_title')}</h2>
                 <p className="mb-4">
                   {getContent('guarantee_content')}
                 </p>
               </div>
               
               <div>
-                <h2 className="text-2xl font-bold text-black mb-4">{getContent('process_title')}</h2>
+                <h2 className="text-2xl font-bold text-white mb-4">{getContent('process_title')}</h2>
                 <ul className="list-disc pl-6 space-y-2">
                   <li>{getContent('process_item_1')}</li>
                   <li>{getContent('process_item_2')}</li>
@@ -80,21 +80,21 @@ export default function RefundPolicy() {
               </div>
               
               <div>
-                <h2 className="text-2xl font-bold text-black mb-4">{getContent('exceptions_title')}</h2>
+                <h2 className="text-2xl font-bold text-white mb-4">{getContent('exceptions_title')}</h2>
                 <p className="mb-4">
                   {getContent('exceptions_content')}
                 </p>
               </div>
               
               <div>
-                <h2 className="text-2xl font-bold text-black mb-4">{getContent('damaged_title')}</h2>
+                <h2 className="text-2xl font-bold text-white mb-4">{getContent('damaged_title')}</h2>
                 <p className="mb-4">
                   {getContent('damaged_content')}
                 </p>
               </div>
               
               <div>
-                <h2 className="text-2xl font-bold text-black mb-4">{getContent('contact_title')}</h2>
+                <h2 className="text-2xl font-bold text-white mb-4">{getContent('contact_title')}</h2>
                 <p>
                   {getContent('contact_content')}
                 </p>

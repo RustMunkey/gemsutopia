@@ -186,7 +186,7 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
         <div 
           className="fixed inset-0 z-0"
           style={{
-            backgroundImage: "url('/images/whitemarble.jpg')",
+            backgroundImage: "url('/images/background.jpg')",
             backgroundSize: "cover",
             backgroundPosition: "center",
             backgroundRepeat: "no-repeat"
@@ -214,7 +214,7 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
         <div 
           className="fixed inset-0 z-0"
           style={{
-            backgroundImage: "url('/images/whitemarble.jpg')",
+            backgroundImage: "url('/images/background.jpg')",
             backgroundSize: "cover",
             backgroundPosition: "center",
             backgroundRepeat: "no-repeat"
@@ -250,7 +250,7 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
       <div 
         className="fixed inset-0 z-0"
         style={{
-          backgroundImage: "url('/images/whitemarble.jpg')",
+          backgroundImage: "url('/images/background.jpg')",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat"
@@ -267,7 +267,7 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
           <div className="mb-6">
             <button
               onClick={() => router.push('/shop')}
-              className="flex items-center gap-2 text-black hover:text-neutral-600 transition-colors"
+              className="flex items-center gap-2 text-white hover:text-gray-300 transition-colors"
             >
               <ArrowLeft className="h-5 w-5" />
               <span>Back to Categories</span>
@@ -288,13 +288,13 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
                   />
                 </div>
               )}
-              <h1 className="text-3xl md:text-4xl font-bold text-black mb-4">{category.name}</h1>
+              <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">{category.name}</h1>
               {category.description && (
-                <p className="text-lg text-neutral-600 max-w-2xl mx-auto mb-4">
+                <p className="text-lg text-white max-w-2xl mx-auto mb-4">
                   {category.description}
                 </p>
               )}
-              <p className="text-sm text-neutral-500">
+              <p className="text-sm text-white/80">
                 {products.length} {products.length === 1 ? 'gem' : 'gems'} in this collection
               </p>
             </div>
@@ -302,10 +302,10 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
 
           {/* Filters and Sorting */}
           {products.length > 0 && (
-            <div className="bg-white/70 rounded-lg p-4 mb-8 shadow-md">
+            <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 mb-8 shadow-2xl border border-white/10">
               {/* Mobile Layout */}
               <div className="block md:hidden">
-                <div className="flex items-center gap-2 text-black mb-4">
+                <div className="flex items-center gap-2 text-white mb-4">
                   <IconFilter className="h-5 w-5" />
                   <span className="font-semibold">Filter & Sort</span>
                 </div>
@@ -313,7 +313,7 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
                 <div className="space-y-3">
                   {/* Sort By */}
                   <div>
-                    <label htmlFor="sort" className="block text-sm font-medium text-black mb-1">Sort by:</label>
+                    <label htmlFor="sort" className="block text-sm font-medium text-white mb-1">Sort by:</label>
                     <select
                       id="sort"
                       value={sortBy}
@@ -329,7 +329,7 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
 
                   {/* Price Filter */}
                   <div>
-                    <label htmlFor="price" className="block text-sm font-medium text-black mb-1">Price:</label>
+                    <label htmlFor="price" className="block text-sm font-medium text-white mb-1">Price:</label>
                     <select
                       id="price"
                       value={priceFilter}
@@ -347,7 +347,7 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
 
               {/* Desktop Layout */}
               <div className="hidden md:flex flex-col lg:flex-row gap-4 items-center justify-between">
-                <div className="flex items-center gap-2 text-black">
+                <div className="flex items-center gap-2 text-white">
                   <IconFilter className="h-5 w-5" />
                   <span className="font-semibold">Filter & Sort:</span>
                 </div>
@@ -355,7 +355,7 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
                 <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
                   {/* Sort By */}
                   <div className="flex items-center gap-2">
-                    <label htmlFor="sort-desktop" className="text-sm font-medium text-black">Sort by:</label>
+                    <label htmlFor="sort-desktop" className="text-sm font-medium text-white">Sort by:</label>
                     <select
                       id="sort-desktop"
                       value={sortBy}
@@ -371,7 +371,7 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
 
                   {/* Price Filter */}
                   <div className="flex items-center gap-2">
-                    <label htmlFor="price-desktop" className="text-sm font-medium text-black">Price:</label>
+                    <label htmlFor="price-desktop" className="text-sm font-medium text-white">Price:</label>
                     <select
                       id="price-desktop"
                       value={priceFilter}
@@ -387,7 +387,7 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
                 </div>
               </div>
               
-              <div className="mt-4 text-sm text-gray-600">
+              <div className="mt-4 text-sm text-white">
                 Showing {filteredProducts.length} of {products.length} gems
               </div>
             </div>
@@ -396,9 +396,9 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
           {/* Products Grid - Exact same as original shop page */}
           {filteredProducts.length === 0 ? (
             <div className="text-center py-16">
-              <Package className="h-16 w-16 text-neutral-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-black mb-2">No Gems Available</h3>
-              <p className="text-neutral-600 mb-6">
+              <Package className="h-16 w-16 text-white/60 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-white mb-2">No Gems Available</h3>
+              <p className="text-white/80 mb-6">
                 {products.length === 0 
                   ? "This category doesn't have any gems yet. Check back soon!"
                   : "No gems match your current filters. Try adjusting your search criteria."
@@ -418,10 +418,9 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
                 return (
                   <div 
                     key={product.id} 
-                    className={`rounded-2xl p-2 md:p-3 shadow-2xl shadow-white/20 border border-white/10 translate-x-1 translate-y-1 transition-all duration-200 ease-out product-card select-none h-full flex flex-col ${
+                    className={`bg-white/5 backdrop-blur-sm rounded-2xl p-2 md:p-3 shadow-2xl border border-white/10 translate-x-1 translate-y-1 transition-all duration-200 ease-out product-card select-none h-full flex flex-col ${
                       product.stock === 0 ? 'cursor-not-allowed' : 'cursor-pointer'
                     }`}
-                    style={{ backgroundColor: '#f0f0f0' }}
                     onClick={(e) => {
                       if (product.stock === 0) return; // Don't navigate if sold out
                       e.stopPropagation();
@@ -465,7 +464,7 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
                         />
                       </div>
                     </div>
-                    <h3 className="text-sm md:text-lg font-semibold text-black mb-1 text-center min-h-[2rem] md:min-h-[2.5rem] flex items-center justify-center leading-tight">{product.name}</h3>
+                    <h3 className="text-sm md:text-lg font-semibold text-white mb-1 text-center min-h-[2rem] md:min-h-[2.5rem] flex items-center justify-center leading-tight">{product.name}</h3>
                     <div className="mt-auto pt-2 md:pt-3 flex items-center md:justify-between justify-center">
                       <button
                         onClick={(e) => {
@@ -476,7 +475,7 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
                         className={`transition-colors p-1 hidden md:block ${
                           product.stock === 0 
                             ? 'text-gray-400 cursor-not-allowed' 
-                            : 'text-black hover:text-yellow-400'
+                            : 'text-white hover:text-yellow-400'
                         }`}
                       >
                         {isInWishlist(product.id) ? (
@@ -495,7 +494,7 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
                           className={`transition-colors p-0.5 md:hidden ${
                             product.stock === 0 
                               ? 'text-gray-400 cursor-not-allowed' 
-                              : 'text-black hover:text-yellow-400'
+                              : 'text-white hover:text-yellow-400'
                           }`}
                         >
                           {isInWishlist(product.id) ? (
@@ -507,12 +506,12 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
                         <div className="flex items-center gap-1 md:gap-2">
                           {product.price < product.originalPrice && (
                             <>
-                              <span className="text-xs md:text-sm text-black line-through md:hidden">{formatPriceNoSuffix(product.originalPrice)}</span>
-                              <span className="text-sm text-black line-through hidden md:inline">{formatPrice(product.originalPrice)}</span>
+                              <span className="text-xs md:text-sm text-white/60 line-through md:hidden">{formatPriceNoSuffix(product.originalPrice)}</span>
+                              <span className="text-sm text-white/60 line-through hidden md:inline">{formatPrice(product.originalPrice)}</span>
                             </>
                           )}
-                          <span className="text-sm md:text-lg font-bold text-black md:hidden">{formatPriceNoSuffix(product.price)}</span>
-                          <span className="text-lg font-bold text-black hidden md:inline">{formatPrice(product.price)}</span>
+                          <span className="text-sm md:text-lg font-bold text-white md:hidden">{formatPriceNoSuffix(product.price)}</span>
+                          <span className="text-lg font-bold text-white hidden md:inline">{formatPrice(product.price)}</span>
                         </div>
                         <button
                           onClick={(e) => {
@@ -523,7 +522,7 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
                           className={`transition-colors p-0.5 relative md:hidden ${
                             product.stock === 0 
                               ? 'text-gray-400 cursor-not-allowed' 
-                              : 'text-black hover:text-neutral-600'
+                              : 'text-white hover:text-neutral-300'
                           }`}
                         >
                           <ShoppingBag className="h-5 w-5" strokeWidth={2} />
@@ -541,7 +540,7 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
                         className={`transition-colors p-1 relative hidden md:block ${
                           product.stock === 0 
                             ? 'text-gray-400 cursor-not-allowed' 
-                            : 'text-black hover:text-neutral-600'
+                            : 'text-white hover:text-neutral-300'
                         }`}
                       >
                         <ShoppingBag className="h-6 w-6" strokeWidth={2} />

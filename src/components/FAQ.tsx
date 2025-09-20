@@ -34,13 +34,13 @@ export default function FAQ() {
   };
 
   const toggleItem = (id: string) => {
-    const newOpenItems = new Set(openItems);
-    if (newOpenItems.has(id)) {
-      newOpenItems.delete(id);
+    if (openItems.has(id)) {
+      // Close the currently open item
+      setOpenItems(new Set());
     } else {
-      newOpenItems.add(id);
+      // Close all items and open only the clicked one
+      setOpenItems(new Set([id]));
     }
-    setOpenItems(newOpenItems);
   };
 
   if (loading) {
@@ -61,40 +61,41 @@ export default function FAQ() {
 
   return (
     <section className="py-16">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <div className="flex items-center justify-center mb-4">
-            <h2 className="text-3xl md:text-4xl font-bold text-black">Frequently Asked Questions</h2>
+      <div className="max-w-7xl mx-auto px-1">
+        <div className="w-full flex items-start justify-between">
+          <div className="w-1/2">
+            <div className="mb-4">
+              <h2 className="text-3xl md:text-4xl font-bold text-white">Frequently Asked Questions</h2>
+            </div>
+            <p className="text-lg text-white max-w-xl">
+              Find answers to common questions about our gemstones, shipping, and services
+            </p>
           </div>
-          <p className="text-lg text-neutral-600 max-w-2xl mx-auto">
-            Find answers to common questions about our gemstones, shipping, and services
-          </p>
-        </div>
 
-        <div className="space-y-4">
+          <div className="space-y-4 w-[600px] pr-0 ml-auto">
           {faqItems.slice(0, 4).map((item) => {
             const isOpen = openItems.has(item.id);
             
             return (
-              <div key={item.id} className="border border-gray-200 rounded-lg overflow-hidden">
+              <div key={item.id} className="rounded-lg overflow-hidden bg-black/80 backdrop-blur-md">
                 <button
                   onClick={() => toggleItem(item.id)}
-                  className="w-full px-6 py-4 text-left bg-white hover:bg-gray-50 transition-colors duration-200 flex items-center justify-between"
+                  className="w-full px-6 py-4 text-left hover:bg-white/10 transition-colors duration-200 flex items-center justify-between"
                 >
-                  <span className="text-lg font-medium text-black pr-4">
+                  <span className="text-lg font-medium text-white pr-4">
                     {item.question}
                   </span>
                   {isOpen ? (
-                    <ChevronUp className="h-5 w-5 text-gray-500 flex-shrink-0" />
+                    <ChevronUp className="h-5 w-5 text-white flex-shrink-0" />
                   ) : (
-                    <ChevronDown className="h-5 w-5 text-gray-500 flex-shrink-0" />
+                    <ChevronDown className="h-5 w-5 text-white flex-shrink-0" />
                   )}
                 </button>
                 
                 {isOpen && (
-                  <div className="px-6 pb-4 bg-gray-50">
-                    <div className="pt-2 border-t border-gray-200">
-                      <p className="text-gray-700 leading-relaxed">
+                  <div className="px-6 pb-4 bg-white/5">
+                    <div className="pt-2">
+                      <p className="text-white/80 leading-relaxed">
                         {item.answer}
                       </p>
                     </div>
@@ -103,14 +104,15 @@ export default function FAQ() {
               </div>
             );
           })}
+          </div>
         </div>
 
         <div className="text-center mt-12">
-          <p className="text-gray-600">
+          <p className="text-white">
             Still have questions?{' '}
-            <a 
-              href="mailto:support@gemsutopia.com" 
-              className="text-black font-medium hover:underline"
+            <a
+              href="mailto:support@gemsutopia.com"
+              className="text-white font-medium hover:underline"
             >
               Contact us
             </a>

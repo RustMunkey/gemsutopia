@@ -287,14 +287,16 @@ export default function ProductContent({ product: initialProduct }: ProductConte
           toggleWishlist();
         }}
         disabled={product.inventory === 0}
-        className={`hidden md:block absolute top-4 right-4 z-10 transition-colors p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-lg ${
-          product.inventory === 0 
-            ? 'text-gray-400 cursor-not-allowed' 
-            : 'text-black hover:text-neutral-600'
+        className={`hidden md:block absolute top-4 right-4 z-10 transition-colors p-2 border-2 border-white backdrop-blur-sm rounded-full shadow-lg ${
+          product.inventory === 0
+            ? 'text-gray-400 cursor-not-allowed bg-white/80'
+            : isInWishlist(product.id)
+            ? 'bg-white text-black'
+            : 'text-white hover:bg-white hover:text-black'
         }`}
       >
         {isInWishlist(product.id) ? (
-          <IconStarFilled className="h-8 w-8 text-yellow-400" />
+          <IconStarFilled className="h-8 w-8 text-black" />
         ) : (
           <IconStar className="h-8 w-8" strokeWidth={2} />
         )}
@@ -305,16 +307,15 @@ export default function ProductContent({ product: initialProduct }: ProductConte
           {/* Product Image Gallery */}
           <div className="space-y-4">
             {/* Main Image/Video Display */}
-            <div 
+            <div
               ref={imageContainerRef}
-              className="w-full aspect-square rounded-2xl p-4 md:p-6 relative group"
-              style={{ backgroundColor: '#f0f0f0' }}
+              className="w-full aspect-square bg-white/5 backdrop-blur-sm rounded-2xl p-4 md:p-6 shadow-2xl border border-white/10 relative group"
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
             >
               <div 
-                className={`w-full h-full bg-neutral-100 rounded-lg overflow-hidden relative ${
+                className={`w-full h-full bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg overflow-hidden relative ${
                   product.inventory === 0 
                     ? 'cursor-default' 
                     : selectedImageIndex >= product.images.length && videoUrl 
@@ -411,10 +412,10 @@ export default function ProductContent({ product: initialProduct }: ProductConte
                         setZoomImageIndex(index);
                       }
                     }}
-                    className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors relative ${
+                    className={`flex-shrink-0 w-16 h-16 bg-white/5 backdrop-blur-sm rounded-lg overflow-hidden border-2 transition-colors relative ${
                       selectedImageIndex === index
-                        ? 'border-black'
-                        : 'border-gray-300 hover:border-gray-400'
+                        ? 'border-white'
+                        : 'border-white/30 hover:border-white/50'
                     }`}
                   >
                     <Image
@@ -439,13 +440,13 @@ export default function ProductContent({ product: initialProduct }: ProductConte
                         setZoomImageIndex(product.images.length);
                       }
                     }}
-                    className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors flex items-center justify-center bg-gray-100 relative ${
+                    className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors flex items-center justify-center bg-white/5 backdrop-blur-sm relative ${
                       selectedImageIndex >= product.images.length
-                        ? 'border-black'
-                        : 'border-gray-300 hover:border-gray-400'
+                        ? 'border-white'
+                        : 'border-white/30 hover:border-white/50'
                     }`}
                   >
-                    <div className="text-xs font-medium text-gray-600">VIDEO</div>
+                    <div className="text-xs font-medium text-white">VIDEO</div>
                     {/* Sold Out Overlay for video thumbnail */}
                     {product.inventory === 0 && (
                       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
@@ -458,23 +459,23 @@ export default function ProductContent({ product: initialProduct }: ProductConte
           
           {/* Product Details */}
           <div className="flex flex-col justify-center">
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-black mb-4 md:mb-6">{product.name}</h1>
-            <p className="text-base md:text-lg text-neutral-600 mb-6 md:mb-8 leading-relaxed">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 md:mb-6">{product.name}</h1>
+            <p className="text-base md:text-lg text-white mb-6 md:mb-8 leading-relaxed">
               {product.description || 'Premium quality gemstone from Alberta, Canada. This exceptional gemstone features clarity and natural beauty, ethically sourced with care.'}
             </p>
             
             <div className="mb-4 md:mb-6">
               <div className="flex items-center gap-4 mb-2">
                 {originalPrice && (
-                  <span className="text-sm md:text-lg text-neutral-500 line-through">{formatPrice(originalPrice)}</span>
+                  <span className="text-sm md:text-lg text-white/70 line-through">{formatPrice(originalPrice)}</span>
                 )}
-                <span className="text-2xl md:text-3xl font-bold text-black">{formatPrice(currentPrice)}</span>
+                <span className="text-2xl md:text-3xl font-bold text-white">{formatPrice(currentPrice)}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm md:text-lg text-neutral-700">
+                <span className="text-sm md:text-lg text-white">
                   <span className="font-semibold">{product.inventory}</span> in stock
                 </span>
-                <div className="text-sm md:text-lg text-neutral-500">
+                <div className="text-sm md:text-lg text-white/80">
                   {wishlistCount > 0 && (
                     <div className="flex items-center gap-1">
                       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -492,7 +493,7 @@ export default function ProductContent({ product: initialProduct }: ProductConte
               <div className={`w-full py-3 md:py-4 px-6 md:px-8 rounded-full font-semibold text-base md:text-lg flex items-center justify-between min-h-[52px] md:min-h-[60px] ${
                 product.inventory === 0 
                   ? 'bg-gray-400 text-gray-600 cursor-not-allowed' 
-                  : 'bg-black text-white'
+                  : 'bg-white text-black border-2 border-white hover:bg-transparent hover:text-white'
               }`}>
                 <button
                   type="button"
@@ -535,7 +536,7 @@ export default function ProductContent({ product: initialProduct }: ProductConte
                 className={`w-full border-2 py-3 md:py-4 px-6 md:px-8 rounded-full font-semibold text-base md:text-lg transition-colors ${
                   product.inventory === 0 
                     ? 'border-gray-400 text-gray-600 bg-gray-100 cursor-not-allowed' 
-                    : 'border-black text-black hover:bg-black hover:text-white'
+                    : 'border-white text-white hover:bg-white hover:text-black'
                 }`}
               >
                 {product.inventory === 0 ? 'SOLD' : 'Buy Now'}
@@ -570,8 +571,8 @@ export default function ProductContent({ product: initialProduct }: ProductConte
             
             <div className="mt-8 md:mt-12 space-y-4 md:space-y-6">
               <div>
-                <h3 className="text-base md:text-lg font-semibold text-black mb-2">Details</h3>
-                <ul className="text-sm md:text-base text-neutral-600 space-y-1">
+                <h3 className="text-base md:text-lg font-semibold text-white mb-2">Details</h3>
+                <ul className="text-sm md:text-base text-white space-y-1">
                   {(product.metadata?.details || [
                     'Premium quality gemstone',
                     'Authentically sourced',
@@ -584,8 +585,8 @@ export default function ProductContent({ product: initialProduct }: ProductConte
               </div>
               
               <div>
-                <h3 className="text-base md:text-lg font-semibold text-black mb-2">Shipping</h3>
-                <p className="text-sm md:text-base text-neutral-600">
+                <h3 className="text-base md:text-lg font-semibold text-white mb-2">Shipping</h3>
+                <p className="text-sm md:text-base text-white">
                   {product.metadata?.shipping_info || 'Free worldwide shipping. Delivery in 3-5 business days.'}
                 </p>
               </div>
@@ -687,7 +688,7 @@ export default function ProductContent({ product: initialProduct }: ProductConte
                     className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors ${
                       zoomImageIndex === index
                         ? 'border-white'
-                        : 'border-gray-500 hover:border-gray-300'
+                        : 'border-white/30 hover:border-white/50'
                     }`}
                   >
                     <Image
@@ -708,7 +709,7 @@ export default function ProductContent({ product: initialProduct }: ProductConte
                     className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors flex items-center justify-center bg-gray-700 ${
                       zoomImageIndex >= product.images.length
                         ? 'border-white'
-                        : 'border-gray-500 hover:border-gray-300'
+                        : 'border-white/30 hover:border-white/50'
                     }`}
                   >
                     <div className="text-xs font-medium text-white">VIDEO</div>

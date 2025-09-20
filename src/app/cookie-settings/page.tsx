@@ -87,7 +87,7 @@ export default function CookieSettings() {
       <div 
         className="fixed inset-0 z-0"
         style={{
-          backgroundImage: "url('/images/whitemarble.jpg')",
+          backgroundImage: "url('/images/background.jpg')",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat"
@@ -98,10 +98,10 @@ export default function CookieSettings() {
       
       <div className="flex-grow py-16 relative z-10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
+          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-white/10">
             <div className="text-center mb-12">
-              <h1 className="text-3xl md:text-4xl font-bold text-black mb-4">{getContent('title')}</h1>
-              <p className="text-lg text-neutral-600">{getContent('subtitle')}</p>
+              <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">{getContent('title')}</h1>
+              <p className="text-lg text-white">{getContent('subtitle')}</p>
             </div>
             
             {saved && (
@@ -110,8 +110,8 @@ export default function CookieSettings() {
               </div>
             )}
             
-            <div className="bg-white rounded-lg shadow-sm p-8 space-y-8">
-            <div className="text-neutral-700">
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg shadow-lg border border-white/20 p-8 space-y-8">
+            <div className="text-white">
               <p className="mb-6">
                 {getContent('intro_text')}
               </p>
@@ -121,8 +121,8 @@ export default function CookieSettings() {
             <div className="border-b border-neutral-200 pb-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-black mb-2">{getContent('essential_title')}</h3>
-                  <p className="text-neutral-600 text-sm">
+                  <h3 className="text-lg font-semibold text-white mb-2">{getContent('essential_title')}</h3>
+                  <p className="text-white text-sm">
                     {getContent('essential_description')}
                   </p>
                 </div>
@@ -132,9 +132,9 @@ export default function CookieSettings() {
                       type="checkbox"
                       checked={localPreferences.essential}
                       disabled
-                      className="w-5 h-5 text-black bg-gray-100 border-gray-300 rounded focus:ring-black"
+                      className="w-5 h-5 text-white bg-gray-100 border-gray-300 rounded focus:ring-black"
                     />
-                    <span className="ml-2 text-sm text-neutral-500">{getContent('essential_status')}</span>
+                    <span className="ml-2 text-sm text-white">{getContent('essential_status')}</span>
                   </div>
                 </div>
               </div>
@@ -144,8 +144,8 @@ export default function CookieSettings() {
             <div className="border-b border-neutral-200 pb-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-black mb-2">{getContent('analytics_title')}</h3>
-                  <p className="text-neutral-600 text-sm">
+                  <h3 className="text-lg font-semibold text-white mb-2">{getContent('analytics_title')}</h3>
+                  <p className="text-white text-sm">
                     {getContent('analytics_description')}
                   </p>
                 </div>
@@ -167,8 +167,8 @@ export default function CookieSettings() {
             <div className="border-b border-neutral-200 pb-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-black mb-2">{getContent('marketing_title')}</h3>
-                  <p className="text-neutral-600 text-sm">
+                  <h3 className="text-lg font-semibold text-white mb-2">{getContent('marketing_title')}</h3>
+                  <p className="text-white text-sm">
                     {getContent('marketing_description')}
                   </p>
                 </div>
@@ -190,8 +190,8 @@ export default function CookieSettings() {
             <div className="pb-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-black mb-2">{getContent('functional_title')}</h3>
-                  <p className="text-neutral-600 text-sm">
+                  <h3 className="text-lg font-semibold text-white mb-2">{getContent('functional_title')}</h3>
+                  <p className="text-white text-sm">
                     {getContent('functional_description')}
                   </p>
                 </div>
@@ -213,28 +213,28 @@ export default function CookieSettings() {
             <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-neutral-200">
               <button
                 onClick={handleSavePreferences}
-                className="bg-black text-white px-6 py-3 rounded-lg font-semibold hover:bg-neutral-800 transition-colors"
+                className="bg-white text-black px-6 py-3 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
               >
                 {getContent('save_button')}
               </button>
               <button
                 onClick={handleAcceptAll}
-                className="bg-neutral-200 text-black px-6 py-3 rounded-lg font-semibold hover:bg-neutral-300 transition-colors"
+                className="border-2 border-white text-white px-6 py-3 rounded-lg font-semibold hover:bg-white hover:text-black transition-colors"
               >
                 {getContent('accept_all_button')}
               </button>
               <button
                 onClick={handleRejectAll}
-                className="bg-neutral-200 text-black px-6 py-3 rounded-lg font-semibold hover:bg-neutral-300 transition-colors"
+                className="border-2 border-white text-white px-6 py-3 rounded-lg font-semibold hover:bg-white hover:text-black transition-colors"
               >
                 {getContent('reject_all_button')}
               </button>
             </div>
 
-            <div className="text-sm text-neutral-600 pt-4 border-t border-neutral-200">
+            <div className="text-sm text-white pt-4 border-t border-neutral-200">
               <p>
                 <strong>{getContent('footer_text')}</strong>{' '}
-                <a href="/cookie-policy" className="text-black underline hover:no-underline">
+                <a href="/cookie-policy" className="text-white underline hover:no-underline">
                   {getContent('footer_link_text')}
                 </a>{' '}
                 {getContent('footer_text_end')}
