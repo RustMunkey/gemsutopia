@@ -60,7 +60,24 @@ function PayPalButtonWrapper({
       if (!response.ok) {
         const errorText = await response.text();
         console.error('API Error Response:', errorText);
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
+
+        // Try to parse error details
+        let errorMessage = `HTTP ${response.status}`;
+        try {
+          const errorData = JSON.parse(errorText);
+          if (errorData.details) {
+            errorMessage += `: ${errorData.details}`;
+          } else if (errorData.error) {
+            errorMessage += `: ${errorData.error}`;
+          } else {
+            errorMessage += `: ${errorText}`;
+          }
+          console.error('Parsed error data:', errorData);
+        } catch (e) {
+          errorMessage += `: ${errorText}`;
+        }
+
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
@@ -152,8 +169,27 @@ function PayPalButtonWrapper({
 }
 
 export default function PayPalPayment(props: PayPalPaymentProps) {
+  const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID;
+
+  console.log('=== PayPalPayment Component ===');
+  console.log('Client ID exists:', !!clientId);
+  console.log('Client ID value:', clientId);
+  console.log('Amount:', props.amount);
+  console.log('Currency:', props.currency);
+  console.log('Items:', props.items);
+
+  if (!clientId) {
+    console.error('NEXT_PUBLIC_PAYPAL_CLIENT_ID is not defined!');
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <p className="text-red-800 font-semibold">PayPal Configuration Error</p>
+        <p className="text-red-600 text-sm">PayPal Client ID is not configured. Please check your environment variables.</p>
+      </div>
+    );
+  }
+
   const initialOptions = {
-    clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID!,
+    clientId,
     currency: props.currency || 'USD',
     intent: 'capture',
     components: 'buttons,funding-eligibility',

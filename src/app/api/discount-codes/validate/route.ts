@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+
 import { validateDiscountCode } from '@/lib/database/discountCodes';
+
+export const dynamic = 'force-dynamic';
+
+
 
 export async function POST(request: NextRequest) {
   try {

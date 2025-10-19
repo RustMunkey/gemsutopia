@@ -89,6 +89,7 @@ export default function Header() {
               <a href="/auctions" className="text-white hover:text-gray-300 text-sm font-bold">Auctions</a>
               <a href="/about" className="text-white hover:text-gray-300 text-sm font-bold">About</a>
               <a href="/contact-us" className="text-white hover:text-gray-300 text-sm font-bold">Contact</a>
+              <a href="/social" className="text-white hover:text-gray-300 text-sm font-bold">Socials</a>
             </div>
           </div>
           

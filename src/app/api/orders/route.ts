@@ -1,8 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
+
 import { createClient } from '@supabase/supabase-js';
+
 import { filterOrdersByMode } from '@/lib/utils/orderUtils';
+
 import { requireAdmin, extractAuth, checkRateLimit } from '@/lib/security/apiAuth';
+
 import { sanitizeInput, validateEmail, validateRequiredFields, sanitizeObject, sanitizeEmail } from '@/lib/security/sanitize';
+
+export const dynamic = 'force-dynamic';
+
+
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,

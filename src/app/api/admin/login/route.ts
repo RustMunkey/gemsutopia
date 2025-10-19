@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+
 // import { checkRateLimit, recordFailedAttempt } from '../../../../lib/security/rateLimiter';
 // import { sendLoginNotification, getClientIP, detectSuspiciousLogin } from '../../../../lib/security/notifications';
 // import { sendVerificationCode } from '../../../../lib/security/twoFactor';
 // import { isIPAllowed } from '../../../../lib/security/ipAllowlist';
 import jwt from 'jsonwebtoken';
+
+export const dynamic = 'force-dynamic';
+
+
 
 // Get authorized credentials from environment variables
 const AUTHORIZED_USERS = [

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+
 import { 
+
   getDiscountCodes, 
   createDiscountCode, 
   updateDiscountCode, 
@@ -7,6 +9,10 @@ import {
   DiscountCode 
 } from '@/lib/database/discountCodesServer';
 import { requireAdmin, rateLimit, validateAndSanitize } from '@/lib/auth/adminAuth';
+
+export const dynamic = 'force-dynamic';
+
+
 
 // 🔐 SECURE handlers with proper security
 async function getDiscountCodesHandler(request: NextRequest) {

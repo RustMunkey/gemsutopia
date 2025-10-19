@@ -1,9 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
+
 import { updateSEOMetadata } from '@/lib/utils/seoMetadata';
+
 import { updateSiteInfo } from '@/lib/utils/siteInfo';
+
 import { getAllSettings, setMultipleSettings } from '@/lib/database/siteSettings';
+
 import { validateShippingSettings } from '@/lib/security/sanitize';
+
 import { requireAdmin } from '@/lib/security/apiAuth';
+
+export const dynamic = 'force-dynamic';
+
+
 
 // Load settings from database
 async function loadSettingsFromDB() {

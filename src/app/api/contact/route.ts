@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+
 import { Resend } from 'resend';
+
 import { sanitizeInput } from '@/lib/security/sanitize';
+
+export const dynamic = 'force-dynamic';
+
+
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 

@@ -79,6 +79,128 @@ export default function CheckoutFlow() {
     }
 
   }, []);
+
+  // Handle return from Stripe Checkout
+  useEffect(() => {
+    const handleStripeReturn = async () => {
+      // Check URL parameters for Stripe session_id
+      const urlParams = new URLSearchParams(window.location.search);
+      const sessionId = urlParams.get('session_id');
+      const paymentMethod = urlParams.get('payment_method');
+
+      if (sessionId && paymentMethod === 'stripe') {
+        console.log('Stripe checkout return detected, session:', sessionId);
+
+        try {
+          // Verify the session with Stripe
+          const verifyResponse = await fetch(`/api/payments/stripe/verify-session?session_id=${sessionId}`);
+          const verifyData = await verifyResponse.json();
+
+          if (!verifyData.success) {
+            showNotification('error', 'Payment verification failed');
+            setCurrentStep('payment-method');
+            return;
+          }
+
+          console.log('Stripe session verified:', verifyData.session);
+
+          // Retrieve checkout data from sessionStorage
+          const checkoutDataStr = sessionStorage.getItem('stripeCheckoutData');
+          if (!checkoutDataStr) {
+            showNotification('error', 'Checkout data not found. Please try again.');
+            setCurrentStep('payment-method');
+            return;
+          }
+
+          const savedCheckoutData = JSON.parse(checkoutDataStr);
+
+          // Create the order in your database
+          const orderData = {
+            items: savedCheckoutData.items,
+            customerInfo: savedCheckoutData.customerData,
+            payment: {
+              payment_id: verifyData.session.payment_intent,
+              session_id: sessionId,
+              paymentMethod: 'stripe',
+              amount: savedCheckoutData.amount,
+              currency: savedCheckoutData.currency,
+              status: 'paid'
+            },
+            totals: {
+              subtotal: savedCheckoutData.subtotal,
+              discount: savedCheckoutData.appliedDiscount?.amount || 0,
+              tax: savedCheckoutData.tax || 0,
+              shipping: savedCheckoutData.shipping,
+              total: savedCheckoutData.amount
+            },
+            discountCode: savedCheckoutData.appliedDiscount || null,
+            timestamp: new Date().toISOString()
+          };
+
+          console.log('Creating order:', orderData);
+
+          const orderResponse = await fetch('/api/orders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(orderData)
+          });
+
+          if (orderResponse.ok) {
+            const orderResult = await orderResponse.json();
+
+            // Clear the stored checkout data
+            sessionStorage.removeItem('stripeCheckoutData');
+
+            // Update checkout data state
+            setCheckoutData(prev => ({
+              ...prev,
+              customer: savedCheckoutData.customerData,
+              paymentMethod: 'stripe'
+            }));
+
+            // Set order info and navigate to success
+            setOrderId(orderResult.order.id);
+            setPaymentInfo({
+              actualAmount: savedCheckoutData.amount,
+              currency: savedCheckoutData.currency
+            });
+
+            // Preserve items for OrderSuccess
+            setPreservedItems(savedCheckoutData.items);
+            setPreservedSubtotal(savedCheckoutData.subtotal);
+            setFinalShipping(savedCheckoutData.shipping);
+
+            setCurrentStep('success');
+            clearPouch();
+            refreshShopProducts();
+
+            // Refresh individual product pages
+            savedCheckoutData.items.forEach((item: any) => {
+              refreshProduct(item.id);
+            });
+
+            // Clean up URL
+            window.history.replaceState({}, '', '/checkout');
+
+            showNotification('success', 'Payment successful! Order created.');
+          } else {
+            const errorData = await orderResponse.json();
+            console.error('Order creation failed:', errorData);
+            showNotification('error', 'Payment succeeded but order creation failed. Please contact support.');
+            setCurrentStep('error');
+            setError('Order creation failed. Your payment was successful. Please contact support with session ID: ' + sessionId);
+          }
+        } catch (error) {
+          console.error('Error handling Stripe return:', error);
+          showNotification('error', 'An error occurred processing your payment');
+          setCurrentStep('error');
+          setError('An error occurred. Please contact support.');
+        }
+      }
+    };
+
+    handleStripeReturn();
+  }, []);
   const [orderId, setOrderId] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [paymentInfo, setPaymentInfo] = useState<{

@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+
 import { supabase } from '@/lib/supabase';
+
 import { createClient } from '@supabase/supabase-js';
+
 import jwt from 'jsonwebtoken';
+
+export const dynamic = 'force-dynamic';
+
+
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
 

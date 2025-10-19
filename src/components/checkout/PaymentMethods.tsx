@@ -1,7 +1,6 @@
 'use client';
 import { useState } from 'react';
 import { CreditCard, Wallet, Shield, AlertTriangle } from 'lucide-react';
-import { useCurrency } from '@/contexts/CurrencyContext';
 
 interface PaymentMethodsProps {
   onSelect: (method: 'stripe' | 'paypal' | 'wallet') => void;
@@ -9,7 +8,6 @@ interface PaymentMethodsProps {
 
 export default function PaymentMethods({ onSelect }: PaymentMethodsProps) {
   const [selectedMethod, setSelectedMethod] = useState<'stripe' | 'paypal' | 'wallet' | null>(null);
-  const { currency } = useCurrency();
   
   // PayPal only accepts USD, Stripe accepts CAD/USD, Crypto is currency-free
   const paymentMethods = [
@@ -26,20 +24,20 @@ export default function PaymentMethods({ onSelect }: PaymentMethodsProps) {
       id: 'paypal' as const,
       name: 'PayPal',
       description: 'Pay with your PayPal account or credit card',
-      currencyNote: 'USD only',
+      currencyNote: 'Accepts CAD and USD',
       icon: Wallet,
-      available: currency === 'USD', // Only available for USD
-      currencyCompatible: currency === 'USD',
-      restrictionMessage: currency !== 'USD' ? 'PayPal only available for USD payments. Switch to USD or use another payment method.' : undefined
+      available: true, // Enabled
+      currencyCompatible: true
     },
     {
       id: 'wallet' as const,
       name: 'Connect Wallet',
-      description: 'Pay with cryptocurrency using WalletConnect',
-      currencyNote: 'Crypto payments (Bitcoin, Ethereum, Solana)',
+      description: 'Coming Soon!',
+      currencyNote: 'Crypto payments will be available soon',
       icon: Wallet,
-      available: true,
-      currencyCompatible: true
+      available: false, // Disabled for now
+      currencyCompatible: false,
+      restrictionMessage: 'Cryptocurrency payment option coming soon!'
     }
   ];
 

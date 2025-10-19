@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+
 import { getAllSettings, setMultipleSettings } from '@/lib/database/siteSettings';
+
+export const dynamic = 'force-dynamic';
+
+
 
 /**
  * Public endpoint to get shipping settings for checkout calculations

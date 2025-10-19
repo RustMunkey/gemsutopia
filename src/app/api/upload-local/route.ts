@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+
 import { writeFile, mkdir } from 'fs/promises';
+
 import { join } from 'path';
+
 import jwt from 'jsonwebtoken';
+
+export const dynamic = 'force-dynamic';
+
+
 
 // Security function to verify admin token
 function verifyAdminToken(request: NextRequest): { valid: boolean; email?: string; reason?: string } {

@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 interface CoinGeckoResponse {
   bitcoin: { usd: number; cad: number };
   ethereum: { usd: number; cad: number };

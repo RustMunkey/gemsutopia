@@ -1,8 +1,6 @@
 'use client';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCcAmex, faCcApplePay, faCcDiscover, faCcDinersClub, faCcMastercard, faCcPaypal, faCcStripe, faCcVisa } from '@fortawesome/free-brands-svg-icons';
-import { faLink } from '@fortawesome/free-solid-svg-icons';
-import { SquareArrowUpRight } from 'lucide-react';
 import { ExchangeCoinbase } from '@web3icons/react';
 import Image from 'next/image';
 import { useState } from 'react';
@@ -51,17 +49,14 @@ export default function Footer() {
   return (
     <div className="bg-black/40 backdrop-blur-md text-white w-full min-h-[50vh] flex flex-col justify-between border-t border-white/20 relative z-10 footer-container">
         <div className="w-full pt-8 px-4">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <Image 
-            src="/logos/gem.png" 
+        <div className="max-w-7xl mx-auto flex justify-start items-center">
+          <Image
+            src="/logos/gem.png"
             alt="Gem"
             width={40}
             height={40}
             className="w-auto h-6 object-contain"
           />
-          <a href="/social" className="text-white text-xl hover:text-gray-300 transition-colors">
-            <SquareArrowUpRight className="h-6 w-6" />
-          </a>
         </div>
       </div>
       <div className="max-w-7xl mx-auto px-4 w-full md:hidden ">

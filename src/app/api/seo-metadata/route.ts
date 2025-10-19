@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server';
+
 import { getSEOMetadata } from '@/lib/utils/seoMetadata';
+
+export const dynamic = 'force-dynamic';
+
+
 
 export async function GET() {
   try {

@@ -61,18 +61,18 @@ export default function FAQ() {
 
   return (
     <section className="py-16">
-      <div className="max-w-7xl mx-auto px-1">
-        <div className="w-full flex items-start justify-between">
-          <div className="w-1/2">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-1">
+        <div className="w-full flex flex-col lg:flex-row items-start justify-between gap-8 lg:gap-4">
+          <div className="w-full lg:w-1/2">
             <div className="mb-4">
-              <h2 className="text-3xl md:text-4xl font-bold text-white">Frequently Asked Questions</h2>
+              <h2 className="text-3xl md:text-4xl font-bold text-white drop-shadow-lg">Frequently Asked Questions</h2>
             </div>
-            <p className="text-lg text-white max-w-xl">
+            <p className="text-lg text-white max-w-xl drop-shadow-lg">
               Find answers to common questions about our gemstones, shipping, and services
             </p>
           </div>
 
-          <div className="space-y-4 w-[600px] pr-0 ml-auto">
+          <div className="space-y-4 w-full lg:w-[600px] pr-0 lg:ml-auto">
           {faqItems.slice(0, 4).map((item) => {
             const isOpen = openItems.has(item.id);
             

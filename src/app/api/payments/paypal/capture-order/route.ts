@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 const PAYPAL_API_BASE = 'https://api.sandbox.paypal.com'; // Force sandbox for now
 
 async function getPayPalAccessToken(): Promise<string> {
