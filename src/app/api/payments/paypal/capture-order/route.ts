@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-const PAYPAL_API_BASE = 'https://api.sandbox.paypal.com'; // Force sandbox for now
+const PAYPAL_API_BASE = 'https://api.paypal.com'; // Live mode
 
 async function getPayPalAccessToken(): Promise<string> {
   const clientId = process.env.PAYPAL_CLIENT_ID!;

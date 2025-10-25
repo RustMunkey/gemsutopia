@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const PAYPAL_API_BASE = 'https://api.sandbox.paypal.com'; // Force sandbox for now
+const PAYPAL_API_BASE = 'https://api.paypal.com'; // Live mode
 
 export const dynamic = 'force-dynamic';
 

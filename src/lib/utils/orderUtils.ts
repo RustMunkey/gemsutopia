@@ -64,16 +64,16 @@ export const isTestOrder = (order: Order): boolean => {
         payment_details.payment_id?.includes('test')) {
       return true;
     }
-    
+
     // Check if using PayPal sandbox client ID
     const usingSandbox = process.env.PAYPAL_CLIENT_ID?.includes('sandbox') ||
                          process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID?.includes('sandbox');
     if (usingSandbox) {
       return true;
     }
-    
-    // For now, assume all PayPal orders are test until live credentials are confirmed
-    return true;
+
+    // Live PayPal payments
+    return false;
   }
   
   // Check for test crypto currencies and networks
