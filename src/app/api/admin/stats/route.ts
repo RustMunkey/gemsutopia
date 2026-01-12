@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { createClient } from '@supabase/supabase-js';
 
-import { requireAdmin, rateLimit, validateAndSanitize } from '@/lib/auth/adminAuth';
+import { requireAdmin, validateAndSanitize } from '@/lib/auth/adminAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -116,8 +116,8 @@ async function putStatsHandler(request: NextRequest) {
     const body = await request.json();
     const { id, ...updateFields } = body;
 
-    if (!id || typeof id !== 'number') {
-      return NextResponse.json({ 
+    if (!id) {
+      return NextResponse.json({
         error: 'Valid stat ID is required',
         code: 'VALIDATION_ERROR'
       }, { status: 400 });
@@ -170,8 +170,8 @@ async function deleteStatsHandler(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
-    if (!id || isNaN(Number(id))) {
-      return NextResponse.json({ 
+    if (!id) {
+      return NextResponse.json({
         error: 'Valid stat ID is required',
         code: 'VALIDATION_ERROR'
       }, { status: 400 });
@@ -180,7 +180,7 @@ async function deleteStatsHandler(request: NextRequest) {
     const { error } = await supabase
       .from('stats')
       .delete()
-      .eq('id', Number(id));
+      .eq('id', id);
 
     if (error) {
       console.error('Error deleting stat:', error);
@@ -203,8 +203,8 @@ async function deleteStatsHandler(request: NextRequest) {
   }
 }
 
-// Apply security middleware to all endpoints
-export const GET = rateLimit(50, 15 * 60 * 1000)(requireAdmin(getStatsHandler));
-export const POST = rateLimit(10, 15 * 60 * 1000)(validateAndSanitize(requireAdmin(postStatsHandler)));
-export const PUT = rateLimit(20, 15 * 60 * 1000)(validateAndSanitize(requireAdmin(putStatsHandler)));
-export const DELETE = rateLimit(5, 15 * 60 * 1000)(requireAdmin(deleteStatsHandler));
+// Apply security middleware to all endpoints (no rate limiting for admin CRUD)
+export const GET = requireAdmin(getStatsHandler);
+export const POST = validateAndSanitize(requireAdmin(postStatsHandler));
+export const PUT = validateAndSanitize(requireAdmin(putStatsHandler));
+export const DELETE = requireAdmin(deleteStatsHandler);
