@@ -1,0 +1,152 @@
+🔒 GEMSUTOPIA SECURITY AUDIT REPORT                                                           
+                                                                                                
+  Executive Summary                                                                             
+                                                                                                
+  This is a gemstone e-commerce site with Supabase backend, Stripe/PayPal/Crypto payments, and  
+  an admin dashboard. The audit revealed critical security vulnerabilities that require         
+  immediate attention.                                                                          
+                                                                                                
+  ---                                                                                           
+  🚨 CRITICAL ISSUES (Fix Immediately)                                                          
+                                                                                                
+  1. Exposed Supabase Keys in Source Code                                                       
+                                                                                                
+  File: src/lib/supabase.ts (lines 4-6)                                                         
+  - Service role key and anon key are hardcoded as fallbacks                                    
+  - These keys are visible in compiled JS, git history, and browser DevTools                    
+  - Impact: Full database bypass of Row Level Security                                          
+                                                                                                
+  2. Hardcoded JWT Secret                                                                       
+                                                                                                
+  Files: Multiple (middleware.ts:72, adminAuth.ts:4, products/route.ts:13, etc.)                
+  const JWT_SECRET = process.env.JWT_SECRET ||                                                  
+  'your-super-secret-jwt-key-change-this-in-production';                                        
+  - Impact: Attackers can forge admin tokens using the default secret                           
+                                                                                                
+  3. Order IDOR - Any User Can View Any Order                                                   
+                                                                                                
+  File: src/app/api/orders/[id]/route.ts                                                        
+  - GET endpoint has no authentication                                                          
+  - Returns full PII: customer name, email, phone, address, payment details                     
+  - Attack: GET /api/orders/{any-uuid} exposes all customer data                                
+                                                                                                
+  4. Client-Side Price Manipulation                                                             
+                                                                                                
+  Files: GemPouchContext.tsx, CheckoutFlow.tsx, PaymentForm.tsx                                 
+  - Prices stored in localStorage, calculated client-side                                       
+  - Server never validates prices against database before payment                               
+  - Attack: Modify localStorage → pay $1 for $1000 item                                         
+                                                                                                
+  5. Admin Login Security Disabled                                                              
+                                                                                                
+  File: src/app/api/admin/login/route.ts (lines 72-147)                                         
+  - Rate limiting: DISABLED (commented out)                                                     
+  - IP allowlist: DISABLED (commented out)                                                      
+  - Suspicious login detection: DISABLED                                                        
+  - Captcha bypass: if (captchaToken !== 'bypassed') allows skipping captcha                    
+                                                                                                
+  6. Payment Amount Not Verified                                                                
+                                                                                                
+  - Stripe: Session verification doesn't compare amount_total to order amount                   
+  - PayPal: Amount sent from frontend without server validation                                 
+  - Crypto: Transaction amounts client-calculated, never verified on-chain                      
+                                                                                                
+  ---                                                                                           
+  ⚠️ HIGH SEVERITY ISSUES                                                                       
+  ┌─────────────────────────────────────────┬─────────────────────────────┬────────────────────┐
+  │                  Issue                  │          Location           │       Impact       │
+  ├─────────────────────────────────────────┼─────────────────────────────┼────────────────────┤
+  │ In-memory rate limiting (lost on        │ apiAuth.ts, adminAuth.ts    │ Brute force        │
+  │ restart)                                │                             │ attacks            │
+  ├─────────────────────────────────────────┼─────────────────────────────┼────────────────────┤
+  │ Weak 2FA code generation                │ twoFactor.ts:15             │ Predictable codes  │
+  │ (Math.random())                         │                             │                    │
+  ├─────────────────────────────────────────┼─────────────────────────────┼────────────────────┤
+  │ XSS protection uses blacklist approach  │ database.ts:227             │ Bypassable filters │
+  ├─────────────────────────────────────────┼─────────────────────────────┼────────────────────┤
+  │ No CSRF protection                      │ All state-changing          │ Cross-site attacks │
+  │                                         │ endpoints                   │                    │
+  ├─────────────────────────────────────────┼─────────────────────────────┼────────────────────┤
+  │ Inventory race condition                │ orders/route.ts:158-320     │ Overselling        │
+  ├─────────────────────────────────────────┼─────────────────────────────┼────────────────────┤
+  │ Wallet addresses stored with PII        │ orders/route.ts:229         │ Privacy violation  │
+  ├─────────────────────────────────────────┼─────────────────────────────┼────────────────────┤
+  │ Session manager code exists but unused  │ sessionManager.ts           │ Dead code          │
+  ├─────────────────────────────────────────┼─────────────────────────────┼────────────────────┤
+  │ Console logging customer emails         │ send-receipt/route.ts:179   │ Log exposure       │
+  └─────────────────────────────────────────┴─────────────────────────────┴────────────────────┘
+  ---                                                                                           
+  📊 Vulnerability Count by Category                                                            
+  ┌────────────────────┬──────────┬──────┬────────┬─────┐                                       
+  │      Category      │ Critical │ High │ Medium │ Low │                                       
+  ├────────────────────┼──────────┼──────┼────────┼─────┤                                       
+  │ Authentication     │ 3        │ 4    │ 2      │ 1   │                                       
+  ├────────────────────┼──────────┼──────┼────────┼─────┤                                       
+  │ Authorization/IDOR │ 2        │ 2    │ 1      │ -   │                                       
+  ├────────────────────┼──────────┼──────┼────────┼─────┤                                       
+  │ Payment Security   │ 4        │ 3    │ 3      │ 1   │                                       
+  ├────────────────────┼──────────┼──────┼────────┼─────┤                                       
+  │ Input Validation   │ 1        │ 3    │ 4      │ 2   │                                       
+  ├────────────────────┼──────────┼──────┼────────┼─────┤                                       
+  │ Data Exposure      │ 2        │ 3    │ 2      │ -   │                                       
+  ├────────────────────┼──────────┼──────┼────────┼─────┤                                       
+  │ Crypto/Wallet      │ 3        │ 4    │ 3      │ -   │                                       
+  ├────────────────────┼──────────┼──────┼────────┼─────┤                                       
+  │ TOTAL              │ 15       │ 19   │ 15     │ 4   │                                       
+  └────────────────────┴──────────┴──────┴────────┴─────┘                                       
+  ---                                                                                           
+  🔧 Immediate Action Items                                                                     
+                                                                                                
+  Must Fix Before Going Live:                                                                   
+                                                                                                
+  1. Rotate all keys immediately:                                                               
+    - Supabase service role key                                                                 
+    - Supabase anon key                                                                         
+    - JWT secret                                                                                
+    - Remove all hardcoded fallbacks from code                                                  
+  2. Fix the Order IDOR:                                                                        
+  // Add to GET /api/orders/[id]                                                                
+  const user = await verifyAuth(request);                                                       
+  if (order.customer_email !== user.email) return 401;                                          
+  3. Server-side price validation:                                                              
+    - Fetch current prices from DB before payment                                               
+    - Compare payment processor amount to calculated total                                      
+  4. Re-enable admin login security:                                                            
+    - Uncomment rate limiting                                                                   
+    - Uncomment IP allowlist                                                                    
+    - Remove captcha bypass                                                                     
+  5. Move to Redis for rate limiting (in-memory doesn't work with multiple instances)           
+  6. Add authentication to:                                                                     
+    - GET /api/orders/[id]                                                                      
+    - GET /api/site-content/[id]                                                                
+    - Wishlist manipulation endpoints                                                           
+                                                                                                
+  ---                                                                                           
+  📁 Files Requiring Immediate Attention                                                        
+                                                                                                
+  src/lib/supabase.ts              ← Remove hardcoded keys                                      
+  src/app/api/orders/[id]/route.ts ← Add authentication                                         
+  src/app/api/admin/login/route.ts ← Re-enable security                                         
+  middleware.ts                     ← Remove default JWT secret                                 
+  src/app/api/orders/route.ts      ← Add price validation                                       
+  src/contexts/GemPouchContext.tsx ← Don't trust client prices                                  
+                                                                                                
+  ---                                                                                           
+  ✅ What's Done Well                                                                           
+                                                                                                
+  - Supabase parameterized queries (prevents SQL injection)                                     
+  - Security middleware structure exists                                                        
+  - Input sanitization functions implemented                                                    
+  - Admin/user auth separation conceptually correct                                             
+  - SameSite cookies on admin tokens                                                            
+                                                                                                
+  ---                                                                                           
+  Summary                                                                                       
+                                                                                                
+  The site has fundamental security issues that would allow attackers to:                       
+  1. Access any customer's order/PII                                                            
+  2. Forge admin access                                                                         
+  3. Pay any amount for products                                                                
+  4. Bypass all login protections                                                               
+                                                                                                
+  Do not go live until critical issues are resolved.
