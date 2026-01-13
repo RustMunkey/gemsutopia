@@ -1,21 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-import { createClient } from '@supabase/supabase-js';
-
+import { supabaseAdmin as supabase } from '@/lib/supabase';
 import { filterOrdersByMode } from '@/lib/utils/orderUtils';
-
 import { requireAdmin, extractAuth, checkRateLimit } from '@/lib/security/apiAuth';
-
 import { sanitizeInput, validateEmail, validateRequiredFields, sanitizeObject, sanitizeEmail } from '@/lib/security/sanitize';
 
 export const dynamic = 'force-dynamic';
-
-
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 // Function to determine if an order is a test order based on payment details and system mode
 function isTestOrderFromPayment(orderData: any, systemMode?: string): boolean {

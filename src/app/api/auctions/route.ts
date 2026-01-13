@@ -1,22 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-import { supabase } from '@/lib/supabase';
-
-import { createClient } from '@supabase/supabase-js';
-
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 import jwt from 'jsonwebtoken';
 
 export const dynamic = 'force-dynamic';
 
-
-
 const JWT_SECRET = process.env.JWT_SECRET || 'gem-admin-super-secret-jwt-key-2024-change-this-in-production';
-
-// Create admin client with service role key
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 // Verify admin token
 function verifyAdminToken(request: NextRequest): boolean {

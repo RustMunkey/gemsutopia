@@ -3,7 +3,8 @@ import Stripe from 'stripe';
 
 export const dynamic = 'force-dynamic';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+// Lazy initialization to avoid build-time errors
+const getStripe = () => new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-07-30.basil',
 });
 
@@ -18,7 +19,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const paymentIntent = await stripe.paymentIntents.create({
+    const paymentIntent = await getStripe().paymentIntents.create({
       amount: Math.round(amount * 100), // Convert to cents
       currency,
       metadata,

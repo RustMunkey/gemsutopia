@@ -1,20 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-import { createClient } from '@supabase/supabase-js';
-
+import { supabaseAdmin as adminSupabase } from '@/lib/supabase';
 import jwt from 'jsonwebtoken';
 
 export const dynamic = 'force-dynamic';
 
-
-
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
-
-// Admin Supabase client with service role key
-const adminSupabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 function verifyAdminToken(request: NextRequest): boolean {
   try {

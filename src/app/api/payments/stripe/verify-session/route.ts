@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+export const dynamic = 'force-dynamic';
+
+// Lazy initialization to avoid build-time errors
+const getStripe = () => new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-07-30.basil',
 });
-
-export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    const session = await getStripe().checkout.sessions.retrieve(sessionId);
 
     if (session.payment_status !== 'paid') {
       return NextResponse.json(

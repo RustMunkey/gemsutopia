@@ -1,11 +1,7 @@
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 
 // ⚠️ This file should only be used for client-side validation
 // All actual database operations should go through secure API routes
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 export interface DiscountCode {
   id?: number;

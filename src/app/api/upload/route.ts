@@ -1,19 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { supabaseAdmin as adminSupabase } from '@/lib/supabase';
 import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
 const ADMIN_EMAILS = [
   process.env.ADMIN_EMAIL_1,
-  process.env.ADMIN_EMAIL_2, 
+  process.env.ADMIN_EMAIL_2,
   process.env.ADMIN_EMAIL_3
 ].filter(Boolean);
-
-// Admin Supabase client with service role key
-const adminSupabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 // Rate limiting storage (in production, use Redis)
 const uploadAttempts = new Map<string, { count: number; lastAttempt: number }>();
