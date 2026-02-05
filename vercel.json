@@ -6,7 +6,7 @@
   "crons": [
     {
       "path": "/api/cron/end-auctions",
-      "schedule": "* * * * *"
+      "schedule": "0 0 * * *"
     }
   ]
 }

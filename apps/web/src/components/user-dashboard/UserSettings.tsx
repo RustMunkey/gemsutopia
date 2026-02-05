@@ -90,7 +90,7 @@ export default function UserSettings() {
     }
     setChangingPassword(true);
     try {
-      const result = await authClient.changePassword({
+      const result = await (authClient as any).changePassword({
         currentPassword: passwordData.currentPassword,
         newPassword: passwordData.newPassword,
       });

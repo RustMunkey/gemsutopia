@@ -4,6 +4,8 @@ import Footer from '@/components/layout/Footer';
 import AuctionContent from './AuctionContent';
 import { store } from '@/lib/store';
 
+export const dynamic = 'force-dynamic';
+
 // Auction interface matching the database schema (Drizzle returns camelCase)
 interface Auction {
   id: string;

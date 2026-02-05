@@ -4,6 +4,8 @@ import ProductContent from './ProductContent';
 import { notFound } from 'next/navigation';
 import { store } from '@/lib/store';
 
+export const dynamic = 'force-dynamic';
+
 export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 

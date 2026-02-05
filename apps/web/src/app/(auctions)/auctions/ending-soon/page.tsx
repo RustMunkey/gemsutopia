@@ -6,6 +6,8 @@ import { EmptyAuctions } from '@/components/empty-states';
 import { store } from '@/lib/store';
 import { IconClock } from '@tabler/icons-react';
 
+export const dynamic = 'force-dynamic';
+
 export default async function EndingSoonAuctions() {
   // Get active auctions sorted by end time (soonest first)
   const { auctions } = await store.auctions.list({ status: 'active', sort: 'endsAt', order: 'asc' });

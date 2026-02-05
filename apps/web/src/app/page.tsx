@@ -1,8 +1,7 @@
 import HomeContent from './HomeContent';
 import { store } from '@/lib/store';
 
-// Revalidate every 60 seconds
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
 export default async function Home() {
   // Fetch from Jetbeans Storefront API
