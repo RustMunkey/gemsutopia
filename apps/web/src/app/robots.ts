@@ -8,7 +8,23 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/admin/', '/api/', '/checkout/'],
+        disallow: [
+          '/admin/',
+          '/api/',
+          '/checkout/',
+          '/_next/image',
+          '/dashboard/',
+          '/dev/',
+          '/gem-pouch',
+          '/sign-in',
+          '/sign-up',
+          '/signup',
+        ],
+      },
+      // Block aggressive crawlers entirely
+      {
+        userAgent: ['AhrefsBot', 'SemrushBot', 'MJ12bot', 'DotBot', 'BLEXBot', 'PetalBot'],
+        disallow: '/',
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
