@@ -7,7 +7,7 @@ import { getCache, setCache } from '@/lib/cache';
 const CACHE_KEY = 'content:site-content';
 const CACHE_TTL = 300; // 5 minutes
 
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
