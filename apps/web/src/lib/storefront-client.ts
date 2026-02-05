@@ -1,0 +1,624 @@
+/**
+ * Storefront API Client
+ *
+ * A simple, framework-agnostic client for connecting to the Jetbeans Storefront API.
+ * Drop this file into any frontend project and configure with your API key.
+ *
+ * Usage:
+ *   const store = new StorefrontClient({ apiKey: 'sf_xxxxx' })
+ *   const products = await store.products.list()
+ */
+
+export type StorefrontConfig = {
+	apiKey: string
+	baseUrl?: string
+}
+
+type RequestOptions = {
+	method?: 'GET' | 'POST' | 'PATCH' | 'DELETE'
+	body?: unknown
+	params?: Record<string, string | number | boolean | undefined>
+	token?: string
+}
+
+// ============================================
+// Types
+// ============================================
+
+export type Product = {
+	id: string
+	name: string
+	slug: string
+	description: string | null
+	shortDescription: string | null
+	price: string
+	compareAtPrice: string | null
+	images: string[] | null
+	thumbnail: string | null
+	isSubscribable: boolean | null
+	isFeatured: boolean | null
+	category: { id: string; name: string | null; slug: string | null } | null
+	tags: string[] | null
+	createdAt: string
+}
+
+export type Category = {
+	id: string
+	name: string
+	slug: string
+	description: string | null
+	image: string | null
+	parentId: string | null
+	sortOrder: number | null
+	productCount?: number
+}
+
+export type Auction = {
+	id: string
+	title: string
+	description: string | null
+	images: string[] | null
+	type: string
+	status: string
+	startingPrice: string
+	currentBid: string | null
+	bidCount: number | null
+	reserveMet: boolean | null
+	startsAt: string
+	endsAt: string
+	autoExtend: boolean | null
+	autoExtendMinutes: number | null
+	product: { id: string; name: string; slug: string; thumbnail: string | null } | null
+}
+
+export type Order = {
+	id: string
+	orderNumber: string
+	status: string
+	subtotal: string
+	taxAmount: string
+	shippingAmount: string
+	total: string
+	trackingNumber: string | null
+	trackingUrl: string | null
+	createdAt: string
+	shippedAt: string | null
+	deliveredAt: string | null
+}
+
+export type Address = {
+	id: string
+	firstName: string
+	lastName: string
+	company: string | null
+	addressLine1: string
+	addressLine2: string | null
+	city: string
+	state: string
+	postalCode: string
+	country: string
+	phone: string | null
+	isDefault: boolean | null
+}
+
+export type Customer = {
+	id: string
+	email: string
+	name: string
+	phone: string | null
+	image: string | null
+	addresses?: Address[]
+}
+
+export type AuthResponse = {
+	user: Customer
+	token: string
+}
+
+export type SiteSettings = {
+	name: string
+	tagline: string | null
+	description: string | null
+	logo: string | null
+	favicon: string | null
+	email: string | null
+	phone: string | null
+	address: string | null
+	social: {
+		facebook: string | null
+		instagram: string | null
+		twitter: string | null
+		tiktok: string | null
+		youtube: string | null
+	}
+	theme: {
+		primaryColor: string
+		secondaryColor: string | null
+		accentColor: string | null
+	}
+	currency: string
+	currencySymbol: string
+	taxRate: number | null
+	freeShippingThreshold: number | null
+	legal: {
+		termsUrl: string | null
+		privacyUrl: string | null
+		refundPolicyUrl: string | null
+	}
+	seo: {
+		title: string | null
+		description: string | null
+		keywords: string | null
+	}
+}
+
+export type ShippingRate = {
+	id: string
+	name: string
+	carrier: string
+	price: number
+	estimatedDays: string | null
+	isFree: boolean
+}
+
+export type WishlistItem = {
+	id: string
+	addedAt: string
+	product: {
+		id: string
+		name: string
+		slug: string
+		price: string
+		thumbnail: string | null
+		images: string[] | null
+		isActive: boolean | null
+	}
+}
+
+export type Review = {
+	id: string
+	rating: number
+	title: string | null
+	body: string | null
+	isVerifiedPurchase: boolean | null
+	helpfulCount: number | null
+	createdAt: string
+	author: {
+		name: string
+		image: string | null
+	}
+}
+
+export type Discount = {
+	code: string | null
+	type: string
+	value: number
+	discountAmount: number
+	name: string
+}
+
+export type Pagination = {
+	page: number
+	limit: number
+	totalCount: number
+	totalPages: number
+	hasMore: boolean
+}
+
+// ============================================
+// Client
+// ============================================
+
+export class StorefrontClient {
+	private apiKey: string
+	private baseUrl: string
+	private customerToken: string | null = null
+
+	constructor(config: StorefrontConfig) {
+		this.apiKey = config.apiKey
+		this.baseUrl = config.baseUrl?.replace(/\/$/, '') || 'https://app.jetbeans.cafe'
+	}
+
+	/**
+	 * Set the customer auth token (after login/register)
+	 */
+	setCustomerToken(token: string | null) {
+		this.customerToken = token
+	}
+
+	/**
+	 * Get the current customer token
+	 */
+	getCustomerToken(): string | null {
+		return this.customerToken
+	}
+
+	private async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
+		const { method = 'GET', body, params, token } = options
+
+		// Build URL with query params
+		let url = `${this.baseUrl}/api/storefront${endpoint}`
+		if (params) {
+			const searchParams = new URLSearchParams()
+			for (const [key, value] of Object.entries(params)) {
+				if (value !== undefined) {
+					searchParams.set(key, String(value))
+				}
+			}
+			const queryString = searchParams.toString()
+			if (queryString) {
+				url += `?${queryString}`
+			}
+		}
+
+		// Build headers
+		const headers: Record<string, string> = {
+			'X-Storefront-Key': this.apiKey,
+			'Content-Type': 'application/json',
+		}
+
+		// Add auth token if available
+		const authToken = token || this.customerToken
+		if (authToken) {
+			headers['Authorization'] = `Bearer ${authToken}`
+		}
+
+		const response = await fetch(url, {
+			method,
+			headers,
+			body: body ? JSON.stringify(body) : undefined,
+		})
+
+		const data = await response.json()
+
+		if (!response.ok) {
+			throw new StorefrontError(data.error || 'Request failed', response.status, data)
+		}
+
+		return data as T
+	}
+
+	// ============================================
+	// Products
+	// ============================================
+
+	products = {
+		list: async (options?: {
+			page?: number
+			limit?: number
+			category?: string
+			search?: string
+			featured?: boolean
+			subscribable?: boolean
+			sort?: 'name' | 'price' | 'createdAt'
+			order?: 'asc' | 'desc'
+		}): Promise<{ products: Product[]; pagination: Pagination }> => {
+			return this.request('/products', {
+				params: {
+					page: options?.page,
+					limit: options?.limit,
+					category: options?.category,
+					search: options?.search,
+					featured: options?.featured,
+					subscribable: options?.subscribable,
+					sort: options?.sort,
+					order: options?.order,
+				},
+			})
+		},
+
+		get: async (slug: string): Promise<{ product: Product }> => {
+			return this.request(`/products/${slug}`)
+		},
+	}
+
+	// ============================================
+	// Categories
+	// ============================================
+
+	categories = {
+		list: async (options?: {
+			count?: boolean
+			parentOnly?: boolean
+		}): Promise<{ categories: Category[] }> => {
+			return this.request('/categories', {
+				params: {
+					count: options?.count,
+					parent_only: options?.parentOnly,
+				},
+			})
+		},
+	}
+
+	// ============================================
+	// Auctions
+	// ============================================
+
+	auctions = {
+		list: async (options?: {
+			page?: number
+			limit?: number
+			status?: 'active' | 'scheduled' | 'upcoming' | 'ended'
+			type?: 'reserve' | 'no_reserve'
+			sort?: 'endsAt' | 'startsAt' | 'currentBid' | 'bidCount' | 'createdAt'
+			order?: 'asc' | 'desc'
+		}): Promise<{ auctions: Auction[]; pagination: Pagination }> => {
+			return this.request('/auctions', {
+				params: {
+					page: options?.page,
+					limit: options?.limit,
+					status: options?.status,
+					type: options?.type,
+					sort: options?.sort,
+					order: options?.order,
+				},
+			})
+		},
+
+		get: async (id: string): Promise<{ auction: Auction }> => {
+			return this.request(`/auctions/${id}`)
+		},
+	}
+
+	// ============================================
+	// Auth
+	// ============================================
+
+	auth = {
+		register: async (data: {
+			email: string
+			password: string
+			name: string
+			phone?: string
+		}): Promise<AuthResponse> => {
+			const response = await this.request<AuthResponse>('/auth/register', {
+				method: 'POST',
+				body: data,
+			})
+			this.customerToken = response.token
+			return response
+		},
+
+		login: async (data: {
+			email: string
+			password: string
+		}): Promise<AuthResponse> => {
+			const response = await this.request<AuthResponse>('/auth/login', {
+				method: 'POST',
+				body: data,
+			})
+			this.customerToken = response.token
+			return response
+		},
+
+		logout: () => {
+			this.customerToken = null
+		},
+
+		getProfile: async (): Promise<{ user: Customer }> => {
+			return this.request('/auth/me')
+		},
+
+		updateProfile: async (data: {
+			name?: string
+			phone?: string
+			image?: string
+		}): Promise<{ user: Customer }> => {
+			return this.request('/auth/me', {
+				method: 'PATCH',
+				body: data,
+			})
+		},
+
+		getAddresses: async (): Promise<{ addresses: Address[] }> => {
+			return this.request('/auth/addresses')
+		},
+
+		addAddress: async (data: Omit<Address, 'id'>): Promise<{ address: Address }> => {
+			return this.request('/auth/addresses', {
+				method: 'POST',
+				body: data,
+			})
+		},
+
+		deleteAddress: async (addressId: string): Promise<{ success: boolean }> => {
+			return this.request('/auth/addresses', {
+				method: 'DELETE',
+				params: { id: addressId },
+			})
+		},
+	}
+
+	// ============================================
+	// Orders
+	// ============================================
+
+	orders = {
+		list: async (customerId: string, options?: {
+			page?: number
+			limit?: number
+			status?: string
+		}): Promise<{ orders: Order[]; pagination: Pagination }> => {
+			return this.request('/orders', {
+				params: {
+					customer_id: customerId,
+					page: options?.page,
+					limit: options?.limit,
+					status: options?.status,
+				},
+			})
+		},
+
+		get: async (orderId: string): Promise<{ order: Order }> => {
+			return this.request(`/orders/${orderId}`)
+		},
+	}
+
+	// ============================================
+	// Checkout
+	// ============================================
+
+	checkout = {
+		create: async (data: {
+			customerId: string
+			items: { variantId: string; quantity: number }[]
+			shippingAddress: Omit<Address, 'id' | 'isDefault'>
+			billingAddress?: Omit<Address, 'id' | 'isDefault'>
+			customerNotes?: string
+			metadata?: Record<string, unknown>
+		}): Promise<{ order: Order & { items: unknown[] } }> => {
+			return this.request('/checkout', {
+				method: 'POST',
+				body: data,
+			})
+		},
+	}
+
+	// ============================================
+	// Payments
+	// ============================================
+
+	payments = {
+		createStripeSession: async (data: {
+			items: { name: string; description?: string; image?: string; price: number; quantity: number }[]
+			successUrl: string
+			cancelUrl: string
+			customerEmail?: string
+			metadata?: Record<string, string>
+			shippingAmount?: number
+			discountAmount?: number
+			discountCode?: string
+		}): Promise<{ sessionId: string; url: string }> => {
+			return this.request('/payments/stripe/checkout', {
+				method: 'POST',
+				body: data,
+			})
+		},
+	}
+
+	// ============================================
+	// Discounts
+	// ============================================
+
+	discounts = {
+		validate: async (code: string, subtotal?: number): Promise<{ valid: boolean; discount: Discount }> => {
+			return this.request('/discounts/validate', {
+				method: 'POST',
+				body: { code, subtotal },
+			})
+		},
+	}
+
+	// ============================================
+	// Site
+	// ============================================
+
+	site = {
+		getSettings: async (): Promise<{ site: SiteSettings }> => {
+			return this.request('/site')
+		},
+	}
+
+	// ============================================
+	// Shipping
+	// ============================================
+
+	shipping = {
+		getRates: async (data: {
+			country: string
+			state?: string
+			weight?: number
+			subtotal?: number
+		}): Promise<{
+			rates: ShippingRate[]
+			freeShippingThreshold: number | null
+			freeShippingApplied: boolean
+		}> => {
+			return this.request('/shipping/rates', {
+				method: 'POST',
+				body: data,
+			})
+		},
+	}
+
+	// ============================================
+	// Wishlist
+	// ============================================
+
+	wishlist = {
+		list: async (): Promise<{ wishlist: WishlistItem[] }> => {
+			return this.request('/wishlist')
+		},
+
+		add: async (productId: string): Promise<{ success: boolean }> => {
+			return this.request('/wishlist', {
+				method: 'POST',
+				body: { productId },
+			})
+		},
+
+		remove: async (productId: string): Promise<{ success: boolean }> => {
+			return this.request('/wishlist', {
+				method: 'DELETE',
+				params: { productId },
+			})
+		},
+	}
+
+	// ============================================
+	// Reviews
+	// ============================================
+
+	reviews = {
+		list: async (productId: string, options?: {
+			page?: number
+			limit?: number
+		}): Promise<{
+			reviews: Review[]
+			summary: { averageRating: number | null; totalReviews: number }
+			pagination: Pagination
+		}> => {
+			return this.request('/reviews', {
+				params: {
+					productId,
+					page: options?.page,
+					limit: options?.limit,
+				},
+			})
+		},
+
+		create: async (data: {
+			productId: string
+			rating: number
+			title?: string
+			body?: string
+		}): Promise<{ review: Review; message: string }> => {
+			return this.request('/reviews', {
+				method: 'POST',
+				body: data,
+			})
+		},
+	}
+}
+
+// ============================================
+// Error Class
+// ============================================
+
+export class StorefrontError extends Error {
+	status: number
+	data: unknown
+
+	constructor(message: string, status: number, data?: unknown) {
+		super(message)
+		this.name = 'StorefrontError'
+		this.status = status
+		this.data = data
+	}
+}
+
+// ============================================
+// Default Export
+// ============================================
+
+export default StorefrontClient

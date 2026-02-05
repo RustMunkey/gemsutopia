@@ -1,0 +1,56 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getAdminSession } from '@/lib/auth';
+import { db, stats } from '@gemsutopia/database';
+import { eq } from 'drizzle-orm';
+import { triggerEvent } from '@gemsutopia/realtime';
+import { deleteCache } from '@gemsutopia/cache';
+
+export const dynamic = 'force-dynamic';
+
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const session = await getAdminSession();
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { id } = await params;
+  const body = await request.json();
+  const { title, value, sortOrder, isActive } = body;
+
+  const updateData: Record<string, unknown> = {};
+  if (title !== undefined) updateData.title = title;
+  if (value !== undefined) updateData.value = value;
+  if (sortOrder !== undefined) updateData.sortOrder = sortOrder;
+  if (isActive !== undefined) updateData.isActive = isActive;
+
+  const [updated] = await db.update(stats).set(updateData).where(eq(stats.id, id)).returning();
+
+  if (!updated) {
+    return NextResponse.json({ error: 'Stat not found' }, { status: 404 });
+  }
+
+  await deleteCache('content:stats');
+  await triggerEvent('content', 'stats-updated', { id: updated.id });
+
+  return NextResponse.json({ data: updated });
+}
+
+export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const session = await getAdminSession();
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { id } = await params;
+
+  const [deleted] = await db.delete(stats).where(eq(stats.id, id)).returning();
+
+  if (!deleted) {
+    return NextResponse.json({ error: 'Stat not found' }, { status: 404 });
+  }
+
+  await deleteCache('content:stats');
+  await triggerEvent('content', 'stats-deleted', { id });
+
+  return NextResponse.json({ data: { success: true } });
+}

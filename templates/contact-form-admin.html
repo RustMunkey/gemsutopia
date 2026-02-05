@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Contact Form Submission</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden;">
+          <tr>
+            <td style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 30px; text-align: center;">
+              <h1 style="color: #d4af37; margin: 0; font-size: 28px;">Gemsutopia Admin</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px 30px;">
+              <h2 style="color: #1a1a2e; margin: 0 0 20px 0;">New Contact Form Submission</h2>
+
+              <!-- Contact Details -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0f7ff; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #2196f3;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="color: #333333; font-size: 14px; margin: 0 0 10px 0;"><strong>Name:</strong> {{customerName}}</p>
+                    <p style="color: #333333; font-size: 14px; margin: 0 0 10px 0;"><strong>Email:</strong> <a href="mailto:{{customerEmail}}" style="color: #2196f3;">{{customerEmail}}</a></p>
+                    <p style="color: #333333; font-size: 14px; margin: 0;"><strong>Subject:</strong> {{subject}}</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Message -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f9f9f9; border-radius: 6px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <h3 style="color: #1a1a2e; margin: 0 0 15px 0; font-size: 16px;">Message</h3>
+                    <p style="color: #666666; font-size: 14px; margin: 0; white-space: pre-wrap; line-height: 1.6;">{{message}}</p>
+                  </td>
+                </tr>
+              </table>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 30px;">
+                <tr>
+                  <td align="center">
+                    <a href="mailto:{{customerEmail}}" style="display: inline-block; background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%); color: #ffffff; text-decoration: none; padding: 14px 40px; border-radius: 6px; font-weight: 600;">
+                      Reply to Customer
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color: #1a1a2e; padding: 20px; text-align: center;">
+              <p style="color: #888888; font-size: 12px; margin: 0;">Gemsutopia Admin Notification</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

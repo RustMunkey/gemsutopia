@@ -1,8 +1,12 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# ========================================
+# GEMSUTOPIA MONOREPO - GITIGNORE
+# ========================================
 
-# dependencies
-/node_modules
-/.pnp
+# ----------------------------------------
+# Dependencies
+# ----------------------------------------
+node_modules/
+.pnp
 .pnp.*
 .yarn/*
 !.yarn/patches
@@ -10,32 +14,177 @@
 !.yarn/releases
 !.yarn/versions
 
-# testing
-/coverage
+# ----------------------------------------
+# Build outputs
+# ----------------------------------------
+# Next.js
+.next/
+out/
+build/
 
-# next.js
-/.next/
-/out/
+# TypeScript
+*.tsbuildinfo
+dist/
+*.d.ts.map
 
-# production
-/build
+# Package build outputs
+packages/*/dist/
 
-# misc
+# ----------------------------------------
+# Environment files
+# ----------------------------------------
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Keep example files
+!.env.example
+!.env.*.example
+
+# ----------------------------------------
+# Turbo
+# ----------------------------------------
+.turbo/
+
+# ----------------------------------------
+# Vercel
+# ----------------------------------------
+.vercel/
+
+# ----------------------------------------
+# Testing
+# ----------------------------------------
+coverage/
+.nyc_output/
+*.lcov
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+# Cypress
+cypress/screenshots/
+cypress/videos/
+
+# ----------------------------------------
+# IDE & Editors
+# ----------------------------------------
+# VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+
+# Local History for VSCode
+.history/
+
+# JetBrains
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# ----------------------------------------
+# OS Files
+# ----------------------------------------
 .DS_Store
-*.pem
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
 
-# debug
+# ----------------------------------------
+# Logs
+# ----------------------------------------
+logs/
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# ----------------------------------------
+# Runtime & Cache
+# ----------------------------------------
+*.pid
+*.seed
+*.pid.lock
+.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
 
-# vercel
-.vercel
+# ----------------------------------------
+# Secrets & Credentials
+# ----------------------------------------
+*.pem
+*.key
+*.cert
+*.p12
+credentials.json
+service-account.json
+secrets/
 
-# typescript
-*.tsbuildinfo
+# ----------------------------------------
+# Database
+# ----------------------------------------
+*.db
+*.sqlite
+*.sqlite3
+database/*.db
+
+# ----------------------------------------
+# Misc
+# ----------------------------------------
+# Sentry
+.sentryclirc
+
+# Storybook
+storybook-static/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Lock files (keep pnpm-lock.yaml)
+package-lock.json
+yarn.lock
+
+# Generated files
 next-env.d.ts
+
+# ----------------------------------------
+# Project-specific ignores
+# ----------------------------------------
+# Local development files
+*.local.ts
+*.local.js
+
+# Uploaded files (use cloud storage instead)
+uploads/
+public/uploads/
+
+# Claude
+.claude/*
+.claude
