@@ -1,14 +1,4 @@
-import {
-  getSetting,
-  setSetting,
-  getAllSettings,
-  initializeDefaultSettings,
-} from '@/lib/database/siteSettings';
-
-// Initialize defaults on module load
-initializeDefaultSettings().catch(() => {
-  // Failed to initialize default settings
-});
+import { getSetting, getAllSettings } from '@/lib/database/siteSettings';
 
 export interface SiteInfo {
   siteName: string;
@@ -16,7 +6,7 @@ export interface SiteInfo {
   siteFavicon: string;
 }
 
-// Get all site info from database
+// Get all site info from database (read-only)
 export async function getSiteInfo(): Promise<SiteInfo> {
   try {
     const settings = await getAllSettings();
@@ -36,36 +26,7 @@ export async function getSiteInfo(): Promise<SiteInfo> {
   }
 }
 
-// Update site info in database
-export async function updateSiteInfo(updates: Partial<SiteInfo>): Promise<boolean> {
-  try {
-    const dbUpdates: Record<string, string> = {};
-
-    if (updates.siteName !== undefined) {
-      dbUpdates.site_name = updates.siteName;
-    }
-    if (updates.siteTagline !== undefined) {
-      dbUpdates.site_tagline = updates.siteTagline;
-    }
-    if (updates.siteFavicon !== undefined) {
-      dbUpdates.site_favicon = updates.siteFavicon;
-    }
-
-    if (Object.keys(dbUpdates).length > 0) {
-      const success = await Promise.all(
-        Object.entries(dbUpdates).map(([key, value]) => setSetting(key, value))
-      );
-
-      return success.every(result => result);
-    }
-
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-// Get specific site setting
+// Get specific site setting (read-only)
 export async function getSiteSetting(key: keyof SiteInfo): Promise<string | null> {
   const dbKey =
     key === 'siteName'
@@ -80,3 +41,5 @@ export async function getSiteSetting(key: keyof SiteInfo): Promise<string | null
 
   return await getSetting(dbKey);
 }
+
+// Site info updates moved to JetBeans BaaS

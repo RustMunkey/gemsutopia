@@ -1,26 +1,11 @@
 import { db, discountCodes, discountUsage } from '@/lib/db';
-import { eq, desc, sql } from 'drizzle-orm';
-
-export interface DiscountCode {
-  id?: string;
-  code: string;
-  description?: string;
-  discount_type: 'percentage' | 'fixed';
-  discount_value: number;
-  free_shipping: boolean;
-  minimum_order: number;
-  usage_limit?: number;
-  used_count: number;
-  is_active: boolean;
-  expires_at?: string;
-  created_at?: string;
-  updated_at?: string;
-}
+import { eq, sql } from 'drizzle-orm';
 
 export interface DiscountValidationResult {
   valid: boolean;
   message: string;
   discount?: {
+    id: string;
     code: string;
     type: 'percentage' | 'fixed';
     value: number;
@@ -29,114 +14,7 @@ export interface DiscountValidationResult {
   };
 }
 
-// Get all discount codes
-export async function getAllDiscountCodes(): Promise<DiscountCode[]> {
-  try {
-    const codes = await db.query.discountCodes.findMany({
-      orderBy: [desc(discountCodes.createdAt)],
-    });
-
-    return codes.map(code => ({
-      id: code.id,
-      code: code.code,
-      description: code.description || undefined,
-      discount_type: code.type as 'percentage' | 'fixed',
-      discount_value: parseFloat(code.value),
-      free_shipping: code.freeShipping || false,
-      minimum_order: parseFloat(code.minimumOrderAmount || '0'),
-      usage_limit: code.usageLimit || undefined,
-      used_count: code.timesUsed || 0,
-      is_active: code.isActive || false,
-      expires_at: code.expiresAt || undefined,
-      created_at: code.createdAt || undefined,
-      updated_at: code.updatedAt || undefined,
-    }));
-  } catch {
-    return [];
-  }
-}
-
-// Create a new discount code
-export async function createDiscountCode(
-  discountCode: Omit<DiscountCode, 'id' | 'used_count' | 'created_at' | 'updated_at'>
-): Promise<DiscountCode | null> {
-  try {
-    const [newCode] = await db
-      .insert(discountCodes)
-      .values({
-        code: discountCode.code.toUpperCase(),
-        description: discountCode.description || null,
-        type: discountCode.discount_type,
-        value: String(discountCode.discount_value),
-        freeShipping: discountCode.free_shipping,
-        minimumOrderAmount: String(discountCode.minimum_order),
-        usageLimit: discountCode.usage_limit || null,
-        timesUsed: 0,
-        isActive: discountCode.is_active,
-        expiresAt: discountCode.expires_at || null,
-      })
-      .returning();
-
-    if (!newCode) return null;
-
-    return {
-      id: newCode.id,
-      code: newCode.code,
-      description: newCode.description || undefined,
-      discount_type: newCode.type as 'percentage' | 'fixed',
-      discount_value: parseFloat(newCode.value),
-      free_shipping: newCode.freeShipping || false,
-      minimum_order: parseFloat(newCode.minimumOrderAmount || '0'),
-      usage_limit: newCode.usageLimit || undefined,
-      used_count: newCode.timesUsed || 0,
-      is_active: newCode.isActive || false,
-      expires_at: newCode.expiresAt || undefined,
-      created_at: newCode.createdAt || undefined,
-      updated_at: newCode.updatedAt || undefined,
-    };
-  } catch {
-    return null;
-  }
-}
-
-// Update a discount code
-export async function updateDiscountCode(
-  id: string,
-  updates: Partial<DiscountCode>
-): Promise<boolean> {
-  try {
-    const updateData: Partial<typeof discountCodes.$inferInsert> = {};
-
-    if (updates.code !== undefined) updateData.code = updates.code.toUpperCase();
-    if (updates.description !== undefined) updateData.description = updates.description;
-    if (updates.discount_type !== undefined) updateData.type = updates.discount_type;
-    if (updates.discount_value !== undefined) updateData.value = String(updates.discount_value);
-    if (updates.free_shipping !== undefined) updateData.freeShipping = updates.free_shipping;
-    if (updates.minimum_order !== undefined)
-      updateData.minimumOrderAmount = String(updates.minimum_order);
-    if (updates.usage_limit !== undefined) updateData.usageLimit = updates.usage_limit;
-    if (updates.is_active !== undefined) updateData.isActive = updates.is_active;
-    if (updates.expires_at !== undefined) updateData.expiresAt = updates.expires_at;
-
-    await db.update(discountCodes).set(updateData).where(eq(discountCodes.id, id));
-
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-// Delete a discount code
-export async function deleteDiscountCode(id: string): Promise<boolean> {
-  try {
-    await db.delete(discountCodes).where(eq(discountCodes.id, id));
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-// Validate and calculate discount
+// Validate and calculate discount (customer-facing)
 export async function validateDiscountCode(
   code: string,
   orderTotal: number
@@ -191,6 +69,7 @@ export async function validateDiscountCode(
       valid: true,
       message: `Discount applied: ${discountCode.description || code}`,
       discount: {
+        id: discountCode.id,
         code: discountCode.code,
         type: discountCode.type as 'percentage' | 'fixed',
         value: discountValue,
@@ -206,7 +85,7 @@ export async function validateDiscountCode(
   }
 }
 
-// Record discount code usage
+// Record discount code usage (called after successful order)
 export async function recordDiscountUsage(
   discountCodeId: string,
   orderId: string,
@@ -236,8 +115,8 @@ export async function recordDiscountUsage(
   }
 }
 
-// Get discount code by code
-export async function getDiscountCodeByCode(code: string): Promise<DiscountCode | null> {
+// Get discount code by code (for checkout flow)
+export async function getDiscountCodeByCode(code: string) {
   try {
     const discountCode = await db.query.discountCodes.findFirst({
       where: eq(discountCodes.code, code.toUpperCase()),
@@ -257,10 +136,10 @@ export async function getDiscountCodeByCode(code: string): Promise<DiscountCode 
       used_count: discountCode.timesUsed || 0,
       is_active: discountCode.isActive || false,
       expires_at: discountCode.expiresAt || undefined,
-      created_at: discountCode.createdAt || undefined,
-      updated_at: discountCode.updatedAt || undefined,
     };
   } catch {
     return null;
   }
 }
+
+// Admin CRUD operations moved to JetBeans BaaS

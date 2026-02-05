@@ -1,6 +1,5 @@
-import { NextRequest } from 'next/server';
-import { getAllSettings, setMultipleSettings } from '@/lib/database/siteSettings';
-import { apiSuccess, ApiError } from '@/lib/api';
+import { getAllSettings } from '@/lib/database/siteSettings';
+import { apiSuccess } from '@/lib/api';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,53 +47,4 @@ export async function GET() {
   }
 }
 
-/**
- * Save shipping settings from admin dashboard
- */
-export async function PUT(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const {
-      singleItemShippingCAD,
-      singleItemShippingUSD,
-      combinedShippingCAD,
-      combinedShippingUSD,
-      combinedShippingEnabled,
-      combinedShippingThreshold,
-      enableShipping,
-      internationalShipping,
-    } = body;
-
-    // Validate the data
-    if (
-      singleItemShippingCAD == null ||
-      singleItemShippingUSD == null ||
-      combinedShippingCAD == null ||
-      combinedShippingUSD == null
-    ) {
-      return ApiError.validation('Missing required shipping rates');
-    }
-
-    // Save all shipping settings to database
-    const settingsToSave = {
-      single_item_shipping_cad: singleItemShippingCAD.toString(),
-      single_item_shipping_usd: singleItemShippingUSD.toString(),
-      combined_shipping_cad: combinedShippingCAD.toString(),
-      combined_shipping_usd: combinedShippingUSD.toString(),
-      combined_shipping_enabled: combinedShippingEnabled ? 'true' : 'false',
-      combined_shipping_threshold: (combinedShippingThreshold || 2).toString(),
-      enable_shipping: enableShipping !== false ? 'true' : 'false',
-      international_shipping: internationalShipping !== false ? 'true' : 'false',
-    };
-
-    const success = await setMultipleSettings(settingsToSave);
-
-    if (!success) {
-      return ApiError.database('Failed to save settings');
-    }
-
-    return apiSuccess(null, 'Shipping settings saved successfully');
-  } catch {
-    return ApiError.internal('Failed to save shipping settings');
-  }
-}
+// PUT /api/shipping-settings - Admin functionality moved to JetBeans BaaS

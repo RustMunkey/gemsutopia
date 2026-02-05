@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
-import { isPublicEndpoint } from '@/lib/security/apiAuth';
 
 // Rate limiting store (in production, use Redis)
 const rateLimit = new Map<string, { count: number; resetTime: number }>();
@@ -38,7 +36,6 @@ function isRateLimited(ip: string, maxRequests: number = 60, windowMs: number = 
 }
 
 function detectXSSAttempt(url: string): boolean {
-  // Only check for the most obvious XSS attempts
   const dangerousPatterns = [
     /<script[^>]*>.*?alert.*?<\/script>/gi,
     /javascript:alert/gi,
@@ -46,14 +43,11 @@ function detectXSSAttempt(url: string): boolean {
     /eval\s*\(.*?\)/gi,
   ];
 
-  // Only check URL parameters, not the entire URL path
   const urlParams = url.split('?')[1] || '';
-
   return dangerousPatterns.some(pattern => pattern.test(urlParams));
 }
 
 function detectSQLInjection(url: string): boolean {
-  // Only check for the most obvious SQL injection attempts
   const dangerousSQLPatterns = [
     /union\s+select/gi,
     /drop\s+table/gi,
@@ -63,59 +57,18 @@ function detectSQLInjection(url: string): boolean {
     /exec\s+xp_/gi,
   ];
 
-  // Only check URL parameters, not normal paths
   const urlParams = url.split('?')[1] || '';
-
   return dangerousSQLPatterns.some(pattern => pattern.test(urlParams));
-}
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
-
-// Protected admin routes that require authentication
-const ADMIN_PROTECTED_ROUTES = ['/admin/dashboard'];
-
-// API routes that require admin authentication
-const ADMIN_API_ROUTES = [
-  '/api/admin/dashboard-stats',
-  '/api/admin/stats',
-  '/api/admin/reviews',
-  '/api/admin/faq',
-  '/api/admin/featured-products',
-  '/api/admin/gem-facts',
-  '/api/admin/pages',
-  '/api/admin/settings',
-];
-
-function isAdminRoute(pathname: string): boolean {
-  return (
-    ADMIN_PROTECTED_ROUTES.some(route => pathname.startsWith(route)) ||
-    ADMIN_API_ROUTES.some(route => pathname.startsWith(route))
-  );
-}
-
-function verifyAdminToken(token: string): boolean {
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { email: string; isAdmin: boolean };
-    return decoded.isAdmin === true;
-  } catch {
-    return false;
-  }
 }
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const isDevelopment = process.env.NODE_ENV === 'development';
-  const isLocalhost =
-    request.nextUrl.hostname === 'localhost' ||
-    request.nextUrl.hostname === '127.0.0.1' ||
-    request.nextUrl.hostname.startsWith('192.168.');
   const clientIP = getClientIP(request);
   const fullUrl = request.url;
-  const method = request.method;
 
-  // 🛡️ ENHANCED SECURITY CHECKS
+  // 🛡️ SECURITY CHECKS
 
-  // 1. Stricter rate limiting
+  // 1. Rate limiting
   if (isRateLimited(clientIP, 200, 60000)) {
     return NextResponse.json(
       {
@@ -126,7 +79,7 @@ export function proxy(request: NextRequest) {
     );
   }
 
-  // 2. Enhanced XSS detection
+  // 2. XSS detection
   if (pathname.startsWith('/api/') && detectXSSAttempt(fullUrl)) {
     return NextResponse.json(
       {
@@ -137,7 +90,7 @@ export function proxy(request: NextRequest) {
     );
   }
 
-  // 3. Enhanced SQL injection detection
+  // 3. SQL injection detection
   if (pathname.startsWith('/api/') && detectSQLInjection(fullUrl)) {
     return NextResponse.json(
       {
@@ -185,7 +138,7 @@ export function proxy(request: NextRequest) {
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
 
-  // More permissive Content Security Policy for development
+  // Content Security Policy
   const csp = [
     "default-src 'self' 'unsafe-inline' 'unsafe-eval'",
     "script-src 'self' 'unsafe-inline' 'unsafe-eval' https: data:",
@@ -198,84 +151,13 @@ export function proxy(request: NextRequest) {
     "object-src 'self'",
   ].join('; ');
 
-  // Only apply strict CSP in production
   if (process.env.NODE_ENV === 'production') {
     response.headers.set('Content-Security-Policy', csp);
-  }
-
-  // 🔒 API SECURITY - Enhanced protection
-  if (pathname.startsWith('/api/')) {
-    // Check if this is a public endpoint
-    const isPublic = isPublicEndpoint(pathname, method);
-
-    if (!isPublic) {
-      response.headers.set('X-Auth-Required', 'true');
-      response.headers.set('X-Security-Level', 'high');
-    } else {
-      response.headers.set('X-Security-Level', 'standard');
-    }
-  }
-
-  // 🔒 ADMIN ROUTE PROTECTION
-  if (isAdminRoute(pathname)) {
-    // Always allow the admin login page itself
-    if (pathname === '/admin') {
-      return response;
-    }
-
-    // Always allow the login and verify API endpoints
-    if (
-      pathname === '/api/admin/login' ||
-      pathname === '/api/admin/verify' ||
-      pathname === '/api/admin/logout'
-    ) {
-      return response;
-    }
-
-    // In development/localhost, be more permissive but still check for valid token
-    if (isDevelopment && isLocalhost) {
-      // Check for admin token but allow if missing in dev (with warning)
-      const token =
-        request.cookies.get('admin-token')?.value ||
-        request.headers.get('authorization')?.replace('Bearer ', '');
-
-      if (token && verifyAdminToken(token)) {
-        // Valid token, allow access
-        return response;
-      }
-
-      // No token or invalid token in development - redirect to login
-      if (pathname.startsWith('/api/admin/')) {
-        return NextResponse.json({ error: 'Please login first', dev: true }, { status: 401 });
-      }
-
-      // For page routes in dev, redirect to login
-      const loginUrl = new URL('/admin', request.url);
-      loginUrl.searchParams.set('redirect', pathname);
-      return NextResponse.redirect(loginUrl);
-    }
-
-    // In production, strict token verification required
-    const token =
-      request.cookies.get('admin-token')?.value ||
-      request.headers.get('authorization')?.replace('Bearer ', '');
-
-    if (!token || !verifyAdminToken(token)) {
-      // For API routes, return 401
-      if (pathname.startsWith('/api/admin/')) {
-        return NextResponse.json({ error: 'Unauthorized access' }, { status: 401 });
-      }
-
-      // For page routes, redirect to admin login
-      const loginUrl = new URL('/admin', request.url);
-      loginUrl.searchParams.set('redirect', pathname);
-      return NextResponse.redirect(loginUrl);
-    }
   }
 
   return response;
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/api/:path*'],
+  matcher: ['/api/:path*'],
 };

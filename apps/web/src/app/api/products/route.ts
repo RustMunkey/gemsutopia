@@ -1,44 +1,18 @@
 import { NextRequest } from 'next/server';
 import { db, products, categories } from '@/lib/db';
 import { eq, desc, and, sql, asc } from 'drizzle-orm';
-import jwt from 'jsonwebtoken';
 import { apiSuccess, ApiError } from '@/lib/api';
 import {
   getCache,
   setCache,
   generateCacheKey,
-  invalidateProductCaches,
   CACHE_KEYS,
   CACHE_TTL,
 } from '@/lib/cache';
 
 export const dynamic = 'force-dynamic';
 
-function getJWTSecret(): string {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error('JWT_SECRET environment variable is not set');
-  }
-  return secret;
-}
-
-// Verify admin token
-function verifyAdminToken(request: NextRequest): boolean {
-  try {
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return false;
-    }
-
-    const token = authHeader.substring(7);
-    jwt.verify(token, getJWTSecret());
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-// GET /api/products - Get products with pagination and filtering
+// GET /api/products - Get products with pagination and filtering (public)
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -48,8 +22,7 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '24')));
     const offset = (page - 1) * limit;
 
-    // Filter params
-    const includeInactive = searchParams.get('includeInactive') === 'true';
+    // Filter params (public filters only)
     const categoryFilter = searchParams.get('category');
     const featured = searchParams.get('featured') === 'true';
     const onSale = searchParams.get('onSale') === 'true';
@@ -59,13 +32,8 @@ export async function GET(request: NextRequest) {
     const sortBy = searchParams.get('sortBy') || 'created_at';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
 
-    // If includeInactive is requested, verify admin token
-    if (includeInactive && !verifyAdminToken(request)) {
-      return ApiError.unauthorized('Admin access required to include inactive products');
-    }
-
-    // Try cache for public requests (no admin-only filters)
-    const canUseCache = !includeInactive && !search; // Don't cache search queries
+    // Try cache for public requests
+    const canUseCache = !search; // Don't cache search queries
     const cacheKey = canUseCache
       ? generateCacheKey(CACHE_KEYS.PRODUCTS_LIST, {
           page,
@@ -89,17 +57,13 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Build where conditions
+    // Build where conditions - only show active products
     const conditions = [];
-
-    // Active filter (unless admin wants inactive)
-    if (!includeInactive) {
-      conditions.push(eq(products.isActive, true));
-      // Also filter out products with frontend_visible = false
-      conditions.push(
-        sql`(${products.metadata}->>'frontend_visible' IS NULL OR ${products.metadata}->>'frontend_visible' != 'false')`
-      );
-    }
+    conditions.push(eq(products.isActive, true));
+    // Also filter out products with frontend_visible = false
+    conditions.push(
+      sql`(${products.metadata}->>'frontend_visible' IS NULL OR ${products.metadata}->>'frontend_visible' != 'false')`
+    );
 
     // Category filter
     if (categoryFilter) {
@@ -212,81 +176,4 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/products - Create new product (admin only)
-export async function POST(request: NextRequest) {
-  try {
-    // Verify admin token
-    if (!verifyAdminToken(request)) {
-      return ApiError.unauthorized();
-    }
-
-    const data = await request.json();
-
-    // Validate required fields
-    if (!data.name || !data.price) {
-      return ApiError.validation('Name and price are required');
-    }
-
-    // Validate numeric fields to prevent overflow
-    const price = parseFloat(data.price);
-    const salePrice = data.sale_price ? parseFloat(data.sale_price) : null;
-    const weight = data.weight ? parseFloat(data.weight) : null;
-
-    if (price > 99999.99) {
-      return ApiError.validation('Price must be less than $99,999.99');
-    }
-
-    if (salePrice && salePrice > 99999.99) {
-      return ApiError.validation('Sale price must be less than $99,999.99');
-    }
-
-    if (weight && weight > 99999.999) {
-      return ApiError.validation('Weight must be less than 99,999.999 grams');
-    }
-
-    // Find category by name or slug
-    let categoryId = null;
-    if (data.category) {
-      const foundCategory = await db.query.categories.findFirst({
-        where: eq(categories.name, data.category),
-      });
-      categoryId = foundCategory?.id || null;
-    }
-
-    // Insert product using raw SQL for full control
-    const sku =
-      data.sku || `PROD-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-
-    const [newProduct] = await db
-      .insert(products)
-      .values({
-        name: data.name,
-        description: data.description || '',
-        price: String(price),
-        salePrice: salePrice ? String(salePrice) : null,
-        onSale: data.on_sale || false,
-        categoryId: categoryId,
-        images: data.images || [],
-        videoUrl: data.video_url || null,
-        tags: data.tags || [],
-        inventory: parseInt(data.inventory) || 0,
-        sku: sku,
-        weight: weight ? String(weight) : null,
-        dimensions: data.dimensions || null,
-        isActive: data.is_active !== false,
-        featured: data.featured || false,
-        metadata: {
-          ...(data.metadata || {}),
-          featured_image_index: data.featured_image_index || 0,
-        },
-      })
-      .returning();
-
-    // Invalidate product caches
-    await invalidateProductCaches();
-
-    return apiSuccess({ product: newProduct }, 'Product created successfully', 201);
-  } catch {
-    return ApiError.internal('Failed to create product');
-  }
-}
+// POST /api/products - Admin functionality moved to JetBeans BaaS

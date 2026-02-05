@@ -1,8 +1,6 @@
 import { NextRequest } from 'next/server';
 import { db, orders, products } from '@/lib/db';
-import { eq, desc, inArray, sql } from 'drizzle-orm';
-import { filterOrdersByMode } from '@/lib/utils/orderUtils';
-import { requireAdmin, extractAuth, checkRateLimit } from '@/lib/security/apiAuth';
+import { eq, inArray, sql } from 'drizzle-orm';
 import {
   sanitizeInput,
   validateEmail,
@@ -12,6 +10,26 @@ import {
 } from '@/lib/security/sanitize';
 import { notifyOrderConfirmed } from '@/lib/email';
 import { apiSuccess, ApiError } from '@/lib/api';
+
+// Simple in-memory rate limiter
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+
+function checkRateLimit(ip: string, maxRequests: number, windowMs: number): { allowed: boolean } {
+  const now = Date.now();
+  const record = rateLimitMap.get(ip);
+
+  if (!record || now > record.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + windowMs });
+    return { allowed: true };
+  }
+
+  if (record.count >= maxRequests) {
+    return { allowed: false };
+  }
+
+  record.count++;
+  return { allowed: true };
+}
 
 export const dynamic = 'force-dynamic';
 
@@ -58,16 +76,12 @@ function isTestOrderFromPayment(orderData: any, systemMode?: string): boolean {
 
 export async function POST(request: NextRequest) {
   try {
-    const auth = extractAuth(request);
-    const isAuthenticated = auth.isAuthenticated;
-
     const clientIP =
       request.headers.get('x-forwarded-for')?.split(',')[0] ||
       request.headers.get('x-real-ip') ||
       'unknown';
 
-    const maxRequests = isAuthenticated ? 100 : 10;
-    const rateLimit = checkRateLimit(clientIP, maxRequests, 3600000);
+    const rateLimit = checkRateLimit(clientIP, 20, 3600000);
 
     if (!rateLimit.allowed) {
       return ApiError.rateLimited('Too many order attempts. Please wait before creating another order.');
@@ -272,25 +286,5 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export const GET = requireAdmin(async (request: NextRequest) => {
-  try {
-    const { searchParams } = new URL(request.url);
-    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 1000);
-    const offset = Math.max(parseInt(searchParams.get('offset') || '0'), 0);
-    const modeParam = sanitizeInput(searchParams.get('mode') || 'dev');
-    const mode = (modeParam === 'live' ? 'live' : 'dev') as 'dev' | 'live';
-
-    const allOrders = await db.query.orders.findMany({
-      orderBy: [desc(orders.createdAt)],
-      limit: limit,
-      offset: offset,
-    });
-
-    // Filter orders based on mode (test vs live)
-    const filteredOrders = filterOrdersByMode(allOrders, mode);
-
-    return apiSuccess({ orders: filteredOrders });
-  } catch {
-    return ApiError.internal('Failed to fetch orders');
-  }
-});
+// GET /api/orders - Admin functionality moved to JetBeans BaaS
+// Customers can view their orders at /api/orders/user

@@ -3,31 +3,28 @@
 
 const requiredEnvVars = [
   'DATABASE_URL',
-  'JWT_SECRET',
 ] as const;
 
 const optionalEnvVars = [
+  // JetBeans Storefront API
+  'NEXT_PUBLIC_STOREFRONT_API_KEY',
+  'NEXT_PUBLIC_STOREFRONT_URL',
   // Payments
   'STRIPE_SECRET_KEY',
   'STRIPE_WEBHOOK_SECRET',
   'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY',
   'PAYPAL_CLIENT_ID',
   'PAYPAL_CLIENT_SECRET',
+  'COINBASE_COMMERCE_API_KEY',
+  'COINBASE_COMMERCE_WEBHOOK_SECRET',
   // Storage (Supabase)
   'NEXT_PUBLIC_SUPABASE_URL',
   'SUPABASE_SERVICE_ROLE_KEY',
-  // Auth
+  // Customer Auth
   'BETTER_AUTH_SECRET',
-  // Rate limiting
-  'UPSTASH_REDIS_REST_URL',
-  'UPSTASH_REDIS_REST_TOKEN',
-  // Email
-  'RESEND_API_KEY',
-  'RESEND_FROM_EMAIL',
-  'ADMIN_NOTIFICATION_EMAIL',
-  // hCaptcha
-  'NEXT_PUBLIC_HCAPTCHA_SITE_KEY',
-  'HCAPTCHA_SECRET_KEY',
+  // Cloudflare Turnstile (optional - for spam protection)
+  'NEXT_PUBLIC_TURNSTILE_SITE_KEY',
+  'TURNSTILE_SECRET_KEY',
 ] as const;
 
 interface EnvValidationResult {
@@ -77,11 +74,14 @@ if (typeof window === 'undefined') {
 
 // Type-safe env access
 export const env = {
-  // Database
+  // Database (temporary - until fully migrated to JetBeans API)
   DATABASE_URL: process.env.DATABASE_URL!,
 
-  // Auth
-  JWT_SECRET: process.env.JWT_SECRET!,
+  // JetBeans Storefront API
+  STOREFRONT_API_KEY: process.env.NEXT_PUBLIC_STOREFRONT_API_KEY,
+  STOREFRONT_URL: process.env.NEXT_PUBLIC_STOREFRONT_URL || 'https://app.jetbeans.cafe',
+
+  // Customer Auth
   BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
 
   // Payments
@@ -89,19 +89,12 @@ export const env = {
   STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
   PAYPAL_CLIENT_ID: process.env.PAYPAL_CLIENT_ID,
   PAYPAL_CLIENT_SECRET: process.env.PAYPAL_CLIENT_SECRET,
+  COINBASE_COMMERCE_API_KEY: process.env.COINBASE_COMMERCE_API_KEY,
+  COINBASE_COMMERCE_WEBHOOK_SECRET: process.env.COINBASE_COMMERCE_WEBHOOK_SECRET,
 
   // Storage
   SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
-
-  // Rate limiting
-  UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
-  UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
-
-  // Email
-  RESEND_API_KEY: process.env.RESEND_API_KEY,
-  RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL,
-  ADMIN_NOTIFICATION_EMAIL: process.env.ADMIN_NOTIFICATION_EMAIL,
 
   // Flags
   isProduction: process.env.NODE_ENV === 'production',
