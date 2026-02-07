@@ -1,52 +1,60 @@
-import { db, siteSettings } from '@/lib/db';
-import { eq } from 'drizzle-orm';
+import { db, storeSettings } from '@/lib/db';
+import { eq, and } from 'drizzle-orm';
 
-// Get a specific setting value (read-only)
+const WORKSPACE_ID = process.env.WORKSPACE_ID!;
+
+// Get a specific setting value from JetBeans store_settings
 export async function getSetting(key: string): Promise<string | null> {
   try {
-    const setting = await db.query.siteSettings.findFirst({
-      where: eq(siteSettings.key, key),
+    const setting = await db.query.storeSettings.findFirst({
+      where: and(
+        eq(storeSettings.workspaceId, WORKSPACE_ID),
+        eq(storeSettings.key, key),
+      ),
     });
-
-    if (!setting) {
-      return null;
-    }
-
-    // Value is stored as JSONB, extract the string value
-    const value = setting.value;
-    if (typeof value === 'string') {
-      return value;
-    }
-    if (value && typeof value === 'object' && 'value' in value) {
-      return String((value as { value: unknown }).value);
-    }
-    return JSON.stringify(value);
+    return setting?.value ?? null;
   } catch {
     return null;
   }
 }
 
-// Get all settings as key-value pairs (read-only)
+// Get all settings as key-value pairs from JetBeans store_settings
 export async function getAllSettings(): Promise<Record<string, string>> {
   try {
-    const allSettings = await db.query.siteSettings.findMany();
-
-    const settings: Record<string, string> = {};
-    allSettings.forEach(setting => {
-      const value = setting.value;
-      if (typeof value === 'string') {
-        settings[setting.key] = value;
-      } else if (value && typeof value === 'object' && 'value' in value) {
-        settings[setting.key] = String((value as { value: unknown }).value);
-      } else {
-        settings[setting.key] = JSON.stringify(value);
-      }
+    const allSettings = await db.query.storeSettings.findMany({
+      where: eq(storeSettings.workspaceId, WORKSPACE_ID),
     });
 
+    const settings: Record<string, string> = {};
+    for (const setting of allSettings) {
+      if (setting.value) {
+        settings[setting.key] = setting.value;
+      }
+    }
     return settings;
   } catch {
     return {};
   }
 }
 
-// Admin write operations (setSetting, deleteSetting, etc.) moved to JetBeans BaaS
+// Get settings by group from JetBeans store_settings
+export async function getSettingsByGroup(group: string): Promise<Record<string, string>> {
+  try {
+    const groupSettings = await db.query.storeSettings.findMany({
+      where: and(
+        eq(storeSettings.workspaceId, WORKSPACE_ID),
+        eq(storeSettings.group, group),
+      ),
+    });
+
+    const settings: Record<string, string> = {};
+    for (const setting of groupSettings) {
+      if (setting.value) {
+        settings[setting.key] = setting.value;
+      }
+    }
+    return settings;
+  } catch {
+    return {};
+  }
+}

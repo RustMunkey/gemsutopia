@@ -1,26 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db, reviews } from '@/lib/db';
-import { eq, desc } from 'drizzle-orm';
+import { db, testimonials } from '@/lib/db';
+import { store } from '@/lib/store';
 import { apiSuccess, ApiError } from '@/lib/api';
-import { getCache, setCache, CACHE_KEYS, CACHE_TTL } from '@/lib/cache';
+
+const WORKSPACE_ID = process.env.WORKSPACE_ID!;
 
 export const revalidate = 300;
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, rating, title, review, productId } = await request.json();
+    const { name, email, rating, title, review } = await request.json();
 
-    // Validate required fields
     if (!name || !email || !rating || !review) {
       return ApiError.validation('Name, email, rating, and review are required');
     }
 
-    // Validate rating is between 1-5
     if (rating < 1 || rating > 5) {
       return ApiError.validation('Rating must be between 1 and 5');
     }
 
-    // Validate character limits
     if (name.length > 50) {
       return ApiError.validation('Name must be 50 characters or less');
     }
@@ -33,61 +31,45 @@ export async function POST(request: NextRequest) {
       return ApiError.validation('Review must be 500 characters or less');
     }
 
-    // Insert into database
-    const [newReview] = await db
-      .insert(reviews)
+    // Write directly to DB (this is a customer-submitted testimonial, needs workspace ID)
+    const [newTestimonial] = await db
+      .insert(testimonials)
       .values({
-        productId: productId || null,
+        workspaceId: WORKSPACE_ID,
         reviewerName: name,
         reviewerEmail: email,
         rating: parseInt(rating),
         title: title || null,
         content: review,
-        isFeatured: false,
         status: 'pending',
-        images: [],
+        isFeatured: false,
       })
       .returning();
 
-    return apiSuccess({ review: newReview }, 'Review submitted successfully', 201);
+    return apiSuccess({ review: newTestimonial }, 'Review submitted successfully', 201);
   } catch {
     return ApiError.internal('Failed to submit review');
   }
 }
 
-// GET /api/reviews - Get all approved reviews
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const featured = searchParams.get('featured') === 'true';
 
-    const cacheKey = featured ? `${CACHE_KEYS.REVIEWS}:featured` : CACHE_KEYS.REVIEWS;
+    const { testimonials: allTestimonials } = await store.testimonials.list({ featured });
 
-    // Try Redis cache first
-    const cached = await getCache<{ reviews: unknown[]; count: number }>(cacheKey);
-    if (cached) {
-      return NextResponse.json(
-        { success: true, data: cached },
-        { headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' } }
-      );
-    }
-
-    let allReviews = await db.query.reviews.findMany({
-      where: eq(reviews.status, 'approved'),
-      orderBy: [desc(reviews.createdAt)],
-    });
-
-    if (featured) {
-      allReviews = allReviews.filter(r => r.isFeatured);
-    }
-
-    const responseData = { reviews: allReviews, count: allReviews.length };
-
-    // Cache in Redis
-    await setCache(cacheKey, responseData, CACHE_TTL.REVIEWS);
+    const reviews = allTestimonials.map(t => ({
+      id: t.id,
+      reviewerName: t.reviewerName,
+      content: t.content,
+      rating: t.rating,
+      title: t.title,
+      isFeatured: t.isFeatured,
+    }));
 
     return NextResponse.json(
-      { success: true, data: responseData },
+      { success: true, data: { reviews, count: reviews.length } },
       { headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' } }
     );
   } catch {

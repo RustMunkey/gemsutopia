@@ -27,6 +27,10 @@ export type {
 	WishlistItem,
 	Review,
 	Discount,
+	FaqItem,
+	StatItem,
+	Testimonial,
+	SiteContentItem,
 } from './storefront-client'
 
 // ============================================

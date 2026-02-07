@@ -1,8 +1,6 @@
 import { MetadataRoute } from 'next';
-import { db, products, categories } from '@/lib/db';
-import { eq } from 'drizzle-orm';
+import { store } from '@/lib/store';
 
-// Force dynamic rendering (not prerendered at build time)
 export const dynamic = 'force-dynamic';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -36,31 +34,33 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // Fetch products for dynamic pages
-  const activeProducts = await db.query.products.findMany({
-    where: eq(products.isActive, true),
-    columns: { id: true, updatedAt: true },
-  });
+  // Fetch products from JetBeans Storefront API
+  let productPages: MetadataRoute.Sitemap = [];
+  try {
+    const { products } = await store.products.list({ limit: 100 });
+    productPages = products.map(product => ({
+      url: `${baseUrl}/products/${product.id}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.8,
+    }));
+  } catch {
+    // Storefront API unavailable, skip product pages
+  }
 
-  const productPages: MetadataRoute.Sitemap = activeProducts.map(product => ({
-    url: `${baseUrl}/products/${product.id}`,
-    lastModified: new Date(product.updatedAt || new Date()),
-    changeFrequency: 'weekly' as const,
-    priority: 0.8,
-  }));
-
-  // Fetch categories for dynamic pages
-  const activeCategories = await db.query.categories.findMany({
-    where: eq(categories.isActive, true),
-    columns: { slug: true, updatedAt: true },
-  });
-
-  const categoryPages: MetadataRoute.Sitemap = activeCategories.map(category => ({
-    url: `${baseUrl}/products?category=${category.slug}`,
-    lastModified: new Date(category.updatedAt || new Date()),
-    changeFrequency: 'weekly' as const,
-    priority: 0.7,
-  }));
+  // Fetch categories from JetBeans Storefront API
+  let categoryPages: MetadataRoute.Sitemap = [];
+  try {
+    const { categories } = await store.categories.list();
+    categoryPages = categories.map(category => ({
+      url: `${baseUrl}/products?category=${category.slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    }));
+  } catch {
+    // Storefront API unavailable, skip category pages
+  }
 
   return [...staticPages, ...productPages, ...categoryPages];
 }

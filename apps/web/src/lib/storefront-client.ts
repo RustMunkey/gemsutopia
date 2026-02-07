@@ -205,6 +205,41 @@ export type Pagination = {
 	hasMore: boolean
 }
 
+export type FaqItem = {
+	id: string
+	question: string
+	answer: string
+	category: string | null
+	sortOrder: number | null
+	isFeatured: boolean | null
+}
+
+export type StatItem = {
+	id: string
+	title: string
+	value: string
+	description: string | null
+	icon: string | null
+	sortOrder: number | null
+}
+
+export type Testimonial = {
+	id: string
+	reviewerName: string
+	rating: number
+	title: string | null
+	content: string
+	isFeatured: boolean | null
+	createdAt: string
+}
+
+export type SiteContentItem = {
+	id: string
+	key: string
+	type: string
+	value: string | null
+}
+
 // ============================================
 // Client
 // ============================================
@@ -597,6 +632,52 @@ export class StorefrontClient {
 				method: 'POST',
 				body: data,
 			})
+		},
+	}
+
+	// ============================================
+	// FAQ
+	// ============================================
+
+	faq = {
+		list: async (): Promise<{ faq: FaqItem[] }> => {
+			return this.request('/faq')
+		},
+	}
+
+	// ============================================
+	// Stats
+	// ============================================
+
+	stats = {
+		list: async (): Promise<{ stats: StatItem[] }> => {
+			return this.request('/stats')
+		},
+	}
+
+	// ============================================
+	// Testimonials
+	// ============================================
+
+	testimonials = {
+		list: async (options?: {
+			featured?: boolean
+		}): Promise<{ testimonials: Testimonial[] }> => {
+			return this.request('/testimonials', {
+				params: {
+					featured: options?.featured,
+				},
+			})
+		},
+	}
+
+	// ============================================
+	// Site Content
+	// ============================================
+
+	siteContent = {
+		list: async (): Promise<{ content: SiteContentItem[] }> => {
+			return this.request('/site-content')
 		},
 	}
 }

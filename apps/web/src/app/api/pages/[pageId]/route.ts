@@ -1,23 +1,25 @@
 import { NextRequest } from 'next/server';
-import { db, siteContent } from '@/lib/db';
-import { eq, asc } from 'drizzle-orm';
+import { store } from '@/lib/store';
 import { apiSuccess, ApiError } from '@/lib/api';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest, context: { params: Promise<{ pageId: string }> }) {
+export async function GET(_request: NextRequest, context: { params: Promise<{ pageId: string }> }) {
   const params = await context.params;
   try {
-    const pageContent = await db.query.siteContent.findMany({
-      where: eq(siteContent.section, params.pageId),
-      orderBy: [asc(siteContent.createdAt)],
-    });
+    const { content } = await store.siteContent.list();
 
-    // Convert array to key-value object for easier use in components
-    const contentMap = pageContent.reduce((acc: Record<string, string>, item) => {
-      acc[item.key] = item.value;
-      return acc;
-    }, {});
+    // Site content uses compound keys like "about:title", "about:description"
+    // pageId is the prefix before the colon
+    const prefix = `${params.pageId}:`;
+
+    const contentMap = content
+      .filter(item => item.key.startsWith(prefix) && item.value)
+      .reduce((acc: Record<string, string>, item) => {
+        const key = item.key.slice(prefix.length);
+        acc[key] = item.value!;
+        return acc;
+      }, {});
 
     return apiSuccess({ content: contentMap });
   } catch {
