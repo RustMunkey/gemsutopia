@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db, testimonials } from '@/lib/db';
 import { store } from '@/lib/store';
 import { apiSuccess, ApiError } from '@/lib/api';
-
-const WORKSPACE_ID = process.env.WORKSPACE_ID!;
 
 export const revalidate = 300;
 
@@ -31,22 +28,18 @@ export async function POST(request: NextRequest) {
       return ApiError.validation('Review must be 500 characters or less');
     }
 
-    // Write directly to DB (this is a customer-submitted testimonial, needs workspace ID)
-    const [newTestimonial] = await db
-      .insert(testimonials)
-      .values({
-        workspaceId: WORKSPACE_ID,
-        reviewerName: name,
-        reviewerEmail: email,
-        rating: parseInt(rating),
-        title: title || null,
-        content: review,
-        status: 'pending',
-        isFeatured: false,
-      })
-      .returning();
+    // Submit via Storefront API (collections.submit handles workspace scoping)
+    const result = await store.collections.submit('testimonials', {
+      reviewerName: name,
+      reviewerEmail: email,
+      rating: parseInt(rating),
+      title: title || null,
+      content: review,
+      status: 'pending',
+      isFeatured: false,
+    });
 
-    return apiSuccess({ review: newTestimonial }, 'Review submitted successfully', 201);
+    return apiSuccess({ review: result.entry }, 'Review submitted successfully', 201);
   } catch {
     return ApiError.internal('Failed to submit review');
   }

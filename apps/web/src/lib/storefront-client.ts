@@ -636,38 +636,96 @@ export class StorefrontClient {
 	}
 
 	// ============================================
-	// FAQ
+	// Collections (Generic)
+	// ============================================
+
+	collections = {
+		list: async (slug: string, options?: {
+			filter?: Record<string, string>
+			sort?: string
+			order?: string
+		}): Promise<{ collection: { name: string; slug: string; description: string | null }; entries: { id: string; data: Record<string, unknown>; sortOrder: number | null; createdAt: string }[] }> => {
+			const params: Record<string, string> = {}
+			if (options?.filter) {
+				for (const [key, value] of Object.entries(options.filter)) {
+					params[`filter[${key}]`] = value
+				}
+			}
+			if (options?.sort) params.sort = options.sort
+			if (options?.order) params.order = options.order
+			return this.request(`/collections/${slug}`, { params })
+		},
+
+		submit: async (slug: string, data: Record<string, unknown>): Promise<{ entry: { id: string; data: Record<string, unknown>; createdAt: string } }> => {
+			return this.request(`/collections/${slug}/entries`, {
+				method: 'POST',
+				body: data,
+			})
+		},
+	}
+
+	// ============================================
+	// FAQ (convenience wrapper)
 	// ============================================
 
 	faq = {
 		list: async (): Promise<{ faq: FaqItem[] }> => {
-			return this.request('/faq')
+			const res = await this.collections.list('faq')
+			return {
+				faq: res.entries.map(e => ({
+					id: e.id,
+					question: e.data.question as string,
+					answer: e.data.answer as string,
+					category: (e.data.category as string) ?? null,
+					sortOrder: e.sortOrder,
+					isFeatured: (e.data.isFeatured as boolean) ?? null,
+				})),
+			}
 		},
 	}
 
 	// ============================================
-	// Stats
+	// Stats (convenience wrapper)
 	// ============================================
 
 	stats = {
 		list: async (): Promise<{ stats: StatItem[] }> => {
-			return this.request('/stats')
+			const res = await this.collections.list('stats')
+			return {
+				stats: res.entries.map(e => ({
+					id: e.id,
+					title: e.data.title as string,
+					value: e.data.value as string,
+					description: (e.data.description as string) ?? null,
+					icon: (e.data.icon as string) ?? null,
+					sortOrder: e.sortOrder,
+				})),
+			}
 		},
 	}
 
 	// ============================================
-	// Testimonials
+	// Testimonials (convenience wrapper)
 	// ============================================
 
 	testimonials = {
 		list: async (options?: {
 			featured?: boolean
 		}): Promise<{ testimonials: Testimonial[] }> => {
-			return this.request('/testimonials', {
-				params: {
-					featured: options?.featured,
-				},
-			})
+			const filter: Record<string, string> = { status: 'approved' }
+			if (options?.featured) filter.isFeatured = 'true'
+			const res = await this.collections.list('testimonials', { filter })
+			return {
+				testimonials: res.entries.map(e => ({
+					id: e.id,
+					reviewerName: e.data.reviewerName as string,
+					rating: e.data.rating as number,
+					title: (e.data.title as string) ?? null,
+					content: e.data.content as string,
+					isFeatured: (e.data.isFeatured as boolean) ?? null,
+					createdAt: e.createdAt,
+				})),
+			}
 		},
 	}
 
