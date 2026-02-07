@@ -240,6 +240,30 @@ export type SiteContentItem = {
 	value: string | null
 }
 
+export type BlogPost = {
+	id: string
+	title: string
+	slug: string
+	excerpt: string | null
+	content: string | null
+	coverImage: string | null
+	tags: string[] | null
+	publishedAt: string | null
+	authorName: string | null
+	authorImage: string | null
+	metaTitle: string | null
+	metaDescription: string | null
+}
+
+export type SitePage = {
+	id: string
+	title: string
+	slug: string
+	content: string | null
+	metaTitle: string | null
+	metaDescription: string | null
+}
+
 // ============================================
 // Client
 // ============================================
@@ -736,6 +760,46 @@ export class StorefrontClient {
 	siteContent = {
 		list: async (): Promise<{ content: SiteContentItem[] }> => {
 			return this.request('/site-content')
+		},
+	}
+
+	// ============================================
+	// Blog
+	// ============================================
+
+	blog = {
+		list: async (options?: {
+			page?: number
+			limit?: number
+			tag?: string
+			search?: string
+		}): Promise<{ posts: BlogPost[]; pagination: Pagination }> => {
+			return this.request('/blog', {
+				params: {
+					page: options?.page,
+					limit: options?.limit,
+					tag: options?.tag,
+					search: options?.search,
+				},
+			})
+		},
+
+		get: async (slug: string): Promise<{ post: BlogPost }> => {
+			return this.request(`/blog/${slug}`)
+		},
+	}
+
+	// ============================================
+	// Pages
+	// ============================================
+
+	pages = {
+		list: async (): Promise<{ pages: SitePage[] }> => {
+			return this.request('/pages')
+		},
+
+		get: async (slug: string): Promise<{ page: SitePage }> => {
+			return this.request(`/pages/${slug}`)
 		},
 	}
 }
