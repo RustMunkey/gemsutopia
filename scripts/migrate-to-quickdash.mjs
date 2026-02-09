@@ -1,16 +1,16 @@
 /**
- * Migration Script: Gemsutopia Neon → JetBeans Neon
+ * Migration Script: Gemsutopia Neon → Quickdash Neon
  *
  * Reads from local Docker Postgres (gemsutopia backup)
- * Transforms data to match JetBeans multi-tenant schema
- * Inserts into JetBeans Neon under workspace "gemsutopia"
+ * Transforms data to match Quickdash multi-tenant schema
+ * Inserts into Quickdash Neon under workspace "gemsutopia"
  *
  * Usage:
- *   node scripts/migrate-to-jetbeans.mjs [--dry-run]
+ *   node scripts/migrate-to-quickdash.mjs [--dry-run]
  *
  * Requires:
  *   - Local Docker gemsutopia-db running (source)
- *   - JetBeans Neon accessible (target)
+ *   - Quickdash Neon accessible (target)
  */
 
 import pg from "pg";
@@ -21,7 +21,7 @@ const { Client } = pg;
 // ============================================================================
 
 const WORKSPACE_ID = "3410dcaf-29e1-40fa-8fbe-47a390f49ec5";
-const OWNER_ID = "ysRb7dk5rGFwxFmrulMUjjw4PIaNQtr1"; // JetBeans user who owns the workspace
+const OWNER_ID = "ysRb7dk5rGFwxFmrulMUjjw4PIaNQtr1"; // Quickdash user who owns the workspace
 
 const SOURCE_DB = "postgresql://postgres:postgres@localhost:5432/gemsutopia";
 const TARGET_DB =
@@ -202,11 +202,11 @@ async function migrateOrders(source, target) {
     // Store all gemsutopia-specific data in metadata
     const metadata = {
       ...(typeof row.metadata === "object" ? row.metadata : {}),
-      // Customer info (since JetBeans uses user_id text reference)
+      // Customer info (since Quickdash uses user_id text reference)
       customerEmail: row.customer_email,
       customerName: row.customer_name,
       customerPhone: row.customer_phone,
-      // Addresses (JetBeans uses address IDs, we store inline)
+      // Addresses (Quickdash uses address IDs, we store inline)
       shippingAddress: {
         line1: row.shipping_address_line1,
         line2: row.shipping_address_line2,
@@ -230,7 +230,7 @@ async function migrateOrders(source, target) {
       paymentMethod: row.payment_method,
       paymentStatus: row.payment_status,
       paymentDetails: row.payment_details,
-      // Items (gemsutopia stores as JSONB, JetBeans uses order_items table)
+      // Items (gemsutopia stores as JSONB, Quickdash uses order_items table)
       items: typeof row.items === "string" ? JSON.parse(row.items) : row.items,
       itemCount: row.item_count,
       // Shipping
@@ -259,7 +259,7 @@ async function migrateOrders(source, target) {
             row.id,
             WORKSPACE_ID,
             row.order_number,
-            OWNER_ID, // user_id is NOT NULL in JetBeans - use workspace owner
+            OWNER_ID, // user_id is NOT NULL in Quickdash - use workspace owner
             row.status || "pending",
             row.subtotal,
             row.discount_amount || "0",
@@ -314,7 +314,7 @@ async function migrateAuctions(source, target) {
       ...(row.color && { color: row.color }),
       ...(row.origin && { origin: row.origin }),
       ...(row.certification && { certification: row.certification }),
-      // Auction-specific fields not in JetBeans schema
+      // Auction-specific fields not in Quickdash schema
       ...(row.buy_now_price && { buyNowPrice: row.buy_now_price }),
       ...(row.currency && { currency: row.currency }),
       ...(row.extended_end_time && { extendedEndTime: row.extended_end_time }),
@@ -333,8 +333,8 @@ async function migrateAuctions(source, target) {
       originalId: row.id,
     };
 
-    // Map status: gemsutopia statuses → JetBeans statuses
-    // JetBeans: draft, scheduled, active, ended, sold, unsold, cancelled
+    // Map status: gemsutopia statuses → Quickdash statuses
+    // Quickdash: draft, scheduled, active, ended, sold, unsold, cancelled
     // Gemsutopia: pending, scheduled, active, ended, sold, cancelled, no_sale
     let status = row.status;
     if (status === "pending") status = "draft";
@@ -393,7 +393,7 @@ async function migrateAuctions(source, target) {
 async function migrateReviews(source, target) {
   log("Migrating reviews → site_content (testimonials)...");
   // Gemsutopia reviews have NULL product_id and user_id
-  // JetBeans reviews require both NOT NULL
+  // Quickdash reviews require both NOT NULL
   // These are store-wide testimonials, so store in site_content
   const { rows } = await source.query("SELECT * FROM reviews");
   let inserted = 0;
@@ -448,7 +448,7 @@ async function migrateSiteContent(source, target) {
   let skipped = 0;
 
   for (const row of rows) {
-    // JetBeans site_content: workspace_id, key, type, value, updated_by, updated_at
+    // Quickdash site_content: workspace_id, key, type, value, updated_by, updated_at
     // Gemsutopia: section, key, value, content_type
     // Combine section:key as the key
     const key = `${row.section}:${row.key}`;
@@ -492,7 +492,7 @@ async function migrateSiteSettings(source, target) {
   let skipped = 0;
 
   for (const row of rows) {
-    // JetBeans store_settings: workspace_id, key, value (text), group, updated_by, updated_at
+    // Quickdash store_settings: workspace_id, key, value (text), group, updated_by, updated_at
     // Gemsutopia: key, value (jsonb), type, category
     const value =
       typeof row.value === "object"
@@ -690,7 +690,7 @@ async function migrateDiscountCodes(source, target) {
   let skipped = 0;
 
   for (const row of rows) {
-    // JetBeans discounts: workspace_id, name, code, discount_type, value_type, value,
+    // Quickdash discounts: workspace_id, name, code, discount_type, value_type, value,
     //   minimum_order_amount, max_uses, current_uses, max_uses_per_user,
     //   applicable_categories, is_active, is_stackable, starts_at, expires_at
     try {
@@ -739,7 +739,7 @@ async function migrateDiscountCodes(source, target) {
 
 async function main() {
   console.log("=".repeat(60));
-  console.log("  Gemsutopia → JetBeans Migration");
+  console.log("  Gemsutopia → Quickdash Migration");
   console.log(`  Mode: ${DRY_RUN ? "DRY RUN (no writes)" : "LIVE"}`);
   console.log(`  Workspace: ${WORKSPACE_ID}`);
   console.log("=".repeat(60));
@@ -756,7 +756,7 @@ async function main() {
     await source.connect();
     log("Connected to source.");
 
-    log("Connecting to target (JetBeans Neon)...");
+    log("Connecting to target (Quickdash Neon)...");
     await target.connect();
     log("Connected to target.");
 

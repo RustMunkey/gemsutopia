@@ -1,5 +1,5 @@
 // Admin auth was part of the old monolith.
-// Gemsutopia is now a frontend shell managed by JetBeans.
+// Gemsutopia is now a frontend shell managed by Quickdash.
 // This module is retained as a stub for build compatibility.
 
 export interface AdminUser {

@@ -85,7 +85,7 @@ export default function Shop() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        // Fetch from Jetbeans Storefront API
+        // Fetch from Quickdash Storefront API
         const { categories: cats } = await store.categories.list({ count: true });
         // Map to local format
         const mapped: Category[] = cats.map((c) => ({

@@ -1,6 +1,6 @@
 /**
  * Move FAQ, stats, and testimonial data from site_content JSON blobs
- * into proper faq, stats, and testimonials tables in JetBeans Neon.
+ * into proper faq, stats, and testimonials tables in Quickdash Neon.
  * Then delete the processed site_content rows.
  */
 
@@ -20,7 +20,7 @@ async function main() {
   });
 
   await client.connect();
-  console.log("Connected to JetBeans Neon");
+  console.log("Connected to Quickdash Neon");
 
   // --- Move FAQ items ---
   console.log("\n--- FAQ ---");

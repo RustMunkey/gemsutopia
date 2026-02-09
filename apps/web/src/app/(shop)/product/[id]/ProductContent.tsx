@@ -83,17 +83,17 @@ export default function ProductContent({ product }: ProductContentProps) {
 
   const { isLg } = useDevice();
 
-  // Fetch similar products from same category via Jetbeans
+  // Fetch similar products from same category via Quickdash
   useEffect(() => {
     const fetchSimilarProducts = async () => {
       if (!product.category?.slug) return;
       try {
-        const { products: jetbeansProducts } = await store.products.list({
+        const { products: quickdashProducts } = await store.products.list({
           category: product.category.slug,
           limit: 5,
         });
         // Map and filter out current product
-        const filtered = jetbeansProducts
+        const filtered = quickdashProducts
           .filter((p) => p.id !== product.id)
           .slice(0, 4)
           .map((p) => ({

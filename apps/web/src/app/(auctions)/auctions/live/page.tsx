@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 export default async function LiveAuctions() {
   const { auctions } = await store.auctions.list({ status: 'active', sort: 'endsAt', order: 'asc' });
 
-  // Map Jetbeans auctions to local format
+  // Map Quickdash auctions to local format
   const mappedAuctions = auctions.map((auction) => ({
     id: auction.id,
     title: auction.title,

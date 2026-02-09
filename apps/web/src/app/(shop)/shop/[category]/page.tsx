@@ -127,14 +127,14 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
     setSortBy('default');
   };
 
-  // Fetch category and products from Jetbeans Storefront API
+  // Fetch category and products from Quickdash Storefront API
   useEffect(() => {
     const fetchCategoryData = async () => {
       try {
         setLoading(true);
         setError('');
 
-        // Fetch categories from Jetbeans
+        // Fetch categories from Quickdash
         const { categories: categoriesList } = await store.categories.list({ count: true });
         const foundCategory = categoriesList.find(
           (cat) => cat.slug === categorySlug
@@ -156,7 +156,7 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
           isActive: true, // API only returns active
         });
 
-        // Fetch products for this category from Jetbeans
+        // Fetch products for this category from Quickdash
         const { products: productsList } = await store.products.list({
           category: categorySlug,
           limit: 100,

@@ -6,7 +6,7 @@ const requiredEnvVars = [
 ] as const;
 
 const optionalEnvVars = [
-  // JetBeans Storefront API
+  // Quickdash Storefront API
   'NEXT_PUBLIC_STOREFRONT_API_KEY',
   'NEXT_PUBLIC_STOREFRONT_URL',
   // Payments
@@ -74,12 +74,12 @@ if (typeof window === 'undefined') {
 
 // Type-safe env access
 export const env = {
-  // Database (temporary - until fully migrated to JetBeans API)
+  // Database (temporary - until fully migrated to Quickdash API)
   DATABASE_URL: process.env.DATABASE_URL!,
 
-  // JetBeans Storefront API
+  // Quickdash Storefront API
   STOREFRONT_API_KEY: process.env.NEXT_PUBLIC_STOREFRONT_API_KEY,
-  STOREFRONT_URL: process.env.NEXT_PUBLIC_STOREFRONT_URL || 'https://app.jetbeans.cafe',
+  STOREFRONT_URL: process.env.NEXT_PUBLIC_STOREFRONT_URL || 'https://app.quickdash.net',
 
   // Customer Auth
   BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,

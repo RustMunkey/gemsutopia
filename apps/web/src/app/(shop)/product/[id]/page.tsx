@@ -10,23 +10,23 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const { id } = await params;
 
   try {
-    // Fetch from Jetbeans Storefront API (supports both ID and slug)
-    const { product: jetbeansProduct } = await store.products.get(id);
+    // Fetch from Quickdash Storefront API (supports both ID and slug)
+    const { product: quickdashProduct } = await store.products.get(id);
 
     // Map to local format expected by ProductContent
     const product = {
-      id: jetbeansProduct.id,
-      name: jetbeansProduct.name,
-      description: jetbeansProduct.description || '',
-      price: parseFloat(jetbeansProduct.price),
-      salePrice: jetbeansProduct.compareAtPrice ? parseFloat(jetbeansProduct.compareAtPrice) : undefined,
-      onSale: !!jetbeansProduct.compareAtPrice && parseFloat(jetbeansProduct.compareAtPrice) > parseFloat(jetbeansProduct.price),
-      images: jetbeansProduct.images || [],
+      id: quickdashProduct.id,
+      name: quickdashProduct.name,
+      description: quickdashProduct.description || '',
+      price: parseFloat(quickdashProduct.price),
+      salePrice: quickdashProduct.compareAtPrice ? parseFloat(quickdashProduct.compareAtPrice) : undefined,
+      onSale: !!quickdashProduct.compareAtPrice && parseFloat(quickdashProduct.compareAtPrice) > parseFloat(quickdashProduct.price),
+      images: quickdashProduct.images || [],
       inventory: 99, // TODO: Get from stock when available
-      sku: (jetbeansProduct as any).sku || `SKU-${jetbeansProduct.id.slice(0, 8)}`,
-      category: jetbeansProduct.category,
+      sku: (quickdashProduct as any).sku || `SKU-${quickdashProduct.id.slice(0, 8)}`,
+      category: quickdashProduct.category,
       // Gemstone specs from metadata (if stored there)
-      ...(jetbeansProduct as any).metadata,
+      ...(quickdashProduct as any).metadata,
     };
 
     return (

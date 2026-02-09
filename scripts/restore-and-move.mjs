@@ -1,5 +1,5 @@
 /**
- * 1. Re-insert FAQ, stats, testimonials from local Docker backup into JetBeans site_content
+ * 1. Re-insert FAQ, stats, testimonials from local Docker backup into Quickdash site_content
  * 2. Move them from site_content into proper tables
  * 3. Delete the site_content blobs
  */

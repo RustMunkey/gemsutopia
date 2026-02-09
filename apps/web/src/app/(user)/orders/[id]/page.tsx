@@ -100,13 +100,13 @@ export default function OrderDetailPage() {
     const fetchOrder = async () => {
       try {
         const { store } = await import('@/lib/store');
-        const { order: jetbeansOrder } = await store.orders.get(orderId);
+        const { order: quickdashOrder } = await store.orders.get(orderId);
 
-        // Map Jetbeans order to local Order type
+        // Map Quickdash order to local Order type
         setOrder({
-          id: jetbeansOrder.id,
-          orderNumber: jetbeansOrder.orderNumber,
-          status: jetbeansOrder.status,
+          id: quickdashOrder.id,
+          orderNumber: quickdashOrder.orderNumber,
+          status: quickdashOrder.status,
           paymentStatus: 'paid', // Default since not exposed
           paymentMethod: 'stripe', // Default since not exposed
           customerName: user.name || user.email || '',
@@ -119,22 +119,22 @@ export default function OrderDetailPage() {
           shippingPostalCode: '',
           shippingCountry: '',
           shippingMethod: '',
-          trackingNumber: jetbeansOrder.trackingNumber || '',
+          trackingNumber: quickdashOrder.trackingNumber || '',
           carrier: '',
-          carrierTrackingUrl: jetbeansOrder.trackingUrl || '',
-          subtotal: jetbeansOrder.subtotal,
-          shippingCost: jetbeansOrder.shippingAmount,
-          taxAmount: jetbeansOrder.taxAmount,
+          carrierTrackingUrl: quickdashOrder.trackingUrl || '',
+          subtotal: quickdashOrder.subtotal,
+          shippingCost: quickdashOrder.shippingAmount,
+          taxAmount: quickdashOrder.taxAmount,
           discountAmount: '0',
           discountCode: '',
-          total: jetbeansOrder.total,
+          total: quickdashOrder.total,
           currency: 'USD',
           items: [], // Items need to be fetched separately or included in response
           itemCount: 0,
           customerNotes: '',
-          createdAt: jetbeansOrder.createdAt,
-          shippedAt: jetbeansOrder.shippedAt || '',
-          deliveredAt: jetbeansOrder.deliveredAt || '',
+          createdAt: quickdashOrder.createdAt,
+          shippedAt: quickdashOrder.shippedAt || '',
+          deliveredAt: quickdashOrder.deliveredAt || '',
           estimatedDelivery: '',
         });
       } catch (err: any) {

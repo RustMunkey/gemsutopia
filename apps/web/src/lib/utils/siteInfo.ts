@@ -42,4 +42,4 @@ export async function getSiteSetting(key: keyof SiteInfo): Promise<string | null
   return await getSetting(dbKey);
 }
 
-// Site info updates moved to JetBeans BaaS
+// Site info updates moved to Quickdash BaaS

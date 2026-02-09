@@ -124,15 +124,15 @@ export default function AuctionsPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Fetch auctions from Jetbeans
+  // Fetch auctions from Quickdash
   useEffect(() => {
     const fetchAuctions = async () => {
       try {
         setLoading(true);
-        const { auctions: jetbeansAuctions } = await store.auctions.list({ limit: 50 });
+        const { auctions: quickdashAuctions } = await store.auctions.list({ limit: 50 });
 
         // Map to local format
-        const mapped: Auction[] = jetbeansAuctions.map((a) => ({
+        const mapped: Auction[] = quickdashAuctions.map((a) => ({
           id: a.id,
           title: a.title,
           description: a.description,

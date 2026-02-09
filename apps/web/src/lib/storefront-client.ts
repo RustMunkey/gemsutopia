@@ -1,7 +1,7 @@
 /**
  * Storefront API Client
  *
- * A simple, framework-agnostic client for connecting to the Jetbeans Storefront API.
+ * A simple, framework-agnostic client for connecting to the Quickdash Storefront API.
  * Drop this file into any frontend project and configure with your API key.
  *
  * Usage:
@@ -275,7 +275,7 @@ export class StorefrontClient {
 
 	constructor(config: StorefrontConfig) {
 		this.apiKey = config.apiKey
-		this.baseUrl = config.baseUrl?.replace(/\/$/, '') || 'https://app.jetbeans.cafe'
+		this.baseUrl = config.baseUrl?.replace(/\/$/, '') || 'https://app.quickdash.net'
 	}
 
 	/**

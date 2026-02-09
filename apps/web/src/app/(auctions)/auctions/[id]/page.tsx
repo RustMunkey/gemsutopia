@@ -33,7 +33,7 @@ async function getAuction(id: string): Promise<Auction | null> {
     const { auction } = await store.auctions.get(id);
     if (!auction) return null;
 
-    // Map Jetbeans auction to local format
+    // Map Quickdash auction to local format
     return {
       id: auction.id,
       title: auction.title,

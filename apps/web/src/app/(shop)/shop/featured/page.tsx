@@ -91,7 +91,7 @@ export default function FeaturedPage() {
     setSortBy('default');
   };
 
-  // Fetch featured products from Jetbeans API
+  // Fetch featured products from Quickdash API
   const fetchProducts = async () => {
     try {
       const { store } = await import('@/lib/store');
@@ -107,7 +107,7 @@ export default function FeaturedPage() {
           price: Number(p.price),
           originalPrice: Number(p.compareAtPrice || p.price),
           image: p.thumbnail || (p.images && p.images[0]) || '',
-          stock: 10, // Default stock since Jetbeans doesn't expose inventory in listing
+          stock: 10, // Default stock since Quickdash doesn't expose inventory in listing
         }))
       );
     } catch { /* silent */ }

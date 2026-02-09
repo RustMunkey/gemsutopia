@@ -1,5 +1,5 @@
 /**
- * Auth client for Jetbeans Storefront API
+ * Auth client for Quickdash Storefront API
  * Handles customer authentication via JWT
  */
 

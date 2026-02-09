@@ -9,9 +9,9 @@ import {
 } from 'drizzle-orm/pg-core';
 
 // =============================================================================
-// JetBeans Neon Schema (workspace-scoped)
+// Quickdash Neon Schema (workspace-scoped)
 // Only tables the gemsutopia frontend queries directly.
-// Products, categories, auctions, orders etc. are handled via JetBeans Storefront API.
+// Products, categories, auctions, orders etc. are handled via Quickdash Storefront API.
 // =============================================================================
 
 export const siteContent = pgTable(

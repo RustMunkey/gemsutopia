@@ -1,9 +1,9 @@
 /**
  * Store instance for gemsutopia
  *
- * This connects to the Jetbeans backend.
+ * This connects to the Quickdash backend.
  * Replace the apiKey with your actual storefront API key from:
- * Jetbeans Admin > Settings > Storefronts
+ * Quickdash Admin > Settings > Storefronts
  */
 
 import { StorefrontClient } from './storefront-client'
@@ -11,7 +11,7 @@ import { StorefrontClient } from './storefront-client'
 // Create the store instance
 export const store = new StorefrontClient({
 	apiKey: process.env.NEXT_PUBLIC_STOREFRONT_API_KEY || 'sf_your_api_key_here',
-	baseUrl: process.env.NEXT_PUBLIC_STOREFRONT_URL || 'https://app.jetbeans.cafe',
+	baseUrl: process.env.NEXT_PUBLIC_STOREFRONT_URL || 'https://app.quickdash.net',
 })
 
 // Re-export types for convenience

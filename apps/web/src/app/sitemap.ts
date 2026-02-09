@@ -34,7 +34,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // Fetch products from JetBeans Storefront API
+  // Fetch products from Quickdash Storefront API
   let productPages: MetadataRoute.Sitemap = [];
   try {
     const { products } = await store.products.list({ limit: 100 });
@@ -48,7 +48,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Storefront API unavailable, skip product pages
   }
 
-  // Fetch categories from JetBeans Storefront API
+  // Fetch categories from Quickdash Storefront API
   let categoryPages: MetadataRoute.Sitemap = [];
   try {
     const { categories } = await store.categories.list();

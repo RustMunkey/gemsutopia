@@ -4,7 +4,7 @@ import { store } from '@/lib/store';
 export const dynamic = 'force-dynamic';
 
 export default async function Home() {
-  // Fetch featured products from Jetbeans Storefront API
+  // Fetch featured products from Quickdash Storefront API
   let featuredProducts: Array<{
     id: string;
     name: string;

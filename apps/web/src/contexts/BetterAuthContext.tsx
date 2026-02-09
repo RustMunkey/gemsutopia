@@ -79,7 +79,7 @@ export function BetterAuthProvider({ children }: { children: ReactNode }) {
   };
 
   const refreshSession = async () => {
-    // Re-fetch session from Jetbeans
+    // Re-fetch session from Quickdash
     try {
       await authClient.getSession();
     } catch {
@@ -87,14 +87,14 @@ export function BetterAuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Map Jetbeans user to local User type
+  // Map Quickdash user to local User type
   const user: User | null = session?.user
     ? {
         id: session.user.id,
         email: session.user.email,
         name: session.user.name,
         image: session.user.image,
-        emailVerified: true, // Jetbeans doesn't track this yet
+        emailVerified: true, // Quickdash doesn't track this yet
       }
     : null;
 

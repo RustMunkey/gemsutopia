@@ -56,11 +56,11 @@ export default function UserAddresses() {
   const fetchAddresses = async () => {
     try {
       const { store } = await import('@/lib/store');
-      const { addresses: jetbeansAddresses } = await store.auth.getAddresses();
+      const { addresses: quickdashAddresses } = await store.auth.getAddresses();
 
-      setAddresses(jetbeansAddresses.map(addr => ({
+      setAddresses(quickdashAddresses.map(addr => ({
         id: addr.id,
-        label: 'Home', // Jetbeans doesn't have label field
+        label: 'Home', // Quickdash doesn't have label field
         firstName: addr.firstName,
         lastName: addr.lastName,
         addressLine1: addr.addressLine1,
@@ -86,7 +86,7 @@ export default function UserAddresses() {
     try {
       const { store } = await import('@/lib/store');
 
-      // Jetbeans API only supports adding addresses, not editing
+      // Quickdash API only supports adding addresses, not editing
       // For now, we just add new ones
       if (!editingId) {
         await store.auth.addAddress({
@@ -151,7 +151,7 @@ export default function UserAddresses() {
   };
 
   const handleSetDefault = async (_id: string) => {
-    // TODO: Set default address endpoint not yet available in Jetbeans
+    // TODO: Set default address endpoint not yet available in Quickdash
     toast.info('Setting default address coming soon');
   };
 

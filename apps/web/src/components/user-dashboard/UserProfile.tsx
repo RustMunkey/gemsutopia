@@ -25,7 +25,7 @@ export default function UserProfile() {
     country: '',
   });
 
-  // Fetch profile on mount from Jetbeans
+  // Fetch profile on mount from Quickdash
   useEffect(() => {
     const fetchProfile = async () => {
       try {

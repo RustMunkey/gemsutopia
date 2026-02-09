@@ -36,7 +36,7 @@ export default function DashboardOverview() {
       try {
         const { store } = await import('@/lib/store');
 
-        // Fetch orders from Jetbeans
+        // Fetch orders from Quickdash
         const { orders: ordersList, pagination } = await store.orders.list(user.id, { limit: 3 });
         setOrders(ordersList.map(o => ({
           id: o.id,
@@ -47,7 +47,7 @@ export default function DashboardOverview() {
         })));
         setOrderCount(pagination?.totalCount || ordersList.length);
 
-        // TODO: Bids endpoint not yet implemented in Jetbeans Storefront API
+        // TODO: Bids endpoint not yet implemented in Quickdash Storefront API
         setBidCount(0);
       } catch {
         // Silent fail

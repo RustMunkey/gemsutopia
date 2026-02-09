@@ -47,4 +47,4 @@ export async function GET() {
   }
 }
 
-// PUT /api/shipping-settings - Admin functionality moved to JetBeans BaaS
+// PUT /api/shipping-settings - Admin functionality moved to Quickdash BaaS

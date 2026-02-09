@@ -3,7 +3,7 @@ import { eq, and } from 'drizzle-orm';
 
 const WORKSPACE_ID = process.env.WORKSPACE_ID!;
 
-// Get a specific setting value from JetBeans store_settings
+// Get a specific setting value from Quickdash store_settings
 export async function getSetting(key: string): Promise<string | null> {
   try {
     const setting = await db.query.storeSettings.findFirst({
@@ -18,7 +18,7 @@ export async function getSetting(key: string): Promise<string | null> {
   }
 }
 
-// Get all settings as key-value pairs from JetBeans store_settings
+// Get all settings as key-value pairs from Quickdash store_settings
 export async function getAllSettings(): Promise<Record<string, string>> {
   try {
     const allSettings = await db.query.storeSettings.findMany({
@@ -37,7 +37,7 @@ export async function getAllSettings(): Promise<Record<string, string>> {
   }
 }
 
-// Get settings by group from JetBeans store_settings
+// Get settings by group from Quickdash store_settings
 export async function getSettingsByGroup(group: string): Promise<Record<string, string>> {
   try {
     const groupSettings = await db.query.storeSettings.findMany({

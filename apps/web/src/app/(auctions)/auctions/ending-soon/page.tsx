@@ -12,7 +12,7 @@ export default async function EndingSoonAuctions() {
   // Get active auctions sorted by end time (soonest first)
   const { auctions } = await store.auctions.list({ status: 'active', sort: 'endsAt', order: 'asc' });
 
-  // Map Jetbeans auctions to local format and filter to those ending within 24 hours
+  // Map Quickdash auctions to local format and filter to those ending within 24 hours
   const now = Date.now();
   const twentyFourHours = 24 * 60 * 60 * 1000;
 
