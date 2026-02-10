@@ -1,47 +1,45 @@
 'use client';
-import { useState } from 'react';
-import { IconCreditCard, IconBrandPaypal, IconBrandCoinbase, IconCheck, IconLock, IconShieldCheck, IconMail } from '@tabler/icons-react';
+import { useState, useEffect } from 'react';
+import { IconCreditCard, IconBrandPaypal, IconWallet, IconCurrencyBitcoin, IconBuildingStore, IconSquare, IconCheck, IconLock, IconShieldCheck, IconMail, IconLoader2 } from '@tabler/icons-react';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { store } from '@/lib/store';
 import Link from 'next/link';
 
+type PaymentMethodType = 'stripe' | 'paypal' | 'polar' | 'reown' | 'shopify' | 'square';
+
 interface PaymentMethodsProps {
-  onSelect: (method: 'stripe' | 'paypal' | 'coinbase') => void;
+  onSelect: (method: PaymentMethodType) => void;
 }
 
+const PROVIDER_META: Record<string, { name: string; icon: typeof IconCreditCard; description?: string }> = {
+  stripe: { name: 'Credit or Debit', icon: IconCreditCard },
+  paypal: { name: 'PayPal', icon: IconBrandPaypal, description: 'PayPal balance, Venmo, or card' },
+  polar: { name: 'Polar', icon: IconWallet, description: 'Secure card payments' },
+  reown: { name: 'Crypto', icon: IconCurrencyBitcoin, description: 'BTC, ETH, SOL & more' },
+  shopify: { name: 'Shopify', icon: IconBuildingStore },
+  square: { name: 'Square', icon: IconSquare },
+};
+
 export default function PaymentMethods({ onSelect }: PaymentMethodsProps) {
-  const [selectedMethod, setSelectedMethod] = useState<'stripe' | 'paypal' | 'coinbase' | null>(null);
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethodType | null>(null);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [methods, setMethods] = useState<{ provider: string; type: string }[]>([]);
+  const [loading, setLoading] = useState(true);
   const { currency } = useCurrency();
 
-  const isUSD = currency === 'USD';
-
-  const paymentMethods = [
-    {
-      id: 'stripe' as const,
-      name: 'Credit or Debit',
-      icon: IconCreditCard,
-      available: true,
-    },
-    {
-      id: 'paypal' as const,
-      name: 'PayPal',
-      icon: IconBrandPaypal,
-      available: isUSD,
-    },
-    {
-      id: 'coinbase' as const,
-      name: 'Coinbase',
-      icon: IconBrandCoinbase,
-      available: true,
-    },
-  ];
-
-  const handleSelect = (methodId: 'stripe' | 'paypal' | 'coinbase') => {
-    const method = paymentMethods.find(m => m.id === methodId);
-    if (method?.available) {
-      setSelectedMethod(methodId);
-    }
-  };
+  useEffect(() => {
+    const fetchMethods = async () => {
+      try {
+        const res = await store.payments.getMethods();
+        setMethods(res.methods);
+      } catch {
+        // Fallback: show nothing, user can't proceed
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMethods();
+  }, []);
 
   const handleContinue = () => {
     if (selectedMethod) {
@@ -49,35 +47,53 @@ export default function PaymentMethods({ onSelect }: PaymentMethodsProps) {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <IconLoader2 size={24} className="animate-spin text-white/60" />
+        <span className="ml-2 font-[family-name:var(--font-inter)] text-sm text-white/60">Loading payment methods...</span>
+      </div>
+    );
+  }
+
+  if (methods.length === 0) {
+    return (
+      <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-center">
+        <p className="font-[family-name:var(--font-inter)] text-sm text-white/60">
+          No payment methods are currently available. Please contact support.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      {paymentMethods.map(method => {
-        const Icon = method.icon;
-        const isSelected = selectedMethod === method.id;
+      {methods.map(method => {
+        const meta = PROVIDER_META[method.provider] || { name: method.provider, icon: IconWallet };
+        const Icon = meta.icon;
+        const id = method.provider as PaymentMethodType;
+        const isSelected = selectedMethod === id;
 
         return (
           <button
-            key={method.id}
-            onClick={() => handleSelect(method.id)}
-            disabled={!method.available}
+            key={id}
+            onClick={() => setSelectedMethod(id)}
             className={`group relative w-full rounded-xl border p-4 text-left transition-all xs:p-5 ${
               isSelected
                 ? 'border-white/30 bg-white/10'
-                : method.available
-                  ? 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'
-                  : 'cursor-not-allowed border-white/5 bg-white/[0.02] opacity-50'
+                : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'
             }`}
           >
             <div className="flex items-center gap-4">
-              <Icon size={24} className={method.available ? 'text-white' : 'text-white/40'} />
+              <Icon size={24} className="text-white" />
               <div className="flex-1">
-                <span className={`font-[family-name:var(--font-inter)] text-base font-semibold ${method.available ? 'text-white' : 'text-white/40'}`}>
-                  {method.name}
+                <span className="font-[family-name:var(--font-inter)] text-base font-semibold text-white">
+                  {meta.name}
                 </span>
-                {method.id === 'paypal' && !isUSD && (
-                  <span className="ml-2 font-[family-name:var(--font-inter)] text-xs text-white/30">
-                    USD only
-                  </span>
+                {meta.description && (
+                  <p className="font-[family-name:var(--font-inter)] text-xs text-white/40 mt-0.5">
+                    {meta.description}
+                  </p>
                 )}
               </div>
               {isSelected && (
@@ -141,7 +157,6 @@ export default function PaymentMethods({ onSelect }: PaymentMethodsProps) {
         </div>
       </div>
 
-      {/* Continue Shopping Link */}
       <Link
         href="/shop"
         className="mt-4 block text-center font-[family-name:var(--font-inter)] text-sm text-white/60 transition-colors hover:text-white"

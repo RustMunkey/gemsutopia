@@ -538,6 +538,14 @@ export class StorefrontClient {
 	// ============================================
 
 	payments = {
+		getMethods: async (): Promise<{
+			methods: { provider: string; type: string; publishableKey?: string; clientId?: string; projectId?: string; chains?: string[]; applicationId?: string; mode?: string }[]
+			currency: string
+			acceptedCurrencies: string[]
+		}> => {
+			return this.request('/payments/methods')
+		},
+
 		createStripeSession: async (data: {
 			items: { name: string; description?: string; image?: string; price: number; quantity: number }[]
 			successUrl: string
@@ -549,6 +557,86 @@ export class StorefrontClient {
 			discountCode?: string
 		}): Promise<{ sessionId: string; url: string }> => {
 			return this.request('/payments/stripe/checkout', {
+				method: 'POST',
+				body: data,
+			})
+		},
+
+		createPayPalOrder: async (data: {
+			items: { name: string; quantity: number; amount: number }[]
+			currency?: string
+			successUrl?: string
+			cancelUrl?: string
+			metadata?: Record<string, string>
+		}): Promise<{ orderId: string; approveUrl: string }> => {
+			return this.request('/payments/paypal/checkout', {
+				method: 'POST',
+				body: data,
+			})
+		},
+
+		capturePayPalOrder: async (orderId: string): Promise<{
+			captureId: string
+			status: string
+			payer: unknown
+			shippingAddress: unknown
+		}> => {
+			return this.request('/payments/paypal/checkout', {
+				method: 'POST',
+				body: { orderId },
+			})
+		},
+
+		createPolarCheckout: async (data: {
+			productId?: string
+			amount?: number
+			currency?: string
+			successUrl?: string
+			metadata?: Record<string, string>
+		}): Promise<{ checkoutId: string; url: string }> => {
+			return this.request('/payments/polar/checkout', {
+				method: 'POST',
+				body: data,
+			})
+		},
+
+		getReownConfig: async (): Promise<{ projectId: string; chains: string[] }> => {
+			return this.request('/payments/reown/config')
+		},
+
+		verifyReownPayment: async (data: {
+			chain: string
+			txHash: string
+			amount: number
+			currency: string
+			walletAddress: string
+			recipientAddress?: string
+		}): Promise<{ verified: boolean; status: string; txHash: string; message: string }> => {
+			return this.request('/payments/reown/verify', {
+				method: 'POST',
+				body: data,
+			})
+		},
+
+		createShopifyCheckout: async (data: {
+			items: { variantId: string; quantity: number }[]
+			email?: string
+			note?: string
+			metadata?: Record<string, string>
+		}): Promise<{ checkoutId: string; webUrl: string }> => {
+			return this.request('/payments/shopify/checkout', {
+				method: 'POST',
+				body: data,
+			})
+		},
+
+		createSquareCheckout: async (data: {
+			items: { name: string; quantity: number; amount: number; note?: string }[]
+			currency?: string
+			successUrl?: string
+			metadata?: Record<string, string>
+		}): Promise<{ paymentLinkId: string; url: string; orderId: string | null }> => {
+			return this.request('/payments/square/checkout', {
 				method: 'POST',
 				body: data,
 			})

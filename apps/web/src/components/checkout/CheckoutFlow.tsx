@@ -5,6 +5,7 @@ import { useGemPouch } from '@/contexts/GemPouchContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { toast } from 'sonner';
 import { useInventory } from '@/contexts/InventoryContext';
+import { store } from '@/lib/store';
 import CartReview from './CartReview';
 import CustomerInfo from './CustomerInfo';
 import PaymentMethods from './PaymentMethods';
@@ -29,7 +30,7 @@ interface CheckoutData {
     country: string;
     phone?: string;
   };
-  paymentMethod: 'stripe' | 'paypal' | 'coinbase' | null;
+  paymentMethod: 'stripe' | 'paypal' | 'polar' | 'reown' | 'shopify' | 'square' | null;
   orderTotal: number;
 }
 
@@ -87,308 +88,166 @@ export default function CheckoutFlow() {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Handle return from Stripe Checkout
+  // Handle return from payment provider redirects (Stripe, PayPal, Polar, Shopify, Square)
   useEffect(() => {
-    const handleStripeReturn = async () => {
-      // Check URL parameters for Stripe session_id
-      const urlParams = new URLSearchParams(window.location.search);
-      const sessionId = urlParams.get('session_id');
-      const paymentMethod = urlParams.get('payment_method');
-
-      if (sessionId && paymentMethod === 'stripe') {
-        try {
-          // Verify the session with Stripe
-          const verifyResponse = await fetch(
-            `/api/payments/stripe/verify-session?session_id=${sessionId}`
-          );
-          const verifyData = await verifyResponse.json();
-
-          if (!verifyData.success) {
-            toast.error('Payment verification failed');
-            setCurrentStep('payment-method');
-            return;
-          }
-
-          // Retrieve checkout data from sessionStorage
-          const checkoutDataStr = sessionStorage.getItem('stripeCheckoutData');
-          if (!checkoutDataStr) {
-            toast.error('Checkout data not found. Please try again.');
-            setCurrentStep('payment-method');
-            return;
-          }
-
-          const savedCheckoutData = JSON.parse(checkoutDataStr);
-
-          // Create the order in your database
-          const orderData = {
-            items: savedCheckoutData.items,
-            customerInfo: savedCheckoutData.customerData,
-            payment: {
-              payment_id: verifyData.session.payment_intent,
-              session_id: sessionId,
-              paymentMethod: 'stripe',
-              amount: savedCheckoutData.amount,
-              currency: savedCheckoutData.currency,
-              status: 'paid',
-            },
-            totals: {
-              subtotal: savedCheckoutData.subtotal,
-              discount: savedCheckoutData.appliedDiscount?.amount || 0,
-              tax: savedCheckoutData.tax || 0,
-              shipping: savedCheckoutData.shipping,
-              total: savedCheckoutData.amount,
-            },
-            discountCode: savedCheckoutData.appliedDiscount || null,
-            timestamp: new Date().toISOString(),
-          };
-
-          const orderResponse = await fetch('/api/orders', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(orderData),
-          });
-
-          if (orderResponse.ok) {
-            const orderResult = await orderResponse.json();
-
-            // Apply referral if this was a referral code
-            if (savedCheckoutData.appliedDiscount?.isReferral && savedCheckoutData.appliedDiscount?.referralId) {
-              try {
-                await fetch('/api/referrals/apply', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    referralId: savedCheckoutData.appliedDiscount.referralId,
-                    orderId: orderResult.order.id,
-                    orderTotal: savedCheckoutData.amount,
-                    discountApplied: savedCheckoutData.appliedDiscount.amount,
-                    referredEmail: savedCheckoutData.customerData.email,
-                    referredName: `${savedCheckoutData.customerData.firstName} ${savedCheckoutData.customerData.lastName}`,
-                  }),
-                });
-                // Clear stored referral code after successful application
-                clearStoredReferralCode();
-              } catch (error) {
-                console.error('Failed to apply referral:', error);
-              }
-            }
-
-            // Clear the stored checkout data
-            sessionStorage.removeItem('stripeCheckoutData');
-
-            // Update checkout data state
-            setCheckoutData(prev => ({
-              ...prev,
-              customer: savedCheckoutData.customerData,
-              paymentMethod: 'stripe',
-            }));
-
-            // Set order info and navigate to success
-            setOrderId(orderResult.order.id);
-            setPaymentInfo({
-              actualAmount: savedCheckoutData.amount,
-              currency: savedCheckoutData.currency,
-            });
-
-            // Preserve items for OrderSuccess
-            setPreservedItems(savedCheckoutData.items);
-            setPreservedSubtotal(savedCheckoutData.subtotal);
-            setFinalShipping(savedCheckoutData.shipping);
-
-            setCurrentStep('success');
-            clearPouch();
-            refreshShopProducts();
-
-            // Refresh individual product pages
-            savedCheckoutData.items.forEach((item: any) => {
-              refreshProduct(item.id);
-            });
-
-            // Clean up URL
-            window.history.replaceState({}, '', '/checkout');
-
-            toast.success('Payment successful! Order created.');
-          } else {
-            toast.error('Payment succeeded but order creation failed. Please contact support.');
-            setCurrentStep('error');
-            setError(
-              'Order creation failed. Your payment was successful. Please contact support with session ID: ' +
-                sessionId
-            );
-          }
-        } catch {
-          toast.error('An error occurred processing your payment');
-          setCurrentStep('error');
-          setError('An error occurred. Please contact support.');
-        }
-      }
-    };
-
-    handleStripeReturn();
-  }, []);
-
-  // Handle return from Coinbase Commerce
-  useEffect(() => {
-    const handleCoinbaseReturn = async () => {
+    const handlePaymentReturn = async () => {
       const urlParams = new URLSearchParams(window.location.search);
       const paymentMethod = urlParams.get('payment_method');
       const status = urlParams.get('status');
 
-      if (paymentMethod === 'coinbase' && status === 'success') {
-        try {
-          // Retrieve checkout data from sessionStorage
-          const checkoutDataStr = sessionStorage.getItem('coinbaseCheckoutData');
-          if (!checkoutDataStr) {
-            toast.error('Checkout data not found. Please try again.');
-            setCurrentStep('payment-method');
-            return;
-          }
+      if (!paymentMethod) return;
 
-          const savedCheckoutData = JSON.parse(checkoutDataStr);
-
-          // Verify the charge with Coinbase
-          const verifyResponse = await fetch(
-            `/api/payments/coinbase/verify-charge?code=${savedCheckoutData.chargeCode}`
-          );
-          const verifyData = await verifyResponse.json();
-
-          if (!verifyData.success) {
-            toast.error('Payment verification failed');
-            setCurrentStep('payment-method');
-            return;
-          }
-
-          // Check if payment is complete or pending
-          if (!verifyData.data.isComplete && !verifyData.data.isPending) {
-            toast.error('Payment was not completed');
-            setCurrentStep('payment-method');
-            return;
-          }
-
-          // Create the order in your database
-          const orderData = {
-            items: savedCheckoutData.items,
-            customerInfo: savedCheckoutData.customerData,
-            payment: {
-              charge_code: savedCheckoutData.chargeCode,
-              paymentMethod: 'coinbase',
-              amount: savedCheckoutData.amount,
-              currency: savedCheckoutData.currency,
-              status: verifyData.data.isComplete ? 'paid' : 'pending',
-              cryptoNetwork: verifyData.data.payment?.network,
-              cryptoAmount: verifyData.data.payment?.cryptoAmount,
-              cryptoCurrency: verifyData.data.payment?.cryptoCurrency,
-              transactionId: verifyData.data.payment?.transactionId,
-            },
-            totals: {
-              subtotal: savedCheckoutData.subtotal,
-              discount: savedCheckoutData.appliedDiscount?.amount || 0,
-              tax: 0,
-              shipping: savedCheckoutData.shipping,
-              total: savedCheckoutData.amount,
-            },
-            discountCode: savedCheckoutData.appliedDiscount || null,
-            timestamp: new Date().toISOString(),
-          };
-
-          const orderResponse = await fetch('/api/orders', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(orderData),
-          });
-
-          if (orderResponse.ok) {
-            const orderResult = await orderResponse.json();
-
-            // Apply referral if this was a referral code
-            if (
-              savedCheckoutData.appliedDiscount?.isReferral &&
-              savedCheckoutData.appliedDiscount?.referralId
-            ) {
-              try {
-                await fetch('/api/referrals/apply', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    referralId: savedCheckoutData.appliedDiscount.referralId,
-                    orderId: orderResult.order.id,
-                    orderTotal: savedCheckoutData.amount,
-                    discountApplied: savedCheckoutData.appliedDiscount.amount,
-                    referredEmail: savedCheckoutData.customerData.email,
-                    referredName: `${savedCheckoutData.customerData.firstName} ${savedCheckoutData.customerData.lastName}`,
-                  }),
-                });
-                clearStoredReferralCode();
-              } catch (error) {
-                console.error('Failed to apply referral:', error);
-              }
-            }
-
-            // Clear the stored checkout data
-            sessionStorage.removeItem('coinbaseCheckoutData');
-
-            // Update checkout data state
-            setCheckoutData(prev => ({
-              ...prev,
-              customer: savedCheckoutData.customerData,
-              paymentMethod: 'coinbase',
-            }));
-
-            // Set order info and navigate to success
-            setOrderId(orderResult.order.id);
-            setPaymentInfo({
-              actualAmount: savedCheckoutData.amount,
-              currency: savedCheckoutData.currency,
-              cryptoAmount: verifyData.data.payment?.cryptoAmount
-                ? parseFloat(verifyData.data.payment.cryptoAmount)
-                : undefined,
-              cryptoCurrency: verifyData.data.payment?.cryptoCurrency,
-              cryptoNetwork: verifyData.data.payment?.network,
-            });
-
-            // Preserve items for OrderSuccess
-            setPreservedItems(savedCheckoutData.items);
-            setPreservedSubtotal(savedCheckoutData.subtotal);
-            setFinalShipping(savedCheckoutData.shipping);
-
-            setCurrentStep('success');
-            clearPouch();
-            refreshShopProducts();
-
-            // Refresh individual product pages
-            savedCheckoutData.items.forEach((item: any) => {
-              refreshProduct(item.id);
-            });
-
-            // Clean up URL
-            window.history.replaceState({}, '', '/checkout');
-
-            toast.success(
-              verifyData.data.isComplete
-                ? 'Payment confirmed! Order created.'
-                : 'Payment detected! Order created (awaiting blockchain confirmation).'
-            );
-          } else {
-            toast.error('Payment processed but order creation failed. Please contact support.');
-            setCurrentStep('error');
-            setError(
-              'Order creation failed. Your payment was successful. Please contact support with charge code: ' +
-                savedCheckoutData.chargeCode
-            );
-          }
-        } catch {
-          toast.error('An error occurred processing your payment');
-          setCurrentStep('error');
-          setError('An error occurred. Please contact support.');
-        }
-      } else if (paymentMethod === 'coinbase' && status === 'cancelled') {
+      // Handle cancellations
+      if (status === 'cancelled') {
         toast.info('Payment cancelled');
         setCurrentStep('payment-method');
         window.history.replaceState({}, '', '/checkout');
+        return;
+      }
+
+      // Map payment methods to sessionStorage keys
+      const storageKeys: Record<string, string> = {
+        stripe: 'stripeCheckoutData',
+        paypal: 'paypalCheckoutData',
+        polar: 'polarCheckoutData',
+        shopify: 'shopifyCheckoutData',
+        square: 'squareCheckoutData',
+      };
+
+      const storageKey = storageKeys[paymentMethod];
+      if (!storageKey) return;
+
+      try {
+        const checkoutDataStr = sessionStorage.getItem(storageKey);
+        if (!checkoutDataStr) {
+          toast.error('Checkout data not found. Please try again.');
+          setCurrentStep('payment-method');
+          return;
+        }
+
+        const savedData = JSON.parse(checkoutDataStr);
+        const paymentRecord: any = {
+          paymentMethod,
+          amount: savedData.amount,
+          currency: savedData.currency,
+          status: 'paid',
+        };
+
+        // Provider-specific capture/verification
+        if (paymentMethod === 'stripe') {
+          const sessionId = urlParams.get('session_id');
+          if (!sessionId) {
+            setCurrentStep('payment-method');
+            return;
+          }
+          paymentRecord.session_id = sessionId;
+        } else if (paymentMethod === 'paypal') {
+          // Capture the PayPal order via storefront API
+          const captureResult = await store.payments.capturePayPalOrder(savedData.orderId);
+          if (captureResult.status !== 'COMPLETED') {
+            toast.error('PayPal payment not completed');
+            setCurrentStep('payment-method');
+            return;
+          }
+          paymentRecord.captureID = captureResult.captureId;
+        } else if (paymentMethod === 'polar') {
+          paymentRecord.checkoutId = savedData.checkoutId;
+        } else if (paymentMethod === 'shopify') {
+          paymentRecord.checkoutId = savedData.checkoutId;
+        } else if (paymentMethod === 'square') {
+          paymentRecord.orderId = savedData.orderId;
+          paymentRecord.paymentLinkId = savedData.paymentLinkId;
+        }
+
+        // Create order in gemsutopia DB
+        const orderData = {
+          items: savedData.items,
+          customerInfo: savedData.customerData,
+          payment: paymentRecord,
+          totals: {
+            subtotal: savedData.subtotal,
+            discount: savedData.appliedDiscount?.amount || 0,
+            tax: 0,
+            shipping: savedData.shipping,
+            total: savedData.amount,
+          },
+          discountCode: savedData.appliedDiscount || null,
+          timestamp: new Date().toISOString(),
+        };
+
+        const orderResponse = await fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(orderData),
+        });
+
+        if (orderResponse.ok) {
+          const orderResult = await orderResponse.json();
+
+          // Apply referral if applicable
+          if (savedData.appliedDiscount?.isReferral && savedData.appliedDiscount?.referralId) {
+            try {
+              await fetch('/api/referrals/apply', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  referralId: savedData.appliedDiscount.referralId,
+                  orderId: orderResult.order.id,
+                  orderTotal: savedData.amount,
+                  discountApplied: savedData.appliedDiscount.amount,
+                  referredEmail: savedData.customerData.email,
+                  referredName: `${savedData.customerData.firstName} ${savedData.customerData.lastName}`,
+                }),
+              });
+              clearStoredReferralCode();
+            } catch (error) {
+              console.error('Failed to apply referral:', error);
+            }
+          }
+
+          // Clear stored checkout data
+          sessionStorage.removeItem(storageKey);
+
+          // Update state
+          setCheckoutData(prev => ({
+            ...prev,
+            customer: savedData.customerData,
+            paymentMethod: paymentMethod as any,
+          }));
+
+          setOrderId(orderResult.order.id);
+          setPaymentInfo({
+            actualAmount: savedData.amount,
+            currency: savedData.currency,
+          });
+
+          setPreservedItems(savedData.items);
+          setPreservedSubtotal(savedData.subtotal);
+          setFinalShipping(savedData.shipping);
+
+          setCurrentStep('success');
+          clearPouch();
+          refreshShopProducts();
+
+          savedData.items.forEach((item: any) => {
+            refreshProduct(item.id);
+          });
+
+          window.history.replaceState({}, '', '/checkout');
+          toast.success('Payment successful! Order created.');
+        } else {
+          toast.error('Payment processed but order creation failed. Please contact support.');
+          setCurrentStep('error');
+          setError('Order creation failed. Your payment was successful. Please contact support.');
+        }
+      } catch {
+        toast.error('An error occurred processing your payment');
+        setCurrentStep('error');
+        setError('An error occurred. Please contact support.');
       }
     };
 
-    handleCoinbaseReturn();
+    handlePaymentReturn();
   }, []);
 
   const [orderId, setOrderId] = useState<string>('');
@@ -405,7 +264,7 @@ export default function CheckoutFlow() {
   const [discountCode, setDiscountCode] = useState<string>('');
   const [appliedDiscount, setAppliedDiscount] = useState<{
     code: string;
-    type: 'percentage' | 'fixed_amount' | 'percentage' | 'fixed';
+    type: 'percentage' | 'fixed_amount' | 'fixed';
     value: number;
     amount: number;
     free_shipping: boolean;
