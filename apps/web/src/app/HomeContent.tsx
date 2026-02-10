@@ -211,7 +211,7 @@ export default function HomeContent({
         ) : (
           <div className="h-full w-full bg-black" />
         )}
-        <div className="pointer-events-none absolute inset-0 bg-black/20 backdrop-blur-[4px]" />
+        <div className="pointer-events-none absolute inset-0 bg-black/20" />
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-4 sm:px-8">
           {heroTitle && (
             <h1 className="max-w-4xl text-center font-[family-name:var(--font-bacasime)] text-4xl leading-tight text-white drop-shadow-2xl sm:text-5xl md:text-6xl lg:text-7xl">

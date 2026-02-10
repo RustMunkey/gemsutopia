@@ -128,7 +128,7 @@ export default function Reviews() {
       const data = await response.json();
 
       if (data.success) {
-        setSubmitMessage('Thank you for your review! It will be published after approval.');
+        setSubmitMessage('Thank you for your review!');
         setReviewForm({
           name: '',
           email: '',
