@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { sql } from 'drizzle-orm';
+import { store } from '@/lib/store';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -11,7 +10,7 @@ interface HealthStatus {
   version: string;
   uptime: number;
   checks: {
-    database: HealthCheck;
+    api: HealthCheck;
     memory: HealthCheck;
   };
 }
@@ -28,30 +27,30 @@ const startTime = Date.now();
 export async function GET() {
   const timestamp = new Date().toISOString();
   const checks: HealthStatus['checks'] = {
-    database: { status: 'fail' },
+    api: { status: 'fail' },
     memory: { status: 'fail' },
   };
 
   let overallStatus: HealthStatus['status'] = 'healthy';
 
-  // Check database connection
+  // Check Quickdash API connectivity
   try {
-    const dbStart = Date.now();
-    await db.execute(sql`SELECT 1`);
-    const dbLatency = Date.now() - dbStart;
+    const apiStart = Date.now();
+    await store.site.getSettings();
+    const apiLatency = Date.now() - apiStart;
 
-    checks.database = {
-      status: dbLatency > 1000 ? 'warn' : 'pass',
-      latency: dbLatency,
+    checks.api = {
+      status: apiLatency > 3000 ? 'warn' : 'pass',
+      latency: apiLatency,
     };
 
-    if (dbLatency > 1000) {
+    if (apiLatency > 3000) {
       overallStatus = 'degraded';
     }
   } catch (error) {
-    checks.database = {
+    checks.api = {
       status: 'fail',
-      message: error instanceof Error ? error.message : 'Database connection failed',
+      message: error instanceof Error ? error.message : 'API connection failed',
     };
     overallStatus = 'unhealthy';
   }
@@ -95,7 +94,7 @@ export async function GET() {
 // HEAD request for simple liveness probe
 export async function HEAD() {
   try {
-    await db.execute(sql`SELECT 1`);
+    await store.site.getSettings();
     return new NextResponse(null, { status: 200 });
   } catch {
     return new NextResponse(null, { status: 503 });

@@ -2,12 +2,11 @@
 // This file validates required environment variables at build/startup time
 
 const requiredEnvVars = [
-  'DATABASE_URL',
+  'NEXT_PUBLIC_STOREFRONT_API_KEY',
 ] as const;
 
 const optionalEnvVars = [
   // Quickdash Storefront API
-  'NEXT_PUBLIC_STOREFRONT_API_KEY',
   'NEXT_PUBLIC_STOREFRONT_URL',
   // Payments
   'STRIPE_SECRET_KEY',
@@ -20,8 +19,6 @@ const optionalEnvVars = [
   // Storage (Supabase)
   'NEXT_PUBLIC_SUPABASE_URL',
   'SUPABASE_SERVICE_ROLE_KEY',
-  // Customer Auth
-  'BETTER_AUTH_SECRET',
   // Cloudflare Turnstile (optional - for spam protection)
   'NEXT_PUBLIC_TURNSTILE_SITE_KEY',
   'TURNSTILE_SECRET_KEY',
@@ -74,15 +71,9 @@ if (typeof window === 'undefined') {
 
 // Type-safe env access
 export const env = {
-  // Database (temporary - until fully migrated to Quickdash API)
-  DATABASE_URL: process.env.DATABASE_URL!,
-
   // Quickdash Storefront API
   STOREFRONT_API_KEY: process.env.NEXT_PUBLIC_STOREFRONT_API_KEY,
   STOREFRONT_URL: process.env.NEXT_PUBLIC_STOREFRONT_URL || 'https://app.quickdash.net',
-
-  // Customer Auth
-  BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
 
   // Payments
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,

@@ -1,50 +1,44 @@
-import { getAllSettings } from '@/lib/database/siteSettings';
-import { apiSuccess } from '@/lib/api';
+import { store } from '@/lib/store';
 
 export const dynamic = 'force-dynamic';
 
+const DEFAULTS = {
+  enableShipping: true,
+  internationalShipping: true,
+  singleItemShippingCAD: 21.0,
+  singleItemShippingUSD: 15.0,
+  combinedShippingCAD: 25.0,
+  combinedShippingUSD: 18.0,
+  combinedShippingEnabled: true,
+  combinedShippingThreshold: 2,
+};
+
 /**
- * Public endpoint to get shipping settings for checkout calculations
- * No authentication required as this is needed for public cart/checkout
+ * Public endpoint to get shipping settings for checkout calculations.
+ * Reads from Quickdash site settings API — no direct DB access.
  */
 export async function GET() {
   try {
-    const dbSettings = await getAllSettings();
+    const { site } = await store.site.getSettings() as any;
+    const s = site.shipping;
+
+    if (!s) {
+      return Response.json({ settings: DEFAULTS, isDefault: true });
+    }
 
     const shippingSettings = {
-      enableShipping:
-        dbSettings.enable_shipping !== undefined ? dbSettings.enable_shipping === 'true' : true,
-      internationalShipping:
-        dbSettings.international_shipping !== undefined
-          ? dbSettings.international_shipping === 'true'
-          : true,
-      singleItemShippingCAD: parseFloat(dbSettings.single_item_shipping_cad) || 21.0,
-      singleItemShippingUSD: parseFloat(dbSettings.single_item_shipping_usd) || 15.0,
-      combinedShippingCAD: parseFloat(dbSettings.combined_shipping_cad) || 25.0,
-      combinedShippingUSD: parseFloat(dbSettings.combined_shipping_usd) || 18.0,
-      combinedShippingEnabled:
-        dbSettings.combined_shipping_enabled !== undefined
-          ? dbSettings.combined_shipping_enabled === 'true'
-          : true,
-      combinedShippingThreshold: parseInt(dbSettings.combined_shipping_threshold) || 2,
+      enableShipping: s.enabled !== false,
+      internationalShipping: s.international !== false,
+      singleItemShippingCAD: s.singleItemCAD || DEFAULTS.singleItemShippingCAD,
+      singleItemShippingUSD: s.singleItemUSD || DEFAULTS.singleItemShippingUSD,
+      combinedShippingCAD: s.combinedCAD || DEFAULTS.combinedShippingCAD,
+      combinedShippingUSD: s.combinedUSD || DEFAULTS.combinedShippingUSD,
+      combinedShippingEnabled: s.combinedEnabled !== false,
+      combinedShippingThreshold: s.combinedThreshold || DEFAULTS.combinedShippingThreshold,
     };
 
-    return apiSuccess({ settings: shippingSettings });
+    return Response.json({ settings: shippingSettings });
   } catch {
-    // Return defaults on error - these should match admin panel settings
-    const defaultSettings = {
-      enableShipping: true,
-      internationalShipping: true,
-      singleItemShippingCAD: 21.0,
-      singleItemShippingUSD: 15.0,
-      combinedShippingCAD: 25.0,
-      combinedShippingUSD: 18.0,
-      combinedShippingEnabled: true,
-      combinedShippingThreshold: 2,
-    };
-
-    return apiSuccess({ settings: defaultSettings, isDefault: true });
+    return Response.json({ settings: DEFAULTS, isDefault: true });
   }
 }
-
-// PUT /api/shipping-settings - Admin functionality moved to Quickdash BaaS

@@ -148,7 +148,15 @@ export type SiteSettings = {
 	seo: {
 		title: string | null
 		description: string | null
+		socialImage: string | null
 		keywords: string | null
+		author: string | null
+		openGraphTitle: string | null
+		openGraphDescription: string | null
+		openGraphImage: string | null
+		twitterTitle: string | null
+		twitterDescription: string | null
+		twitterImage: string | null
 	}
 }
 
@@ -511,6 +519,21 @@ export class StorefrontClient {
 		get: async (orderId: string): Promise<{ order: Order }> => {
 			return this.request(`/orders/${orderId}`)
 		},
+
+		create: async (data: {
+			customer: { email: string; firstName: string; lastName: string; phone?: string }
+			shippingAddress: { addressLine1: string; addressLine2?: string; city: string; state: string; postalCode: string; country: string; phone?: string; firstName?: string; lastName?: string }
+			items: { name: string; price: number; quantity: number; productId?: string; variantId?: string; sku?: string; image?: string }[]
+			payment: { provider: string; method: string; externalId?: string; amount: string | number; currency: string; status?: string; session_id?: string; captureID?: string; checkoutId?: string; orderId?: string; paymentLinkId?: string; txHash?: string; walletAddress?: string; chain?: string }
+			totals: { subtotal: number; discount: number; tax: number; shipping: number; total: number }
+			discountCode?: unknown
+			metadata?: Record<string, unknown>
+		}): Promise<{ order: { id: string; orderNumber: string; status: string } }> => {
+			return this.request('/orders', {
+				method: 'POST',
+				body: data,
+			})
+		},
 	}
 
 	// ============================================
@@ -848,6 +871,81 @@ export class StorefrontClient {
 	siteContent = {
 		list: async (): Promise<{ content: SiteContentItem[] }> => {
 			return this.request('/site-content')
+		},
+	}
+
+	// ============================================
+	// Referrals
+	// ============================================
+
+	referrals = {
+		generate: async (email: string): Promise<{ referral: unknown }> => {
+			return this.request('/referrals', {
+				method: 'POST',
+				body: { email },
+			})
+		},
+
+		validate: async (code: string, customerEmail?: string, orderTotal?: number): Promise<{
+			valid: boolean
+			error?: string
+			discount?: {
+				code: string
+				type: string
+				value: number
+				amount: number
+				free_shipping: boolean
+				isReferral: boolean
+				referralId: string
+				referrerName: string
+				description: string
+			}
+		}> => {
+			return this.request('/referrals/validate', {
+				method: 'POST',
+				body: { code, customerEmail, orderTotal },
+			})
+		},
+
+		apply: async (data: {
+			referralId: string
+			orderId: string
+			orderTotal: number
+			discountApplied: number
+			referredEmail: string
+			referredName: string
+		}): Promise<{ success: boolean; referral?: unknown }> => {
+			return this.request('/referrals/apply', {
+				method: 'POST',
+				body: data,
+			})
+		},
+
+		get: async (email: string): Promise<{ referral: unknown | null }> => {
+			return this.request('/referrals', {
+				params: { email },
+			})
+		},
+	}
+
+	// ============================================
+	// Analytics
+	// ============================================
+
+	analytics = {
+		track: async (data: {
+			sessionId: string
+			visitorId: string
+			eventType?: string
+			pathname: string
+			referrer?: string | null
+			hostname?: string
+			eventData?: Record<string, unknown>
+		}): Promise<{ ok: boolean }> => {
+			return this.request('/analytics/track', {
+				method: 'POST',
+				body: data,
+			})
 		},
 	}
 

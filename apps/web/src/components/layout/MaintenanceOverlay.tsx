@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { useMode } from '@/lib/contexts/ModeContext';
 import { usePathname } from 'next/navigation';
-import { IconSettings, IconRefresh } from '@tabler/icons-react';
 import '../../styles/maintenanceoverlay.css';
 import { Spinner } from '@/components/ui/spinner';
 
@@ -20,52 +19,49 @@ const maintenanceMessages = [
 ];
 
 export default function MaintenanceOverlay() {
-  const { mode } = useMode();
+  const { mode, maintenanceMessage } = useMode();
   const pathname = usePathname();
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
 
-  // Check if current page should be excluded from maintenance mode
   const isAdminPage = pathname?.startsWith('/admin') || false;
+  const showOverlay = mode === 'maintenance' && !isAdminPage;
 
   // Cycle through maintenance messages
   useEffect(() => {
-    if (mode === 'dev' && !isAdminPage) {
+    if (showOverlay) {
       const interval = setInterval(() => {
         setCurrentMessageIndex(prev => (prev + 1) % maintenanceMessages.length);
-      }, 30000); // Change message every 30 seconds
+      }, 30000);
 
       return () => clearInterval(interval);
     }
-  }, [mode, isAdminPage]);
+  }, [showOverlay]);
 
   // Handle visibility with smooth transition and body scroll lock
   useEffect(() => {
-    if (mode === 'dev' && !isAdminPage) {
+    if (showOverlay) {
       setIsVisible(true);
-      // Prevent body scrolling
       document.body.style.overflow = 'hidden';
       document.body.style.position = 'fixed';
       document.body.style.width = '100%';
       document.body.style.height = '100%';
     } else {
-      // Restore body scrolling
       document.body.style.overflow = '';
       document.body.style.position = '';
       document.body.style.width = '';
       document.body.style.height = '';
-      // Delay hiding to allow fade out animation
       const timeout = setTimeout(() => setIsVisible(false), 300);
       return () => clearTimeout(timeout);
     }
-  }, [mode, isAdminPage]);
+  }, [showOverlay]);
 
   if (!isVisible) return null;
 
   return (
     <div
       className={`maintenance-overlay fixed inset-0 z-[9999] transition-all duration-500 ${
-        mode === 'dev' ? 'opacity-100 backdrop-blur-md' : 'pointer-events-none opacity-0'
+        showOverlay ? 'opacity-100 backdrop-blur-md' : 'pointer-events-none opacity-0'
       }`}
       onWheel={e => e.preventDefault()}
       onTouchMove={e => e.preventDefault()}
@@ -81,8 +77,8 @@ export default function MaintenanceOverlay() {
           {/* Main title */}
           <h1 className="mb-4 text-3xl font-bold text-white md:text-4xl">Under Maintenance</h1>
 
-          {/* Subtitle */}
-          <p className="mb-8 text-lg text-white/80">Site temporarily unavailable</p>
+          {/* Subtitle — from admin settings */}
+          <p className="mb-8 text-lg text-white/80">{maintenanceMessage}</p>
 
           {/* Animated loader */}
           <div className="mb-6">

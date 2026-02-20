@@ -1,4 +1,4 @@
-import { getAllSettings } from '../database/siteSettings';
+import { store } from '@/lib/store';
 
 export interface SEOMetadata {
   seoTitle: string;
@@ -32,32 +32,32 @@ const defaults: SEOMetadata = {
   siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://gemsutopia.com',
 };
 
-// In-memory cache for client-side updates
-let seoCache: SEOMetadata | null = null;
-
-// Fetch SEO settings from database (for server-side rendering)
+// Fetch SEO settings from Quickdash API
 export async function getSEOMetadataFromDB(): Promise<SEOMetadata> {
   try {
-    const dbSettings = await getAllSettings();
+    const { site } = await store.site.getSettings();
 
     return {
-      seoTitle: dbSettings.seo_title || defaults.seoTitle,
-      seoDescription: dbSettings.seo_description || defaults.seoDescription,
-      seoKeywords: dbSettings.seo_keywords || defaults.seoKeywords,
-      seoAuthor: dbSettings.seo_author || defaults.seoAuthor,
-      openGraphTitle: dbSettings.open_graph_title || defaults.openGraphTitle,
-      openGraphDescription: dbSettings.open_graph_description || defaults.openGraphDescription,
-      openGraphImage: dbSettings.open_graph_image || defaults.openGraphImage,
-      twitterTitle: dbSettings.twitter_title || defaults.twitterTitle,
-      twitterDescription: dbSettings.twitter_description || defaults.twitterDescription,
-      twitterImage: dbSettings.twitter_image || defaults.twitterImage,
-      siteName: dbSettings.site_name || defaults.siteName,
+      seoTitle: site.seo?.title || defaults.seoTitle,
+      seoDescription: site.seo?.description || defaults.seoDescription,
+      seoKeywords: site.seo?.keywords || defaults.seoKeywords,
+      seoAuthor: site.seo?.author || defaults.seoAuthor,
+      openGraphTitle: site.seo?.openGraphTitle || defaults.openGraphTitle,
+      openGraphDescription: site.seo?.openGraphDescription || defaults.openGraphDescription,
+      openGraphImage: site.seo?.openGraphImage || defaults.openGraphImage,
+      twitterTitle: site.seo?.twitterTitle || defaults.twitterTitle,
+      twitterDescription: site.seo?.twitterDescription || defaults.twitterDescription,
+      twitterImage: site.seo?.twitterImage || defaults.twitterImage,
+      siteName: site.name || defaults.siteName,
       siteUrl: process.env.NEXT_PUBLIC_SITE_URL || defaults.siteUrl,
     };
   } catch {
     return defaults;
   }
 }
+
+// In-memory cache for client-side updates
+let seoCache: SEOMetadata | null = null;
 
 // Sync getter for client-side (returns cached or defaults)
 export function getSEOMetadata(): SEOMetadata {

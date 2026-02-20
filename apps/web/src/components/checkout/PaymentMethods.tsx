@@ -1,7 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { IconCreditCard, IconBrandPaypal, IconWallet, IconCurrencyBitcoin, IconBuildingStore, IconSquare, IconCheck, IconLock, IconShieldCheck, IconMail, IconLoader2 } from '@tabler/icons-react';
+import { IconCreditCard, IconBrandPaypal, IconWallet, IconCurrencyBitcoin, IconBuildingStore, IconSquare, IconCheck, IconLock, IconShieldCheck, IconMail, IconLoader2, IconTestPipe } from '@tabler/icons-react';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { useMode } from '@/lib/contexts/ModeContext';
 import { store } from '@/lib/store';
 import Link from 'next/link';
 
@@ -23,9 +24,11 @@ const PROVIDER_META: Record<string, { name: string; icon: typeof IconCreditCard;
 export default function PaymentMethods({ onSelect }: PaymentMethodsProps) {
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethodType | null>(null);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
-  const [methods, setMethods] = useState<{ provider: string; type: string }[]>([]);
+  const [methods, setMethods] = useState<{ provider: string; type: string; testMode?: boolean; mode?: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const { currency } = useCurrency();
+  const { mode: siteMode } = useMode();
+  const isSandbox = siteMode === 'sandbox';
 
   useEffect(() => {
     const fetchMethods = async () => {
@@ -68,11 +71,20 @@ export default function PaymentMethods({ onSelect }: PaymentMethodsProps) {
 
   return (
     <div className="space-y-4">
+      {isSandbox && (
+        <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2.5">
+          <IconTestPipe size={16} className="shrink-0 text-amber-400" />
+          <p className="font-[family-name:var(--font-inter)] text-xs text-amber-300">
+            Sandbox mode — use test card numbers. No real charges will be made.
+          </p>
+        </div>
+      )}
       {methods.map(method => {
         const meta = PROVIDER_META[method.provider] || { name: method.provider, icon: IconWallet };
         const Icon = meta.icon;
         const id = method.provider as PaymentMethodType;
         const isSelected = selectedMethod === id;
+        const isProviderTest = method.testMode === true || method.mode === 'sandbox';
 
         return (
           <button
@@ -87,9 +99,16 @@ export default function PaymentMethods({ onSelect }: PaymentMethodsProps) {
             <div className="flex items-center gap-4">
               <Icon size={24} className="text-white" />
               <div className="flex-1">
-                <span className="font-[family-name:var(--font-inter)] text-base font-semibold text-white">
-                  {meta.name}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="font-[family-name:var(--font-inter)] text-base font-semibold text-white">
+                    {meta.name}
+                  </span>
+                  {isProviderTest && (
+                    <span className="rounded bg-amber-500/20 px-1.5 py-0.5 font-[family-name:var(--font-inter)] text-[10px] font-semibold uppercase tracking-wider text-amber-400">
+                      Test
+                    </span>
+                  )}
+                </div>
                 {meta.description && (
                   <p className="font-[family-name:var(--font-inter)] text-xs text-white/40 mt-0.5">
                     {meta.description}

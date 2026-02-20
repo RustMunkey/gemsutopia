@@ -1,39 +1,56 @@
 'use client';
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { store } from '@/lib/store';
 
-export type DashboardMode = 'live' | 'dev';
+export type SiteMode = 'live' | 'maintenance' | 'sandbox';
 
 interface ModeContextType {
-  mode: DashboardMode;
-  setMode: (mode: DashboardMode) => void;
-  toggleMode: () => void;
+  mode: SiteMode;
+  maintenanceMessage: string;
+  loading: boolean;
 }
 
 const ModeContext = createContext<ModeContextType | undefined>(undefined);
 
 export function ModeProvider({ children }: { children: ReactNode }) {
-  const [mode, setMode] = useState<DashboardMode>('live');
+  const [mode, setMode] = useState<SiteMode>('live');
+  const [maintenanceMessage, setMaintenanceMessage] = useState("We'll be back soon.");
+  const [loading, setLoading] = useState(true);
 
-  // Check mode from localStorage on mount
-  useEffect(() => {
-    const savedMode = localStorage.getItem('dashboard-mode') as DashboardMode;
-    if (savedMode === 'dev' || savedMode === 'live') {
-      setMode(savedMode);
+  const fetchSiteMode = useCallback(async () => {
+    try {
+      const result = await store.site.getSettings();
+      const site = result.site as any;
+
+      if (site.maintenance?.enabled) {
+        setMode('maintenance');
+        setMaintenanceMessage(site.maintenance.message || "We'll be back soon.");
+      } else if (site.sandbox?.enabled) {
+        setMode('sandbox');
+      } else {
+        setMode('live');
+      }
+    } catch {
+      // API not available — default to live
+      setMode('live');
+    } finally {
+      setLoading(false);
     }
   }, []);
 
-  const handleSetMode = (newMode: DashboardMode) => {
-    setMode(newMode);
-    localStorage.setItem('dashboard-mode', newMode);
-  };
+  // Fetch mode on mount
+  useEffect(() => {
+    fetchSiteMode();
+  }, [fetchSiteMode]);
 
-  const toggleMode = () => {
-    const newMode = mode === 'live' ? 'dev' : 'live';
-    handleSetMode(newMode);
-  };
+  // Poll for mode changes every 30 seconds (admin might toggle it)
+  useEffect(() => {
+    const interval = setInterval(fetchSiteMode, 30000);
+    return () => clearInterval(interval);
+  }, [fetchSiteMode]);
 
   return (
-    <ModeContext.Provider value={{ mode, setMode: handleSetMode, toggleMode }}>
+    <ModeContext.Provider value={{ mode, maintenanceMessage, loading }}>
       {children}
     </ModeContext.Provider>
   );

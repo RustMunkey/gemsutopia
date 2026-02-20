@@ -127,7 +127,8 @@ export default function CheckoutFlow() {
 
         const savedData = JSON.parse(checkoutDataStr);
         const paymentRecord: any = {
-          paymentMethod,
+          provider: paymentMethod,
+          method: paymentMethod,
           amount: savedData.amount,
           currency: savedData.currency,
           status: 'paid',
@@ -159,10 +160,32 @@ export default function CheckoutFlow() {
           paymentRecord.paymentLinkId = savedData.paymentLinkId;
         }
 
-        // Create order in gemsutopia DB
-        const orderData = {
-          items: savedData.items,
-          customerInfo: savedData.customerData,
+        // Create order via Quickdash storefront API
+        const orderResult = await store.orders.create({
+          customer: {
+            email: savedData.customerData.email,
+            firstName: savedData.customerData.firstName,
+            lastName: savedData.customerData.lastName,
+            phone: savedData.customerData.phone,
+          },
+          shippingAddress: {
+            firstName: savedData.customerData.firstName,
+            lastName: savedData.customerData.lastName,
+            addressLine1: savedData.customerData.addressLine1 || savedData.customerData.address || '',
+            addressLine2: savedData.customerData.addressLine2 || '',
+            city: savedData.customerData.city || '',
+            state: savedData.customerData.state || savedData.customerData.province || '',
+            postalCode: savedData.customerData.postalCode || savedData.customerData.zip || '',
+            country: savedData.customerData.country || 'CA',
+            phone: savedData.customerData.phone,
+          },
+          items: savedData.items.map((item: any) => ({
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            productId: item.id,
+            image: item.image,
+          })),
           payment: paymentRecord,
           totals: {
             subtotal: savedData.subtotal,
@@ -172,78 +195,64 @@ export default function CheckoutFlow() {
             total: savedData.amount,
           },
           discountCode: savedData.appliedDiscount || null,
-          timestamp: new Date().toISOString(),
-        };
-
-        const orderResponse = await fetch('/api/orders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(orderData),
         });
 
-        if (orderResponse.ok) {
-          const orderResult = await orderResponse.json();
-
-          // Apply referral if applicable
-          if (savedData.appliedDiscount?.isReferral && savedData.appliedDiscount?.referralId) {
-            try {
-              await fetch('/api/referrals/apply', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  referralId: savedData.appliedDiscount.referralId,
-                  orderId: orderResult.order.id,
-                  orderTotal: savedData.amount,
-                  discountApplied: savedData.appliedDiscount.amount,
-                  referredEmail: savedData.customerData.email,
-                  referredName: `${savedData.customerData.firstName} ${savedData.customerData.lastName}`,
-                }),
-              });
-              clearStoredReferralCode();
-            } catch (error) {
-              console.error('Failed to apply referral:', error);
-            }
+        // Apply referral if applicable
+        if (savedData.appliedDiscount?.isReferral && savedData.appliedDiscount?.referralId) {
+          try {
+            await fetch('/api/referrals/apply', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                referralId: savedData.appliedDiscount.referralId,
+                orderId: orderResult.order.id,
+                orderTotal: savedData.amount,
+                discountApplied: savedData.appliedDiscount.amount,
+                referredEmail: savedData.customerData.email,
+                referredName: `${savedData.customerData.firstName} ${savedData.customerData.lastName}`,
+              }),
+            });
+            clearStoredReferralCode();
+          } catch (error) {
+            console.error('Failed to apply referral:', error);
           }
-
-          // Clear stored checkout data
-          sessionStorage.removeItem(storageKey);
-
-          // Update state
-          setCheckoutData(prev => ({
-            ...prev,
-            customer: savedData.customerData,
-            paymentMethod: paymentMethod as any,
-          }));
-
-          setOrderId(orderResult.order.id);
-          setPaymentInfo({
-            actualAmount: savedData.amount,
-            currency: savedData.currency,
-          });
-
-          setPreservedItems(savedData.items);
-          setPreservedSubtotal(savedData.subtotal);
-          setFinalShipping(savedData.shipping);
-
-          setCurrentStep('success');
-          clearPouch();
-          refreshShopProducts();
-
-          savedData.items.forEach((item: any) => {
-            refreshProduct(item.id);
-          });
-
-          window.history.replaceState({}, '', '/checkout');
-          toast.success('Payment successful! Order created.');
-        } else {
-          toast.error('Payment processed but order creation failed. Please contact support.');
-          setCurrentStep('error');
-          setError('Order creation failed. Your payment was successful. Please contact support.');
         }
-      } catch {
-        toast.error('An error occurred processing your payment');
+
+        // Clear stored checkout data
+        sessionStorage.removeItem(storageKey);
+
+        // Update state
+        setCheckoutData(prev => ({
+          ...prev,
+          customer: savedData.customerData,
+          paymentMethod: paymentMethod as any,
+        }));
+
+        setOrderId(orderResult.order.id);
+        setPaymentInfo({
+          actualAmount: savedData.amount,
+          currency: savedData.currency,
+        });
+
+        setPreservedItems(savedData.items);
+        setPreservedSubtotal(savedData.subtotal);
+        setFinalShipping(savedData.shipping);
+
+        setCurrentStep('success');
+        clearPouch();
+        refreshShopProducts();
+
+        savedData.items.forEach((item: any) => {
+          refreshProduct(item.id);
+        });
+
+        window.history.replaceState({}, '', '/checkout');
+        toast.success('Payment successful! Order created.');
+      } catch (err) {
+        console.error('Checkout error:', err);
+        toast.error('Payment processed but order creation failed. Please contact support.');
         setCurrentStep('error');
-        setError('An error occurred. Please contact support.');
+        setError('Your payment was successful but we had trouble recording the order. Please contact support with your payment confirmation.');
       }
     };
 
@@ -584,8 +593,9 @@ export default function CheckoutFlow() {
     error: 'Payment Error',
   };
 
-  if (items.length === 0 && currentStep !== 'success') {
-    // Redirect to gem-pouch page instead of showing empty cart screen
+  // Don't redirect if we're completing a payment return, showing success, or showing an error
+  const isPaymentReturn = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('payment_method');
+  if (items.length === 0 && currentStep !== 'success' && currentStep !== 'error' && !isPaymentReturn && preservedItems.length === 0) {
     if (typeof window !== 'undefined') {
       window.location.href = '/gem-pouch';
     }

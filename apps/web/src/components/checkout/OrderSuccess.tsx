@@ -1,6 +1,6 @@
 'use client';
-import { IconPackage, IconMail, IconArrowRight } from '@tabler/icons-react';
-import React, { useEffect, useState } from 'react';
+import { IconPackage, IconArrowRight } from '@tabler/icons-react';
+import React, { useEffect } from 'react';
 import { AnimatedCheckmark } from '@/components/success-states';
 
 interface OrderSuccessProps {
@@ -73,50 +73,6 @@ export default function OrderSuccess({
   const finalShipping = appliedDiscount?.free_shipping ? 0 : shipping || 0;
 
   const actualShipping = finalShipping;
-
-  const [emailSent, setEmailSent] = useState(false);
-  const [emailError, setEmailError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const sendReceiptEmail = async () => {
-      try {
-        const emailData = {
-          orderId,
-          customerEmail,
-          customerName: customerName || 'Customer',
-          items,
-          subtotal: actualSubtotal,
-          tax: 0, // Tax included in product price
-          shipping: actualShipping,
-          total: amount,
-          currency: currency || 'CAD',
-          shippingAddress: shippingAddress,
-        };
-
-        const response = await fetch('/api/send-receipt', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(emailData),
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-          setEmailSent(true);
-        } else {
-          setEmailError(result.error || 'Failed to send receipt email');
-        }
-      } catch {
-        setEmailError('Failed to send receipt email');
-      }
-    };
-
-    if (customerEmail && orderId) {
-      sendReceiptEmail();
-    }
-  }, [orderId, customerEmail, customerName, items, amount, currency, shippingAddress]);
 
   useEffect(() => {
     // Simple CSS-based confetti animation instead of external script
@@ -356,40 +312,13 @@ export default function OrderSuccess({
         )}
 
         <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2">
-          <div
-            className={`rounded-lg border p-6 ${
-              emailSent
-                ? 'border-green-200 bg-green-50'
-                : emailError
-                  ? 'border-red-200 bg-red-50'
-                  : 'border-blue-200 bg-blue-50'
-            }`}
-          >
+          <div className="rounded-lg border border-green-200 bg-green-50 p-6">
             <div className="mb-3 flex items-center">
-              <IconMail
-                size={24}
-                className={`mr-3 ${
-                  emailSent ? 'text-green-600' : emailError ? 'text-red-600' : 'text-blue-600'
-                }`}
-              />
-              <h3
-                className={`font-semibold ${
-                  emailSent ? 'text-green-900' : emailError ? 'text-red-900' : 'text-blue-900'
-                }`}
-              >
-                Email Confirmation
-              </h3>
+              <IconPackage size={24} className="mr-3 text-green-600" />
+              <h3 className="font-semibold text-green-900">Email Confirmation</h3>
             </div>
-            <p
-              className={`text-sm ${
-                emailSent ? 'text-green-800' : emailError ? 'text-red-800' : 'text-blue-800'
-              }`}
-            >
-              {emailSent
-                ? `✓ Order confirmation and receipt sent to ${customerEmail}`
-                : emailError
-                  ? `⚠ ${emailError}. Please contact support if you don't receive your receipt.`
-                  : `Sending order confirmation and receipt to ${customerEmail}...`}
+            <p className="text-sm text-green-800">
+              An order confirmation and receipt has been sent to {customerEmail}
             </p>
           </div>
 

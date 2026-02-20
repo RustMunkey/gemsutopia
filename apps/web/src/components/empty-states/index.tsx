@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import Image from 'next/image';
 
 interface EmptyStateProps {
   title: string;
@@ -24,23 +23,11 @@ export function EmptyState({
   secondaryAction,
 }: EmptyStateProps) {
   return (
-    <div className="relative flex flex-col items-center justify-center py-16 px-4 text-center w-full">
-      {/* Rotating gem logo */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <Image
-          src="/logos/gem2.svg"
-          alt=""
-          width={800}
-          height={800}
-          className="h-[150vw] w-[150vw] md:h-[700px] md:w-[700px] lg:h-[900px] lg:w-[900px] animate-[spin_60s_linear_infinite] opacity-[0.08]"
-          aria-hidden="true"
-        />
-      </div>
-
-      <h1 className="relative z-10 text-3xl md:text-4xl font-semibold text-white mb-4 font-[family-name:var(--font-bacasime)]">{title}</h1>
-      <p className="relative z-10 text-gray-400 max-w-sm mb-8">{description}</p>
+    <div className="flex flex-col items-center justify-center py-16 px-4 text-center w-full">
+      <h1 className="text-3xl md:text-4xl font-semibold text-white mb-4 font-[family-name:var(--font-bacasime)]">{title}</h1>
+      <p className="text-gray-400 max-w-sm mb-8">{description}</p>
       {(action || secondaryAction) && (
-        <div className="relative z-10 flex w-[calc(100vw-4rem)] flex-col gap-4 sm:w-auto sm:flex-row justify-center">
+        <div className="flex w-[calc(100vw-4rem)] flex-col gap-4 sm:w-auto sm:flex-row justify-center">
           {action && (
             action.href ? (
               <Link

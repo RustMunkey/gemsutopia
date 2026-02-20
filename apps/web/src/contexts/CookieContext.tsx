@@ -49,34 +49,11 @@ export function CookieProvider({ children }: { children: ReactNode }) {
       setPreferences(JSON.parse(savedPreferences));
       setHasConsented(true);
       setShowBanner(false);
-      loadGoogleAnalytics(JSON.parse(savedPreferences).analytics);
     } else {
       // Show banner if no previous consent
       setShowBanner(true);
     }
   }, [isClient]);
-
-  const loadGoogleAnalytics = (analyticsEnabled: boolean) => {
-    if (analyticsEnabled && typeof window !== 'undefined') {
-      // Load Google Analytics if analytics cookies are enabled
-      // Replace 'GA_MEASUREMENT_ID' with actual Google Analytics ID
-      const script = document.createElement('script');
-      script.async = true;
-      script.src = 'https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID';
-      document.head.appendChild(script);
-
-      window.dataLayer = window.dataLayer || [];
-      function gtag(...args: unknown[]) {
-        window.dataLayer.push(args);
-      }
-      (window as typeof window & { gtag: typeof gtag }).gtag = gtag;
-      gtag('js', new Date());
-      gtag('config', 'GA_MEASUREMENT_ID', {
-        anonymize_ip: true,
-        cookie_flags: 'secure;samesite=none',
-      });
-    }
-  };
 
   const updatePreferences = (newPreferences: Partial<CookiePreferences>) => {
     const updatedPreferences = { ...preferences, ...newPreferences };
@@ -84,9 +61,6 @@ export function CookieProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('cookiePreferences', JSON.stringify(updatedPreferences));
     localStorage.setItem('cookieConsent', 'true');
     setHasConsented(true);
-
-    // Load/unload analytics based on preferences
-    loadGoogleAnalytics(updatedPreferences.analytics);
   };
 
   const acceptAll = () => {
@@ -142,9 +116,3 @@ export const useCookies = () => {
   return context;
 };
 
-// Extend Window interface for dataLayer
-declare global {
-  interface Window {
-    dataLayer: unknown[];
-  }
-}

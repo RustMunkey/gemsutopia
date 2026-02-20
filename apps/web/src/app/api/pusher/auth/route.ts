@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server';
 import { authenticateChannel } from '@/lib/pusher';
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
+import { store } from '@/lib/store';
 import { apiSuccess, ApiError } from '@/lib/api';
 
 export const dynamic = 'force-dynamic';
@@ -18,26 +17,31 @@ export async function POST(request: NextRequest) {
 
     // For private channels, verify user authentication
     if (channelName.startsWith('private-') || channelName.startsWith('presence-')) {
-      // Get session from Better Auth
-      const session = await auth.api.getSession({
-        headers: await headers(),
-      });
-
-      // For admin channel, also verify admin status
+      // For admin channel, check for admin JWT token
       if (channelName === 'private-admin') {
-        // Check for admin JWT token
         const authHeader = request.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
           return ApiError.unauthorized('Admin access required');
         }
-        // Admin is authenticated via JWT - allow access
-      } else if (!session?.user) {
-        // Regular private channels require user session
-        return ApiError.unauthorized('Authentication required for private channels');
+      } else {
+        // Regular private channels require customer auth via Quickdash JWT
+        const authHeader = request.headers.get('authorization');
+        const token = authHeader?.replace('Bearer ', '');
+
+        if (!token) {
+          return ApiError.unauthorized('Authentication required for private channels');
+        }
+
+        // Verify token by checking profile
+        try {
+          await store.auth.getProfile();
+        } catch {
+          return ApiError.unauthorized('Invalid or expired token');
+        }
       }
 
       try {
-        const authResponse = authenticateChannel(socketId, channelName, session?.user?.id);
+        const authResponse = authenticateChannel(socketId, channelName);
         return apiSuccess(authResponse);
       } catch (error) {
         console.error('Pusher auth error:', error);
